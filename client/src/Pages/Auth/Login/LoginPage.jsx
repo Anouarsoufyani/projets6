@@ -6,7 +6,7 @@ import { FaEnvelope, FaLock } from "react-icons/fa";
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
-        username: "",
+        email: "",
         password: "",
     });
 
@@ -18,13 +18,13 @@ const LoginPage = () => {
         isPending,
         error,
     } = useMutation({
-        mutationFn: async ({ username, password }) => {
+        mutationFn: async ({ email, password }) => {
             const res = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ email, password }),
             });
             const data = await res.json();
 
@@ -37,7 +37,7 @@ const LoginPage = () => {
         onSuccess: () => {
             toast.success("Login successful");
             setFormData({
-                username: "",
+                email: "",
                 password: "",
             });
             queryClient.invalidateQueries({ queryKey: ["authUser"] });
@@ -50,11 +50,11 @@ const LoginPage = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!formData.username || !formData.password) {
+        if (!formData.email || !formData.password) {
             toast.error("Please fill in all fields");
         } else {
             loginMutation({
-                username: formData.username,
+                email: formData.email,
                 password: formData.password,
             });
         }
@@ -83,10 +83,10 @@ const LoginPage = () => {
                             <input
                                 type="email"
                                 placeholder="Votre email"
-                                name="username" // Aligné avec formData.username
+                                name="email" // Aligné avec formData.username
                                 className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 onChange={handleInputChange}
-                                value={formData.username}
+                                value={formData.email}
                             />
                         </div>
                     </div>

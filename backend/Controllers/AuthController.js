@@ -4,7 +4,8 @@ import bcrypt from "bcryptjs";
 
 export const signup = async (req, res) => {
     // validation for req.body
-    const { name, email, password, numero, userType } = req.body;
+    const { email, name, password, numero, userType } = req.body;
+
     // Regular expression for email validation (i dont understand but ok)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -19,6 +20,13 @@ export const signup = async (req, res) => {
         // checking if email already exists
         const existingEmail = await User.findOne({ email });
         if (existingEmail) {
+            return res
+                .status(400)
+                .json({ success: false, error: "Email already taken" });
+        }
+
+        const existingNumber = await User.findOne({ numero });
+        if (existingNumber) {
             return res
                 .status(400)
                 .json({ success: false, error: "Email already taken" });
@@ -40,6 +48,7 @@ export const signup = async (req, res) => {
                 .status(400)
                 .json({ success: false, error: "Invalid user type" });
         }
+
         //hash password
         // example : pass os 123456 -> it will be something like wuijfowebf327423gr784vbf47
         const salt = await bcrypt.genSalt(10);
@@ -59,9 +68,13 @@ export const signup = async (req, res) => {
             password: hashedPassword,
         });
 
+        // console.log(newUser);
+
         if (newUser) {
-            generateTokenAndSetCookie(newUser._id, res);
             await newUser.save();
+
+            generateTokenAndSetCookie(newUser._id, res);
+
             return res.status(201).json({
                 success: true,
                 message: "User created successfully",

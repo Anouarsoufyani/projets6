@@ -10,15 +10,10 @@ const SignupPage = () => {
         name: "",
         password: "",
         numero: "",
-        userType: "user",
+        userType: "client",
     });
 
-    const {
-        mutate: signupMutation,
-        isError,
-        isPending,
-        error,
-    } = useMutation({
+    const { mutate: signupMutation, isPending } = useMutation({
         mutationFn: async ({ email, name, password, numero, userType }) => {
             const res = await fetch("/api/auth/signup", {
                 method: "POST",
@@ -48,7 +43,7 @@ const SignupPage = () => {
                 name: "",
                 password: "",
                 numero: "",
-                userType: "user",
+                userType: "client",
             });
         },
         onError: (error) => {
@@ -57,6 +52,8 @@ const SignupPage = () => {
     });
 
     const handleSubmit = (e) => {
+        console.log(formData);
+
         e.preventDefault();
         if (
             !formData.email ||
@@ -96,7 +93,7 @@ const SignupPage = () => {
                             Nom complet
                         </label>
                         <div className="relative">
-                            <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
                             <input
                                 type="text"
                                 placeholder="Votre nom complet"
@@ -112,7 +109,7 @@ const SignupPage = () => {
                             Adresse email
                         </label>
                         <div className="relative">
-                            <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
                             <input
                                 type="email"
                                 placeholder="Votre email"
@@ -128,7 +125,7 @@ const SignupPage = () => {
                             Numéro de téléphone
                         </label>
                         <div className="relative">
-                            <FaPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <FaPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
                             <input
                                 type="tel"
                                 placeholder="Votre numéro de téléphone"
@@ -145,7 +142,7 @@ const SignupPage = () => {
                             Mot de passe
                         </label>
                         <div className="relative">
-                            <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
                             <input
                                 type="password"
                                 placeholder="Votre mot de passe"
@@ -161,7 +158,7 @@ const SignupPage = () => {
                             Je suis
                         </label>
                         <div className="relative">
-                            <FaUserTie className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <FaUserTie className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
                             <select
                                 name="userType"
                                 className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -188,9 +185,6 @@ const SignupPage = () => {
                         )}
                     </button>
                 </form>
-                {isError && (
-                    <p className="text-red-500 mt-2">{error.message}</p>
-                )}
                 <div className="mt-4 text-center">
                     <p className="text-gray-600">
                         Vous avez déjà un compte ?{" "}

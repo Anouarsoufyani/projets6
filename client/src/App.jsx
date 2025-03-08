@@ -3,17 +3,15 @@ import SignupPage from "./Pages/Auth/SignUp/SignupPage";
 import LoginPage from "./Pages/Auth/Login/LoginPage";
 import HomePage from "./Pages/Home/HomePage";
 // import NotificationPage from "./Pages/Notification/NotificationPage"
-import ProfilePage from "./Pages/Profile/ProfilePage";
-import DashboardPage from "./Pages/Dashboard/DashboardPage";
+import ProfilePage from "./Pages/User/ProfilePage";
+import DashboardPage from "./Pages/User/DashboardPage";
 import Navbar from "./Components/Navigation/Navbar";
-// import Sidebar from "./Components/common/Sidebar"
+import Sidebar from "./Components/Navigation/Sidebar";
 // import RightPanel from "./Components/common/RightPanel"
-// import { Toaster } from "react-hot-toast"
+import { Toaster } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 
 function App() {
-    console.log("fefefe");
-
     const { data: authUser, isLoading } = useQuery({
         queryKey: ["authUser"],
         queryFn: async () => {
@@ -42,8 +40,8 @@ function App() {
 
     return (
         <div className="flex flex-col w-full m-0 min-h-screen">
-            {/* {authUser && <Sidebar />} */}
-            <Navbar />
+            {authUser && <Sidebar />}
+            <Navbar isLoggedIn={!!authUser} />
             <Routes>
                 <Route
                     path="/"
@@ -65,6 +63,12 @@ function App() {
                         authUser ? <DashboardPage /> : <Navigate to="/login" />
                     }
                 />
+                <Route
+                    path="/profil"
+                    element={
+                        authUser ? <ProfilePage /> : <Navigate to="/login" />
+                    }
+                />
                 {/* <Route
                     path="/notifications"
                     element={
@@ -83,7 +87,7 @@ function App() {
                 />
             </Routes>
             {/* {authUser && <RightPanel />} */}
-            {/* <Toaster /> */}
+            <Toaster />
         </div>
     );
 }

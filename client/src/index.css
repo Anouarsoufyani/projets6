@@ -7,3 +7,7 @@ body {
     min-height: 100vh;
     /* background: linear-gradient(to bottom, #020618 50%, #040a4d); */
 }
+
+button {
+    cursor: pointer;
+}

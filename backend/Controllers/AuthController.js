@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 
 export const signup = async (req, res) => {
     // validation for req.body
-    const { username, email, password, fullName, userType } = req.body;
+    const { name, email, password, numero, userType } = req.body;
     // Regular expression for email validation (i dont understand but ok)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -15,13 +15,7 @@ export const signup = async (req, res) => {
                 .status(400)
                 .json({ success: false, error: "Invalid email address" });
         }
-        // checking if username already exists
-        const existingUser = await User.findOne({ username });
-        if (existingUser) {
-            return res
-                .status(400)
-                .json({ success: false, error: "Username already taken" });
-        }
+
         // checking if email already exists
         const existingEmail = await User.findOne({ email });
         if (existingEmail) {
@@ -51,15 +45,15 @@ export const signup = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        if (!username || !email || !password || !fullName || !userType) {
+        if (!name || !email || !password || !numero || !userType) {
             return res
                 .status(400)
                 .json({ success: false, error: "All fields are required" });
         }
 
         const newUser = new User({
-            username,
-            fullName,
+            name,
+            numero,
             email,
             userType,
             password: hashedPassword,
@@ -72,8 +66,8 @@ export const signup = async (req, res) => {
                 success: true,
                 message: "User created successfully",
                 _id: newUser._id,
-                fullName: newUser.fullName,
-                username: newUser.username,
+                name: newUser.name,
+                numero: newUser.numero,
                 email: newUser.email,
                 profilePic: newUser.profilePic,
                 userType: newUser.userType,
@@ -90,17 +84,17 @@ export const signup = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
     try {
         // validation
-        if (!username || !password) {
+        if (!email || !password) {
             return res
                 .status(400)
                 .json({ success: false, error: "All fields are required" });
         }
 
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ email });
         const isPasswordValid = await bcrypt.compare(
             password,
             user?.password || ""

@@ -1,26 +1,31 @@
 import { Link } from "react-router";
+import { FaSignInAlt, FaUserPlus } from "react-icons/fa";
 
 const Navbar = () => {
     return (
-        <nav className="sticky top-0 bg-transparent p-2 flex justify-between items-center z-50">
-            <Link to="/" className="font-bold">
+        <nav className="sticky top-0 bg-gradient-to-r from-emerald-500 to-emerald-700 p-4 flex justify-between items-center z-50 shadow-lg">
+            <Link
+                to="/"
+                className="text-2xl font-extrabold text-white tracking-wide"
+            >
                 SmartCity
             </Link>
-            <div className="md:flex md:items-center space-x-4">
+            <div className="flex items-center space-x-6">
                 <Link
                     to="/login"
-                    className="bg-slate-800 px-4 py-2 rounded-md hover:bg-slate-700 text-slate-100"
+                    className="flex items-center gap-2 bg-white text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-100 transition duration-300 shadow-md"
                 >
-                    Connexion
+                    <FaSignInAlt /> Connexion
                 </Link>
                 <Link
                     to="/signup"
-                    className="bg-slate-800 px-4 py-2 rounded-md hover:bg-slate-700 text-slate-100"
+                    className="flex items-center gap-2 bg-white text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-100 transition duration-300 shadow-md"
                 >
-                    Sign Up
+                    <FaUserPlus /> S'inscrire
                 </Link>
             </div>
         </nav>
     );
 };
+
 export default Navbar;

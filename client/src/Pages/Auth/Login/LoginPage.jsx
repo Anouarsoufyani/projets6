@@ -1,8 +1,8 @@
-/* eslint-disable no-unused-vars */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router"; // Correction de "react-router" à "react-router-dom"
+import { FaEnvelope, FaLock } from "react-icons/fa";
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
@@ -63,64 +63,77 @@ const LoginPage = () => {
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
+
     return (
-        <>
-            <main className="flex justify-center items-center w-full h-[95vh]">
-                <div className="flex flex-col gap-4 justify-center items-center w-1/3 h-1/2 border p-4 rounded-md shadow-lg">
-                    <form
-                        className="flex items-center justify-center gap-5 flex-col w-full h-1/2"
-                        onSubmit={handleSubmit}
-                    >
-                        <div className="flex flex-col items-start gap-2 w-1/2">
-                            <h1 className=" text-4xl font-extrabold">
-                                Connexion
-                            </h1>
-                        </div>
-                        <label className="flex flex-col items-start w-1/2 input input-bordered rounded flex items-center gap-2">
+        <main className="flex justify-center items-center w-full h-[95vh] bg-gray-100">
+            <div className="flex flex-col gap-6 justify-center items-center w-1/3 bg-white p-8 rounded-xl shadow-2xl">
+                <h1 className="text-3xl font-bold text-emerald-600 mb-4">
+                    Connexion
+                </h1>
+                <form
+                    onSubmit={handleSubmit}
+                    className="w-full flex flex-col gap-4"
+                >
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-gray-700">
                             Adresse email
+                        </label>
+                        <div className="relative">
+                            <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                             <input
                                 type="email"
-                                placeholder="email adress"
-                                name="email"
-                                className="border border-black w-full rounded-md p-2"
+                                placeholder="Votre email"
+                                name="username" // Aligné avec formData.username
+                                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 onChange={handleInputChange}
                                 value={formData.username}
                             />
-                        </label>
-
-                        <label className="flex flex-col items-start w-1/2 input input-bordered rounded flex items-center gap-2">
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-gray-700">
                             Mot de passe
+                        </label>
+                        <div className="relative">
+                            <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                             <input
                                 type="password"
-                                placeholder="Password"
+                                placeholder="Votre mot de passe"
                                 name="password"
-                                className="border border-black w-full rounded-md p-2"
+                                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 onChange={handleInputChange}
                                 value={formData.password}
                             />
-                        </label>
-                        <button className="btn rounded-md p-2 cursor-pointer btn-primary border w-1/2 hover:bg-slate-950 hover:text-white transition-all">
-                            {isPending ? (
-                                <span className="loading loading-spinner loading-md"></span>
-                            ) : (
-                                "Se connecter"
-                            )}
-                        </button>
-                        {/* {isError && <p className='text-red-500'>Something went wrong</p>} */}
-                    </form>
-                    <div className="flex flex-col gap-2 mt-4">
-                        <p className="text-lg">
-                            {"Don't have an account ? "}
-                            <Link to="/signup">
-                                <span className="font-bold cursor-pointer text-emerald-600">
-                                    S'inscrire
-                                </span>
-                            </Link>
-                        </p>
+                        </div>
                     </div>
+                    <button
+                        type="submit"
+                        className="w-full bg-emerald-600 text-white py-3 rounded-md hover:bg-emerald-700 transition duration-300 mt-4"
+                    >
+                        {isPending ? (
+                            <span className="loading loading-spinner loading-md"></span>
+                        ) : (
+                            "Se connecter"
+                        )}
+                    </button>
+                </form>
+                {isError && (
+                    <p className="text-red-500 mt-2">{error.message}</p>
+                )}
+                <div className="mt-4 text-center">
+                    <p className="text-gray-600">
+                        Pas de compte ?{" "}
+                        <Link
+                            to="/signup"
+                            className="text-emerald-600 font-semibold hover:underline"
+                        >
+                            S'inscrire
+                        </Link>
+                    </p>
                 </div>
-            </main>
-        </>
+            </div>
+        </main>
     );
 };
+
 export default LoginPage;

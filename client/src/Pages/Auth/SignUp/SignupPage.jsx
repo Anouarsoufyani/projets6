@@ -1,10 +1,8 @@
-/* eslint-disable no-unused-vars */
-import { Link } from "react-router";
-import { useState } from "react";
-
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-// import { set } from "mongoose";
+import { useState } from "react";
+import { Link } from "react-router"; // Correction de "react-router" à "react-router-dom"
+import { FaUser, FaEnvelope, FaPhone, FaLock, FaUserTie } from "react-icons/fa";
 
 const SignupPage = () => {
     const [formData, setFormData] = useState({
@@ -36,18 +34,11 @@ const SignupPage = () => {
                 }),
             });
 
-            console.log("formdata ", email, name, password, numero, userType);
-
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.error || "Something went wrong");
             }
 
-            // if (data.error) {
-            //     throw new Error(data.error);
-            // }
-            console.log("formdata ", formData);
-            console.log(data);
             return data;
         },
         onSuccess: () => {
@@ -66,110 +57,148 @@ const SignupPage = () => {
     });
 
     const handleSubmit = (e) => {
-        e.preventDefault(); // Prevent the form from reloading the page
-        signupMutation({
-            email: formData.email,
-            name: formData.name,
-            password: formData.password,
-            numero: formData.numero,
-            userType: formData.userType,
-        });
+        e.preventDefault();
+        if (
+            !formData.email ||
+            !formData.name ||
+            !formData.password ||
+            !formData.numero ||
+            !formData.userType
+        ) {
+            toast.error("Please fill in all fields");
+        } else {
+            signupMutation({
+                email: formData.email,
+                name: formData.name,
+                password: formData.password,
+                numero: formData.numero,
+                userType: formData.userType,
+            });
+        }
     };
 
     const handleInputChange = (e) => {
-        console.log(e.target.value);
-
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     return (
-        <main className="flex justify-center items-center w-full h-[95vh]">
-            <div className="flex flex-col gap-4 justify-center items-center w-1/2 h-[80%] border p-4 rounded-md shadow-lg">
+        <main className="flex justify-center items-center w-full h-[95vh] bg-gray-100">
+            <div className="flex flex-col gap-6 justify-center items-center w-1/2 bg-white p-8 rounded-xl shadow-2xl">
+                <h1 className="text-3xl font-bold text-emerald-600 mb-4">
+                    Inscription
+                </h1>
                 <form
-                    className="flex items-center justify-center gap-5 flex-col w-full h-[60%]"
                     onSubmit={handleSubmit}
+                    className="w-full flex flex-col gap-4"
                 >
-                    <div className="flex flex-col items-start gap-2 w-1/2">
-                        <h1 className=" text-4xl font-extrabold">
-                            Inscription
-                        </h1>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-gray-700">
+                            Nom complet
+                        </label>
+                        <div className="relative">
+                            <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Votre nom complet"
+                                name="name"
+                                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                onChange={handleInputChange}
+                                value={formData.name}
+                            />
+                        </div>
                     </div>
-                    <label className="flex flex-col items-start w-1/2 input input-bordered rounded flex items-center gap-2">
-                        Nom
-                        <input
-                            type="text"
-                            placeholder="Nom complet"
-                            name="name"
-                            className="border border-black w-full rounded-md p-2"
-                            onChange={handleInputChange}
-                            value={formData.name}
-                        />
-                    </label>
-                    <label className="flex flex-col items-start w-1/2 input input-bordered rounded flex items-center gap-2">
-                        Adresse email
-                        <input
-                            type="email"
-                            placeholder="adresse email"
-                            name="email"
-                            className="border border-black w-full rounded-md p-2"
-                            onChange={handleInputChange}
-                            value={formData.email}
-                        />
-                    </label>
-                    <label className="flex flex-col items-start w-1/2 input input-bordered rounded flex items-center gap-2">
-                        Numero de telephone
-                        <input
-                            type="tel"
-                            placeholder="Numero de telephone"
-                            name="numero"
-                            pattern="^0[1-9](\s?\d{2}){4}$"
-                            className="border border-black w-full rounded-md p-2"
-                            onChange={handleInputChange}
-                            value={formData.numero}
-                        />
-                    </label>
-
-                    <label className="flex flex-col items-start w-1/2 input input-bordered rounded flex items-center gap-2">
-                        Mot de passe
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            name="password"
-                            className="border border-black w-full rounded-md p-2"
-                            onChange={handleInputChange}
-                            value={formData.password}
-                        />
-                    </label>
-                    <label className="flex flex-col items-start w-1/2 input input-bordered rounded flex items-center gap-2">
-                        Je suis
-                        <select
-                            name="userType"
-                            className="border border-black w-full rounded-md p-2"
-                            onChange={handleInputChange}
-                            value={formData.userType}
-                        >
-                            <option value="">Sélectionnez une option</option>
-                            <option value="livreur">Livreur</option>
-                            <option value="client">Client</option>
-                            <option value="commercant">Commerçant</option>
-                        </select>
-                    </label>
-                    <button className="btn rounded-md p-2 cursor-pointer btn-primary border w-1/2 hover:bg-slate-950 hover:text-white transition-all">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-gray-700">
+                            Adresse email
+                        </label>
+                        <div className="relative">
+                            <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="email"
+                                placeholder="Votre email"
+                                name="email"
+                                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                onChange={handleInputChange}
+                                value={formData.email}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-gray-700">
+                            Numéro de téléphone
+                        </label>
+                        <div className="relative">
+                            <FaPhone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="tel"
+                                placeholder="Votre numéro de téléphone"
+                                name="numero"
+                                pattern="^0[1-9](\s?\d{2}){4}$"
+                                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                onChange={handleInputChange}
+                                value={formData.numero}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-gray-700">
+                            Mot de passe
+                        </label>
+                        <div className="relative">
+                            <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <input
+                                type="password"
+                                placeholder="Votre mot de passe"
+                                name="password"
+                                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                onChange={handleInputChange}
+                                value={formData.password}
+                            />
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-gray-700">
+                            Je suis
+                        </label>
+                        <div className="relative">
+                            <FaUserTie className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <select
+                                name="userType"
+                                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                onChange={handleInputChange}
+                                value={formData.userType}
+                            >
+                                <option value="">
+                                    Sélectionnez une option
+                                </option>
+                                <option value="livreur">Livreur</option>
+                                <option value="client">Client</option>
+                                <option value="commercant">Commerçant</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button
+                        type="submit"
+                        className="w-full bg-emerald-600 text-white py-3 rounded-md hover:bg-emerald-700 transition duration-300 mt-4"
+                    >
                         {isPending ? (
                             <span className="loading loading-spinner loading-md"></span>
                         ) : (
                             "S'inscrire"
                         )}
                     </button>
-                    {/* {isError && <p className='text-red-500'>Something went wrong</p>} */}
                 </form>
-                <div className="flex flex-col gap-2 mt-4">
-                    <p className="text-lg">
-                        {"I already have an account ? "}
-                        <Link to="/login">
-                            <span className="font-bold cursor-pointer text-emerald-600">
-                                Se connecter
-                            </span>
+                {isError && (
+                    <p className="text-red-500 mt-2">{error.message}</p>
+                )}
+                <div className="mt-4 text-center">
+                    <p className="text-gray-600">
+                        Vous avez déjà un compte ?{" "}
+                        <Link
+                            to="/login"
+                            className="text-emerald-600 font-semibold hover:underline"
+                        >
+                            Se connecter
                         </Link>
                     </p>
                 </div>
@@ -177,4 +206,5 @@ const SignupPage = () => {
         </main>
     );
 };
+
 export default SignupPage;

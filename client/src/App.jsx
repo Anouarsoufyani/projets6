@@ -41,7 +41,7 @@ function App() {
     }
 
     return (
-        <div className="flex max-w-6xl mx-auto">
+        <div className="flex flex-col w-full m-0 min-h-screen">
             {/* {authUser && <Sidebar />} */}
             <Navbar />
             <Routes>

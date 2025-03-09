@@ -5,7 +5,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import PropTypes from "prop-types";
 
-const Navbar = ({ isLoggedIn }) => {
+const Navbar = ({ isLoggedIn, navbarHeight }) => {
     const queryClient = useQueryClient();
 
     const { mutate: logout, error } = useMutation({
@@ -35,7 +35,10 @@ const Navbar = ({ isLoggedIn }) => {
     // });
 
     return (
-        <nav className="sticky top-0 bg-gradient-to-r from-emerald-500 to-emerald-700 p-4 flex justify-between items-center z-50 shadow-lg h-[4rem]">
+        <nav
+            className={`sticky top-0 bg-gradient-to-r from-emerald-500 to-emerald-700 p-4 flex justify-between items-center z-50 shadow-lg`}
+            style={{ height: navbarHeight }}
+        >
             <Link
                 to="/"
                 className="text-2xl font-extrabold text-white tracking-wide"
@@ -66,6 +69,7 @@ const Navbar = ({ isLoggedIn }) => {
 
 Navbar.propTypes = {
     isLoggedIn: PropTypes.bool.isRequired,
+    navbarHeight: PropTypes.string,
     userName: PropTypes.string,
 };
 

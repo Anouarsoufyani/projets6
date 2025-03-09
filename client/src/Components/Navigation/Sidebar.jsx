@@ -14,11 +14,11 @@ import PropTypes from "prop-types";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-const Sidebar = ({ navbarHeight = "4rem" }) => {
+const Sidebar = ({ sidebarSize, navbarHeight }) => {
     const location = useLocation();
     const queryClient = useQueryClient();
 
-    // Mutation pour la déconnexion
+    // Mutation for logout
     const { mutate: logout } = useMutation({
         mutationFn: async () => {
             const res = await fetch("/api/auth/logout", {
@@ -39,141 +39,154 @@ const Sidebar = ({ navbarHeight = "4rem" }) => {
         },
     });
 
-    // Récupération des données utilisateur
+    // Fetch user data
     const { data: authUser, isLoading } = useQuery({ queryKey: ["authUser"] });
 
-    // Liste des liens selon le type d'utilisateur
+    // Define navigation items based on user type
     const navItems = authUser?.userType
         ? {
               livreur: [
                   {
                       to: "/dashboard",
-                      icon: <MdOutlineSpaceDashboard className="w-6 h-6" />,
+                      icon: <MdOutlineSpaceDashboard className="w-5 h-5" />,
                       label: "Dashboard",
                   },
                   {
                       to: "/profil",
-                      icon: <LuUserRound className="w-6 h-6" />,
+                      icon: <LuUserRound className="w-5 h-5" />,
                       label: "Profil",
                   },
                   {
                       to: "/livraisons",
-                      icon: <TbTruckDelivery className="w-6 h-6" />,
+                      icon: <TbTruckDelivery className="w-5 h-5" />,
                       label: "Livraisons",
                   },
                   {
                       to: "/commandes",
-                      icon: <FaRegListAlt className="w-6 h-6" />,
+                      icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Commandes",
                   },
               ],
               client: [
                   {
                       to: "/profil",
-                      icon: <LuUserRound className="w-6 h-6" />,
+                      icon: <LuUserRound className="w-5 h-5" />,
                       label: "Profil",
                   },
                   {
                       to: "/commandes",
-                      icon: <FaRegListAlt className="w-6 h-6" />,
+                      icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Commandes",
                   },
                   {
                       to: "/commander",
-                      icon: <FaRegListAlt className="w-6 h-6" />,
+                      icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Passer une Commande",
                   },
               ],
               commercant: [
                   {
                       to: "/dashboard",
-                      icon: <MdOutlineSpaceDashboard className="w-6 h-6" />,
+                      icon: <MdOutlineSpaceDashboard className="w-5 h-5" />,
                       label: "Dashboard",
                   },
                   {
                       to: "/profil",
-                      icon: <LuUserRound className="w-6 h-6" />,
+                      icon: <LuUserRound className="w-5 h-5" />,
                       label: "Profil",
                   },
                   {
                       to: "/produits",
-                      icon: <AiOutlineShoppingCart className="w-6 h-6" />,
+                      icon: <AiOutlineShoppingCart className="w-5 h-5" />,
                       label: "Produits",
                   },
                   {
                       to: "/livraison",
-                      icon: <TbTruckDelivery className="w-6 h-6" />,
+                      icon: <TbTruckDelivery className="w-5 h-5" />,
                       label: "Livraisons",
                   },
                   {
                       to: "/commandes",
-                      icon: <FaRegListAlt className="w-6 h-6" />,
+                      icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Commandes",
                   },
               ],
           }[authUser.userType] || []
         : [];
 
-    // Gestion du chargement
+    // Handle loading state
     if (isLoading) {
         return (
-            <aside className="h-screen fixed top-0 left-0 bg-white w-64 border-r border-gray-200 shadow-lg flex items-center justify-center">
-                <span className="text-emerald-700">Chargement...</span>
+            <aside className="h-screen fixed top-0 left-0 bg-white w-64 border-r border-gray-100 shadow-sm flex items-center justify-center">
+                <span className="text-emerald-600 font-medium">
+                    Chargement...
+                </span>
             </aside>
         );
     }
 
+    console.log(sidebarSize, navbarHeight);
+
     return (
         <aside
-            className="fixed left-0 bg-white text-emerald-700 w-72 border-r border-gray-200 shadow-lg flex flex-col justify-between transition-all duration-300"
+            className={`fixed left-0 bg-white text-gray-700 border-r border-gray-100 shadow-sm flex flex-col transition-all duration-300 z-10`}
             style={{
                 top: navbarHeight,
                 height: `calc(100vh - ${navbarHeight})`,
-            }} // Ajustement pour la navbar
+                width: sidebarSize,
+            }}
         >
-            {/* Navigation principale */}
-            <nav className="flex flex-col">
+            {/* Navigation Section */}
+            <nav className="flex-1 flex flex-col pt-6">
+                <div className="px-6 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                    Menu
+                </div>
                 {navItems.map((item) => (
                     <Link
                         key={item.to}
                         to={item.to}
-                        className={`flex items-center gap-4 py-4 px-6 transition-colors duration-200 ${
+                        className={`flex items-center gap-3 py-3 px-6 transition-all duration-300 ease-in-out ${
                             location.pathname === item.to
-                                ? "bg-emerald-100 text-emerald-900 font-semibold"
-                                : "hover:bg-emerald-50"
+                                ? "bg-emerald-50 text-emerald-700 font-medium border-l-4 border-emerald-500"
+                                : "text-gray-600 hover:bg-gray-50 hover:text-emerald-700 hover:pl-7"
                         }`}
                     >
-                        {item.icon}
-                        <span className="text-lg">{item.label}</span>
+                        <div className="flex items-center justify-center w-5 h-5">
+                            {item.icon}
+                        </div>
+                        <span className="text-sm font-medium">
+                            {item.label}
+                        </span>
                     </Link>
                 ))}
             </nav>
 
-            {/* Bouton de déconnexion */}
-            <div className="p-4">
+            {/* Logout Button */}
+            <div className="p-6 border-t border-gray-100">
                 <button
-                    onClick={(e) => {
-                        // e.preventDefault();
-                        logout();
-                    }}
-                    className="flex items-center gap-2 w-full bg-emerald-500 text-white px-4 py-2 rounded-md hover:bg-emerald-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    onClick={() => logout()}
+                    className="flex items-center gap-3 w-full text-gray-600 py-3 px-6 rounded-lg hover:bg-gray-50 hover:text-emerald-700 transition-all duration-300 ease-in-out hover:pl-7 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                 >
-                    <FaSignInAlt />
-                    <span className="text-lg">Déconnexion</span>
+                    <div className="flex items-center justify-center w-5 h-5">
+                        <FaSignInAlt className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm font-medium">Déconnexion</span>
                 </button>
             </div>
         </aside>
     );
 };
 
-// Validation des props
+// Prop validation
 Sidebar.propTypes = {
-    navbarHeight: PropTypes.string, // Hauteur de la navbar en tant que string (ex. "4rem")
+    navbarHeight: PropTypes.string,
+    sidebarSize: PropTypes.string,
 };
 
-// Valeurs par défaut
+// Default props
 Sidebar.defaultProps = {
-    navbarHeight: "4rem", // Hauteur par défaut de la navbar
+    navbarHeight: "4rem",
+    sidebarSize: "16rem",
 };
 
 export default Sidebar;

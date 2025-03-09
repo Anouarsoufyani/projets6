@@ -12,6 +12,9 @@ import { Toaster } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 
 function App() {
+    const navbarSize = "4rem";
+    const sidebarSize = "18rem";
+
     const { data: authUser, isLoading } = useQuery({
         queryKey: ["authUser"],
         queryFn: async () => {
@@ -39,53 +42,75 @@ function App() {
     }
 
     return (
-        <div className="flex flex-col w-full m-0 min-h-screen">
-            {authUser && <Sidebar />}
-            <Navbar isLoggedIn={!!authUser} />
-            <Routes>
-                <Route
-                    path="/"
-                    element={
-                        !authUser ? <HomePage /> : <Navigate to="/dashboard" />
-                    }
-                />
-                <Route
-                    path="/signup"
-                    element={!authUser ? <SignupPage /> : <Navigate to="/" />}
-                />
-                <Route
-                    path="/login"
-                    element={!authUser ? <LoginPage /> : <Navigate to="/" />}
-                />
-                <Route
-                    path="/dashboard"
-                    element={
-                        authUser ? <DashboardPage /> : <Navigate to="/login" />
-                    }
-                />
-                <Route
-                    path="/profil"
-                    element={
-                        authUser ? <ProfilePage /> : <Navigate to="/login" />
-                    }
-                />
-                {/* <Route
-                    path="/notifications"
-                    element={
-                        authUser ? (
-                            <NotificationPage />
-                        ) : (
-                            <Navigate to="/login" />
-                        )
-                    }
-                /> */}
-                <Route
-                    path="/profile/:username"
-                    element={
-                        authUser ? <ProfilePage /> : <Navigate to="/login" />
-                    }
-                />
-            </Routes>
+        <div className={`flex flex-col w-full m-0 min-h-screen`}>
+            {authUser && (
+                <Sidebar sidebarSize={sidebarSize} navbarHeight={navbarSize} />
+            )}
+            <Navbar isLoggedIn={!!authUser} navbarHeight={navbarSize} />
+            <div
+                className={`h-scree`}
+                style={{
+                    marginLeft: sidebarSize,
+                    width: `calc(100% - ${sidebarSize})`,
+                    height: `calc(100vh - ${navbarSize})`,
+                }}
+            >
+                <Routes>
+                    <Route
+                        path="/"
+                        element={
+                            !authUser ? (
+                                <HomePage />
+                            ) : (
+                                <Navigate to="/dashboard" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/signup"
+                        element={
+                            !authUser ? <SignupPage /> : <Navigate to="/" />
+                        }
+                    />
+                    <Route
+                        path="/login"
+                        element={
+                            !authUser ? <LoginPage /> : <Navigate to="/" />
+                        }
+                    />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            authUser ? (
+                                <DashboardPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/profil"
+                        element={
+                            authUser ? (
+                                <ProfilePage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/profile/:username"
+                        element={
+                            authUser ? (
+                                <ProfilePage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                </Routes>
+            </div>
+
             {/* {authUser && <RightPanel />} */}
             <Toaster />
         </div>

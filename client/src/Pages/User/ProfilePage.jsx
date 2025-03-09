@@ -1,6 +1,6 @@
 const DashboardPage = () => {
     return (
-        <div className="ml-72">
+        <div>
             {" "}
             {/* Ajout de marge gauche égale à la largeur de la sidebar (w-72) */}
             <main className="w-full min-h-screen bg-gray-100 p-6">

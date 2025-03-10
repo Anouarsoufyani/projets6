@@ -1,11 +1,17 @@
 import { FaUser, FaBiking, FaStore } from "react-icons/fa";
+import { PropTypes } from "prop-types";
 
-const HomePage = () => {
+const HomePage = ({ navbarHeight }) => {
     return (
         <>
             <main className="w-full h-full">
                 {/* En-tête principal */}
-                <header className="flex flex-row w-full h-[95vh] justify-center items-center bg-gradient-to-r from-emerald-500 to-emerald-700">
+                <header
+                    className="flex flex-row w-full justify-center items-center bg-gradient-to-r from-emerald-500 to-emerald-700"
+                    style={{
+                        minHeight: "calc(100vh - " + navbarHeight + ")",
+                    }}
+                >
                     <div className="flex justify-center items-center w-1/2 h-full">
                         <img
                             src="deliver_truck_banner.svg"
@@ -103,6 +109,10 @@ const HomePage = () => {
             </main>
         </>
     );
+};
+
+HomePage.propTypes = {
+    navbarHeight: PropTypes.string,
 };
 
 export default HomePage;

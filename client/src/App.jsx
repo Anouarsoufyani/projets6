@@ -7,6 +7,7 @@ import ProfilePage from "./Pages/User/ProfilePage";
 import DashboardPage from "./Pages/User/DashboardPage";
 import Navbar from "./Components/Navigation/Navbar";
 import Sidebar from "./Components/Navigation/Sidebar";
+import LivraisonPage from "./Pages/Livraisons/LivraisonPage";
 // import RightPanel from "./Components/common/RightPanel"
 import { Toaster } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
@@ -48,19 +49,23 @@ function App() {
             )}
             <Navbar isLoggedIn={!!authUser} navbarHeight={navbarSize} />
             <div
-                className={`h-scree`}
-                style={{
-                    marginLeft: sidebarSize,
-                    width: `calc(100% - ${sidebarSize})`,
-                    height: `calc(100vh - ${navbarSize})`,
-                }}
+                className={`h-screen`}
+                style={
+                    authUser
+                        ? {
+                              marginLeft: sidebarSize,
+                              width: `calc(100% - ${sidebarSize})`,
+                              height: `calc(100vh - ${navbarSize})`,
+                          }
+                        : {}
+                }
             >
                 <Routes>
                     <Route
                         path="/"
                         element={
                             !authUser ? (
-                                <HomePage />
+                                <HomePage navbarHeight={navbarSize} />
                             ) : (
                                 <Navigate to="/dashboard" />
                             )
@@ -103,6 +108,16 @@ function App() {
                         element={
                             authUser ? (
                                 <ProfilePage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/livraison"
+                        element={
+                            authUser ? (
+                                <LivraisonPage />
                             ) : (
                                 <Navigate to="/login" />
                             )

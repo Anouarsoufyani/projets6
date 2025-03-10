@@ -1,17 +1,23 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema(
+const ClientSchema = new mongoose.Schema(
     {
-        name: {
-            type: String,
-            required: true,
-        },
-        numero: {
+        email: {
             type: String,
             required: true,
             unique: true,
         },
-        email: {
+        name: {
+            type: String,
+            required: true,
+        },
+        prenom: {
+            type: String,
+        },
+        adresse:{
+            type : String,
+        },
+        numero: {
             type: String,
             required: true,
             unique: true,
@@ -25,25 +31,12 @@ const userSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
-        bio: {
-            type: String,
-            default: "",
-        },
-        links: {
-            type: String,
-            default: "",
-        },
-        userType: {
-            type: String,
-            enum: ["livreur", "client", "commercant"],
-            required: true,
-        },
     },
     {
         timestamps: true,
     }
 );
 
-const User = mongoose.model("User", userSchema);
+const Client = mongoose.model("Client", ClientSchema);
 
-export default User;
+export default Client;

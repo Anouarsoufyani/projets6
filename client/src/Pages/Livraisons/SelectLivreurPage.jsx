@@ -64,7 +64,7 @@ const SelectLivreurPage = () => {
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
                 Livraison - Sélection de livreurs
             </h1>
-            <div className="flex flex-1 p-4 bg-gradient-to-r from-emerald-100 to-emerald-200 rounded-lg">
+            <div className="flex flex-1 gap-5 p- rounded-lg">
                 {/* Section Tableaux Livreurs */}
                 <div className="w-3/10 bg-white p-4 rounded-lg shadow-md">
                     <h2 className="text-lg font-semibold text-emerald-800 mb-4">
@@ -130,7 +130,7 @@ const SelectLivreurPage = () => {
                 </div>
 
                 {/* Map Container */}
-                <div className="w-7/10 p-4">
+                <div className="w-7/10 ">
                     <MapContainer
                         center={[48.8566, 2.3522]} // Paris
                         zoom={13}

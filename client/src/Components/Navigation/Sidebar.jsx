@@ -99,6 +99,11 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
                       label: "Livraisons",
                   },
                   {
+                      to: "/livreurs",
+                      icon: <TbTruckDelivery className="w-5 h-5" />,
+                      label: "Trouver un livreur",
+                  },
+                  {
                       to: "/commandes",
                       icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Commandes",

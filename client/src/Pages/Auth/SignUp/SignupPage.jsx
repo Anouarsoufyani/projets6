@@ -7,14 +7,14 @@ import { FaUser, FaEnvelope, FaPhone, FaLock, FaUserTie } from "react-icons/fa";
 const SignupPage = () => {
     const [formData, setFormData] = useState({
         email: "",
-        name: "",
+        nom: "",
         password: "",
         numero: "",
-        userType: "client",
+        role: "client",
     });
 
     const { mutate: signupMutation, isPending } = useMutation({
-        mutationFn: async ({ email, name, password, numero, userType }) => {
+        mutationFn: async ({ email, nom, password, numero, role }) => {
             const res = await fetch("/api/auth/signup", {
                 method: "POST",
                 headers: {
@@ -22,10 +22,10 @@ const SignupPage = () => {
                 },
                 body: JSON.stringify({
                     email,
-                    name,
+                    nom,
                     password,
                     numero,
-                    userType,
+                    role,
                 }),
             });
 
@@ -40,10 +40,10 @@ const SignupPage = () => {
             toast.success("Account created successfully");
             setFormData({
                 email: "",
-                name: "",
+                nom: "",
                 password: "",
                 numero: "",
-                userType: "client",
+                role: "client",
             });
         },
         onError: (error) => {
@@ -57,19 +57,19 @@ const SignupPage = () => {
         e.preventDefault();
         if (
             !formData.email ||
-            !formData.name ||
+            !formData.nom ||
             !formData.password ||
             !formData.numero ||
-            !formData.userType
+            !formData.role
         ) {
             toast.error("Please fill in all fields");
         } else {
             signupMutation({
                 email: formData.email,
-                name: formData.name,
+                nom: formData.nom,
                 password: formData.password,
                 numero: formData.numero,
-                userType: formData.userType,
+                role: formData.role,
             });
         }
     };
@@ -97,10 +97,10 @@ const SignupPage = () => {
                             <input
                                 type="text"
                                 placeholder="Votre nom complet"
-                                name="name"
+                                name="nom"
                                 className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 onChange={handleInputChange}
-                                value={formData.name}
+                                value={formData.nom}
                             />
                         </div>
                     </div>
@@ -160,10 +160,10 @@ const SignupPage = () => {
                         <div className="relative">
                             <FaUserTie className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
                             <select
-                                name="userType"
+                                name="role"
                                 className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 onChange={handleInputChange}
-                                value={formData.userType}
+                                value={formData.role}
                             >
                                 <option value="">
                                     Sélectionnez une option

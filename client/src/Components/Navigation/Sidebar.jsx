@@ -1,20 +1,15 @@
 import { Link, useLocation } from "react-router";
-import {
-    FaSignInAlt,
-    FaUser,
-    FaShoppingCart,
-    FaClipboardList,
-} from "react-icons/fa";
+import { FaSignInAlt } from "react-icons/fa";
 import { FaRegListAlt } from "react-icons/fa";
 import { LuUserRound } from "react-icons/lu";
 import { AiOutlineShoppingCart } from "react-icons/ai";
 import { TbTruckDelivery } from "react-icons/tb";
 import { MdOutlineSpaceDashboard } from "react-icons/md";
 import PropTypes from "prop-types";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-const Sidebar = ({ sidebarSize, navbarHeight }) => {
+const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
     const location = useLocation();
     const queryClient = useQueryClient();
 
@@ -39,11 +34,9 @@ const Sidebar = ({ sidebarSize, navbarHeight }) => {
         },
     });
 
-    // Fetch user data
-    const { data: authUser, isLoading } = useQuery({ queryKey: ["authUser"] });
-
     // Define navigation items based on user type
-    const navItems = authUser?.userType
+
+    const navItems = authUser?.role
         ? {
               livreur: [
                   {
@@ -111,19 +104,8 @@ const Sidebar = ({ sidebarSize, navbarHeight }) => {
                       label: "Commandes",
                   },
               ],
-          }[authUser.userType] || []
+          }[authUser.role] || []
         : [];
-
-    // Handle loading state
-    if (isLoading) {
-        return (
-            <aside className="h-screen fixed top-0 left-0 bg-white w-64 border-r border-gray-100 shadow-sm flex items-center justify-center">
-                <span className="text-emerald-600 font-medium">
-                    Chargement...
-                </span>
-            </aside>
-        );
-    }
 
     console.log(sidebarSize, navbarHeight);
 
@@ -181,6 +163,7 @@ const Sidebar = ({ sidebarSize, navbarHeight }) => {
 Sidebar.propTypes = {
     navbarHeight: PropTypes.string,
     sidebarSize: PropTypes.string,
+    authUser: PropTypes.object,
 };
 
 // Default props

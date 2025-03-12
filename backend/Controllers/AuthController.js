@@ -1,10 +1,11 @@
 import { generateTokenAndSetCookie } from "../Lib/utils/generateToken.js";
-import User from "../Models/User.js";
+import userModels from "../Models/Users/User.js";
+const { User, Client, Commercant, Livreur } = userModels;
 import bcrypt from "bcryptjs";
 
 export const signup = async (req, res) => {
     // validation for req.body
-    const { email, name, password, numero, userType } = req.body;
+    const { email, nom, password, numero, role } = req.body;
 
     // Regular expression for email validation (i dont understand but ok)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -39,36 +40,52 @@ export const signup = async (req, res) => {
             });
         }
 
-        if (
-            userType !== "livreur" &&
-            userType !== "client" &&
-            userType !== "commercant"
-        ) {
-            return res
-                .status(400)
-                .json({ success: false, error: "Invalid user type" });
-        }
-
         //hash password
         // example : pass os 123456 -> it will be something like wuijfowebf327423gr784vbf47
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        if (!name || !email || !password || !numero || !userType) {
+        if (!nom || !email || !password || !numero || !role) {
             return res
                 .status(400)
                 .json({ success: false, error: "All fields are required" });
         }
 
-        const newUser = new User({
-            name,
-            numero,
-            email,
-            userType,
-            password: hashedPassword,
-        });
+        if (role !== "livreur" && role !== "client" && role !== "commercant") {
+            return res
+                .status(400)
+                .json({ success: false, error: "Invalid user type" });
+        }
 
-        // console.log(newUser);
+        let newUser;
+
+        if (role === "livreur") {
+            newUser = new Livreur({
+                nom,
+                numero,
+                email,
+                role,
+                password: hashedPassword,
+            });
+        } else if (role === "commercant") {
+            newUser = new Commercant({
+                nom,
+                numero,
+                email,
+                role,
+                password: hashedPassword,
+            });
+        } else if (role === "client") {
+            newUser = new Client({
+                nom,
+                numero,
+                email,
+                role,
+                password: hashedPassword,
+            });
+        }
+
+        console.log(newUser);
 
         if (newUser) {
             await newUser.save();
@@ -79,11 +96,11 @@ export const signup = async (req, res) => {
                 success: true,
                 message: "User created successfully",
                 _id: newUser._id,
-                name: newUser.name,
+                name: newUser.nom,
                 numero: newUser.numero,
                 email: newUser.email,
                 profilePic: newUser.profilePic,
-                userType: newUser.userType,
+                role: newUser.role,
             });
         } else {
             console.log("error", error.message);
@@ -119,11 +136,11 @@ export const login = async (req, res) => {
                 success: true,
                 message: "User logged in successfully",
                 _id: user._id,
-                fullName: user.fullName,
-                username: user.username,
+                nom: user.nom,
+                numero: user.numero,
                 email: user.email,
                 profilePic: user.profilePic,
-                userType: user.userType,
+                role: user.role,
             });
         } else {
             console.log("error", error.message);

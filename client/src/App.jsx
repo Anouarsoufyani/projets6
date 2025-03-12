@@ -3,36 +3,22 @@ import SignupPage from "./Pages/Auth/SignUp/SignupPage";
 import LoginPage from "./Pages/Auth/Login/LoginPage";
 import HomePage from "./Pages/Home/HomePage";
 // import NotificationPage from "./Pages/Notification/NotificationPage"
-import ProfilePage from "./Pages/User/ProfilePage";
+import ProfilePage from "./Pages/Profile/ProfilePage";
 import DashboardPage from "./Pages/User/DashboardPage";
 import Navbar from "./Components/Navigation/Navbar";
 import Sidebar from "./Components/Navigation/Sidebar";
 import LivraisonPage from "./Pages/Livraisons/LivraisonPage";
+import SelectLivreurPage from "./Pages/Livraisons/SelectLivreurPage";
+import CommandePage from "./Pages/Commandes/CommandePage";
 // import RightPanel from "./Components/common/RightPanel"
 import { Toaster } from "react-hot-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useAuthUserQuery } from "./Hooks/useAuthQueries";
 
 function App() {
     const navbarSize = "4rem";
     const sidebarSize = "18rem";
 
-    const { data: authUser, isLoading } = useQuery({
-        queryKey: ["authUser"],
-        queryFn: async () => {
-            const res = await fetch("/api/auth/dashboard");
-            const data = await res.json();
-            if (data.error) {
-                return null;
-            }
-            if (!res.ok) {
-                throw new Error(data.error || "Something went wrong");
-            }
-            console.log("authUser", data);
-
-            return data.data;
-        },
-        retry: false,
-    });
+    const { data: authUser, isLoading } = useAuthUserQuery();
 
     if (isLoading) {
         return (
@@ -122,6 +108,28 @@ function App() {
                         element={
                             authUser ? (
                                 <LivraisonPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+
+                    <Route
+                        path="/livreurs"
+                        element={
+                            authUser && authUser.role == "commercant" ? (
+                                <SelectLivreurPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+
+                    <Route
+                        path="/commandes"
+                        element={
+                            authUser ? (
+                                <CommandePage />
                             ) : (
                                 <Navigate to="/login" />
                             )

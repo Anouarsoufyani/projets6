@@ -45,7 +45,11 @@ function App() {
     return (
         <div className={`flex flex-col w-full m-0 min-h-screen`}>
             {authUser && (
-                <Sidebar sidebarSize={sidebarSize} navbarHeight={navbarSize} />
+                <Sidebar
+                    authUser={authUser}
+                    sidebarSize={sidebarSize}
+                    navbarHeight={navbarSize}
+                />
             )}
             <Navbar isLoggedIn={!!authUser} navbarHeight={navbarSize} />
             <div

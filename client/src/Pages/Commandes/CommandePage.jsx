@@ -1,130 +1,86 @@
-import { Link } from "react-router";
-const CommandePage = () => {
-    // Données codées en dur pour les commandes
-    const commandes = [
-        {
-            id: 1,
-            client: "Jean",
-            livreur: "Marc",
-            produits: "Pizza x2, Soda",
-            position: "48.8566, 2.3522",
-            distance: "3.5 km",
-            statut: "En cours",
-        },
-        {
-            id: 2,
-            client: "Marie",
-            livreur: "Sophie",
-            produits: "Burger x1, Frites",
-            position: "48.8600, 2.3376",
-            distance: "1.8 km",
-            statut: "Livré",
-        },
-        {
-            id: 3,
-            client: "Paul",
-            livreur: "Lucas",
-            produits: "Sushi x3",
-            position: "48.8500, 2.3400",
-            distance: "4.2 km",
-            statut: "En attente",
-        },
-    ];
+import { useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import "leaflet-routing-machine";
+import PropTypes from "prop-types";
 
-    // Colonnes fixes pour tous les rôles
-    const columns = [
-        "ID",
-        "Client",
-        "Livreur",
-        "Produits",
-        "Position",
-        "Distance",
-        "Statut",
-        "",
-    ];
+const livreur = { id: 3, name: "Livreur", position: [48.8466, 2.3622] }; // Paris (Sud)
+const client = { id: 5, name: "Client", position: [48.8066, 2.3022] }; // Paris (Sud)
 
+const RoutingMachine = ({ from, to }) => {
+    const map = useMap();
+
+    useEffect(() => {
+        if (!map) return;
+
+        const routingControl = L.Routing.control({
+            waypoints: [L.latLng(from[0], from[1]), L.latLng(to[0], to[1])],
+            routeWhileDragging: true,
+            createMarker: () => null, // Désactive les marqueurs automatiques
+            showAlternatives: false,
+        }).addTo(map);
+
+        return () => map.removeControl(routingControl);
+    }, [map, from, to]);
+
+    return null;
+};
+
+RoutingMachine.propTypes = {
+    from: PropTypes.arrayOf(PropTypes.number).isRequired,
+    to: PropTypes.arrayOf(PropTypes.number).isRequired,
+};
+
+const LivraisonPage = () => {
     return (
-        <div>
-            <main className="w-full min-h-screen bg-gray-100 p-6">
-                <h1 className="text-2xl font-bold text-emerald-700 mb-6">
-                    Commandes
-                </h1>
-                <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div className="p-4 bg-gradient-to-r from-emerald-100 to-emerald-200">
-                        <h2 className="text-lg font-semibold text-emerald-800">
-                            Liste des commandes
-                        </h2>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-gray-50 border-b">
-                                <tr>
-                                    {columns.map((column) => (
-                                        <th
-                                            key={column}
-                                            className="py-3 px-4 text-sm font-semibold text-gray-700"
-                                        >
-                                            {column}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {commandes.map((commande) => (
-                                    <tr
-                                        key={commande.id}
-                                        className="hover:bg-gray-50 transition-colors"
-                                    >
-                                        <td className="py-3 px-4">
-                                            {commande.id}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {commande.client}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {commande.livreur}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {commande.produits}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {commande.position}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            {commande.distance}
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <span
-                                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    commande.statut ===
-                                                    "En cours"
-                                                        ? "bg-yellow-100 text-yellow-800"
-                                                        : commande.statut ===
-                                                          "Livré"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : "bg-gray-100 text-gray-800"
-                                                }`}
-                                            >
-                                                {commande.statut}
-                                            </span>
-                                        </td>
-                                        <td className="py-3 px-4">
-                                            <Link
-                                                className="text-emerald-500 cursor-pointer hover:text-emerald-800"
-                                                to={"/livraison/" + commande.id}
-                                            >
-                                                Suivre la commande
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+        <div className="w-full h-screen bg-gray-100 p-6 flex flex-col">
+            <h1 className="text-2xl font-bold text-emerald-700 mb-6">
+                Livraison - Suivi en temps réel
+            </h1>
+            <div className="flex flex-1 p-4 bg-gradient-to-r from-emerald-100 to-emerald-200">
+                <div className="w-3/12  bg-emerald-50 p-4 text-black rounded-lg">
+                    <h2 className="text-lg font-bold mb-4">
+                        Information Commande
+                    </h2>
+                    <ul>
+                        <li key={livreur.id} className="mb-2">
+                            🚴 {livreur.name}
+                        </li>
+                        <li className="mb-2">photo de profil</li>
+                        <li className="mb-2">commande</li>
+                        <li className="mb-2">véhicule</li>
+                        <li className="mb-2">immatriculation</li>
+                        <li className="mb-2">note</li>
+                    </ul>
                 </div>
-            </main>
+
+                {/* Map Container */}
+                <div className="w-9/12 p-4">
+                    <MapContainer
+                        center={[48.8366, 2.3322]} // Centre ajusté
+                        zoom={13}
+                        className="w-full h-full rounded-lg shadow-lg"
+                    >
+                        <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        />
+                        <Marker key={livreur.id} position={livreur.position}>
+                            <Popup>{livreur.name} - 📍 En déplacement</Popup>
+                        </Marker>
+                        <Marker key={client.id} position={client.position}>
+                            <Popup>{client.name} - 📍 Adresse client</Popup>
+                        </Marker>
+                        <RoutingMachine
+                            from={livreur.position}
+                            to={client.position}
+                        />
+                    </MapContainer>
+                </div>
+            </div>
         </div>
     );
 };
 
-export default CommandePage;
+export default LivraisonPage;

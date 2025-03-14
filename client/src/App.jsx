@@ -9,10 +9,12 @@ import Navbar from "./Components/Navigation/Navbar";
 import Sidebar from "./Components/Navigation/Sidebar";
 import LivraisonPage from "./Pages/Livraisons/LivraisonPage";
 import SelectLivreurPage from "./Pages/Livraisons/SelectLivreurPage";
-import CommandePage from "./Pages/Commandes/CommandePage";
+import CommandesListePage from "./Pages/Commandes/CommandesListePage";
 // import RightPanel from "./Components/common/RightPanel"
 import { Toaster } from "react-hot-toast";
 import { useAuthUserQuery } from "./Hooks/useAuthQueries";
+import CreateCommandePage from "./Pages/Commandes/CreateCommandePage";
+import CommandeSuivi from "./Pages/Commandes/CommandeSuivi";
 
 function App() {
     const navbarSize = "4rem";
@@ -129,7 +131,28 @@ function App() {
                         path="/commandes"
                         element={
                             authUser ? (
-                                <CommandePage />
+                                <CommandesListePage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/commandes/create"
+                        element={
+                            authUser ? (
+                                <CreateCommandePage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+
+                    <Route
+                        path="/livraison/:id"
+                        element={
+                            authUser ? (
+                                <CommandeSuivi />
                             ) : (
                                 <Navigate to="/login" />
                             )

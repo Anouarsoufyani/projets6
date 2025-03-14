@@ -72,7 +72,7 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
                       label: "Commandes",
                   },
                   {
-                      to: "/commander",
+                      to: "/commandes/create",
                       icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Passer une Commande",
                   },

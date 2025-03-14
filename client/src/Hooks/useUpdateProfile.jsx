@@ -3,25 +3,30 @@ import toast from "react-hot-toast";
 
 const useUpdateProfile = () => {
     const queryClient = useQueryClient();
+
     const { mutateAsync: updateProfile, isPending: isUpdatingProfile } =
         useMutation({
             mutationFn: async (formData) => {
-                const res = await fetch(`/api/user/update`, {
-                    method: "POST",
+                const res = await fetch("/api/user/update", {
+                    method: "PUT", // Changé en PUT pour une mise à jour (plus idiomatique que POST)
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify(formData),
                 });
+
                 const data = await res.json();
                 if (!res.ok) {
-                    throw new Error(data.error || "Something went wrong");
+                    throw new Error(
+                        data.error || "Erreur lors de la mise à jour du profil"
+                    );
                 }
-                console.log("profile updated", data);
-                return data.data;
+                console.log("Profil mis à jour :", data);
+                return data.user; // Retourne l'utilisateur mis à jour (ajusté selon ta réponse API)
             },
             onSuccess: () => {
-                toast.success("Profile updated successfully");
+                toast.success("Profil mis à jour avec succès");
+                // Invalide les caches pour rafraîchir les données
                 Promise.all([
                     queryClient.invalidateQueries({
                         queryKey: ["userProfile"],
@@ -33,6 +38,7 @@ const useUpdateProfile = () => {
                 toast.error(err.message);
             },
         });
+
     return { updateProfile, isUpdatingProfile };
 };
 

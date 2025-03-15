@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import useUpdateProfile from "../../Hooks/useUpdateProfile";
 import toast from "react-hot-toast";
+import { averageRating } from "../User/DashboardPage";
 
 const ProfilePage = () => {
     const [edit, setEdit] = useState(false);
@@ -171,6 +172,8 @@ const ProfilePage = () => {
                 </div>
 
                 {/* Contenu */}
+
+                
                 {edit ? (
                     <form
                         onSubmit={handleSubmit}
@@ -214,6 +217,23 @@ const ProfilePage = () => {
                                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
                             />
                         </div>
+
+                        {/* Affichage de la note globale récupérée de l'URL */}
+            <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
+                <h2 className="text-lg font-semibold text-emerald-800 mb-2">Note Globale</h2>
+                <div className="flex items-center text-2xl font-bold text-yellow-500">
+                    {averageRating}{" "}
+                    <span className="ml-2 flex">
+                        {[...Array(5)].map((_, i) =>
+                            i < Math.round(averageRating) ? (
+                                <FaStar key={i} className="text-yellow-500" />
+                            ) : (
+                                <FaRegStar key={i} className="text-gray-300" />
+                            )
+                        )}
+                    </span>
+                </div>
+            </div>
 
                         {/* Champs spécifiques selon le rôle */}
                         {authUser.role === "commercant" && (

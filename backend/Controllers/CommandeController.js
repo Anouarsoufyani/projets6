@@ -1,8 +1,8 @@
-import { generateTokenAndSetCookie } from "../Lib/utils/generateToken.js";
+// import { generateTokenAndSetCookie } from "../Lib/utils/generateToken.js";
 import userModels from "../Models/User.js";
 import Commande from "../Models/Commandes.js";
-const { User, Client, Commercant, Livreur } = userModels;
-import bcrypt from "bcryptjs";
+// const { User, Client, Commercant, Livreur } = userModels;
+// import bcrypt from "bcryptjs";
 
 // export const signup = async (req, res) => {
 //     // validation for req.body
@@ -169,6 +169,9 @@ export const getCommandes = async (req, res) => {
 };
 
 export const createCommande = async (req, res) => {
+    console.log("test");
+    console.log(req.body);
+
     // const {
     //     client_id,
     //     commercant_id,
@@ -181,14 +184,14 @@ export const createCommande = async (req, res) => {
         client_id: "67d15d4c87a55d5aadf95b03",
         commercant_id: "67d15e4ccf1feb1de84ad918",
         livreur_id: "67d15c6987a55d5aadf95aff",
-        total: 3 * 15.99 + 2 * 5.5, // 47.97 + 11.00 = 58.97
+        total: 3 * 8.99,
         statut: "en_livraison", // Commande en cours de livraison
         adresse_livraison: {
-            rue: "12 Rue de la Paix",
-            ville: "Paris",
-            code_postal: "75002",
-            lat: 48.8693, // Coordonnées réelles de cette zone à Paris
-            lng: 2.3314,
+            rue: "Arc de Triomphe",
+            ville: "Montpellier",
+            code_postal: "34000",
+            lat: 43.611152689515265,
+            lng: 3.8724387513146397,
         },
         date_creation: new Date(), // Date fictive (aujourd'hui)
         date_livraison: null, // Pas encore livrée
@@ -197,10 +200,33 @@ export const createCommande = async (req, res) => {
     // Sauvegarde dans la base (à utiliser dans ton code)
     try {
         await commandeFictive.save();
-        return res.status(201).json(commandeFictive);
         console.log("Commande fictive sauvegardée :", commandeFictive);
+
+        return res.status(201).json(commandeFictive);
     } catch (err) {
         console.error("Erreur :", err);
         return res.status(500).json({ error: "Erreur lors de la sauvegarde" });
+    }
+};
+
+export const cancelCommande = async (req, res) => {
+    try {
+        const commande = await Commande.findById(req.params.id);
+        if (!commande) {
+            return res
+                .status(404)
+                .json({ success: false, error: "Commande not found" });
+        }
+
+        commande.statut = "annulee";
+        await commande.save();
+
+        return res
+            .status(200)
+            .json({ success: true, message: "Commande annulée" });
+    } catch (error) {
+        return res
+            .status(400)
+            .json({ success: false, error: "Failed to cancel commande" });
     }
 };

@@ -1,5 +1,5 @@
 "use client";
-
+import { useGetCoords } from "../../Hooks/useGetCoords";
 import { useEffect, useState, useRef } from "react";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import { useParams } from "react-router";
@@ -79,10 +79,23 @@ const CommandeSuivi = () => {
     const livreur = commande?.data?.livreur_id || {};
     const livreurPosition =
         position[0] && position[1] ? position : [48.8466, 2.3622];
-    const adresseLivraison = [
-        commande?.data?.adresse_livraison?.lat || 48.8066,
-        commande?.data?.adresse_livraison?.lng || 2.3022,
-    ];
+    // const adresseLivraison = [
+    //     commande?.data?.adresse_livraison?.lat || 48.8066,
+    //     commande?.data?.adresse_livraison?.lng || 2.3022,
+    // ];
+
+    // Avoir la geolocalisation exacte grace a l'adresse
+    const adresseClient = //on mets l'adresse du client bien formatee
+        commande?.data?.adresse_livraison?.rue +
+        ", " +
+        commande?.data?.adresse_livraison?.ville +
+        ", " +
+        commande?.data?.adresse_livraison?.code_postal;
+    console.log("adresseClient", adresseClient);
+    const coords = useGetCoords(adresseClient); // on utilise l'api google maps geocoding pour avoir les coordonnees
+    console.log("coords", coords);
+    const adresseLivraison = [coords?.data?.lat, coords?.data?.lng]; // on formate les coordonnees
+    console.log("adresseLivraison", adresseLivraison);
 
     // Calculate route using DirectionsService
     const calculateRoute = async () => {

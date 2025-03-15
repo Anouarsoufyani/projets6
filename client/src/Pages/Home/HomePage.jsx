@@ -1,6 +1,6 @@
 import { FaUser, FaBiking, FaStore } from "react-icons/fa";
 import { PropTypes } from "prop-types";
-
+import { Link } from "react-router";
 const HomePage = ({ navbarHeight }) => {
     return (
         <>
@@ -34,15 +34,24 @@ const HomePage = ({ navbarHeight }) => {
                                 Commencez dès aujourd’hui
                             </h2>
                             <div className="flex flex-col gap-4">
-                                <button className="flex items-center justify-center gap-2 bg-white text-emerald-700 px-6 py-3 rounded-md hover:bg-emerald-100 transition duration-300">
+                                <Link
+                                    to={`/signup/?role=client`}
+                                    className="flex items-center justify-center gap-2 bg-white text-emerald-700 px-6 py-3 rounded-md hover:bg-emerald-100 transition duration-300"
+                                >
                                     <FaUser /> Je suis un Client
-                                </button>
-                                <button className="flex items-center justify-center gap-2 bg-white text-emerald-700 px-6 py-3 rounded-md hover:bg-emerald-100 transition duration-300">
+                                </Link>
+                                <Link
+                                    to={`/signup/?role=livreur`}
+                                    className="flex items-center justify-center gap-2 bg-white text-emerald-700 px-6 py-3 rounded-md hover:bg-emerald-100 transition duration-300"
+                                >
                                     <FaBiking /> Je suis un Livreur
-                                </button>
-                                <button className="flex items-center justify-center gap-2 bg-white text-emerald-700 px-6 py-3 rounded-md hover:bg-emerald-100 transition duration-300">
+                                </Link>
+                                <Link
+                                    to={`/signup/?role=commercant`}
+                                    className="flex items-center justify-center gap-2 bg-white text-emerald-700 px-6 py-3 rounded-md hover:bg-emerald-100 transition duration-300"
+                                >
                                     <FaStore /> Je suis un Commerçant
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     </div>
@@ -101,9 +110,11 @@ const HomePage = ({ navbarHeight }) => {
                         <p className="mb-4">
                             Prêt à transformer vos livraisons ?
                         </p>
-                        <button className="bg-white text-emerald-700 px-8 py-3 rounded-md hover:bg-emerald-100 transition duration-300">
-                            S’inscrire maintenant
-                        </button>
+                        <Link to="/signup">
+                            <button className="bg-white text-emerald-700 px-8 py-3 rounded-md hover:bg-emerald-100 transition duration-300">
+                                S’inscrire maintenant
+                            </button>
+                        </Link>
                     </div>
                 </footer>
             </main>

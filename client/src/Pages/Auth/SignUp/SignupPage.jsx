@@ -1,10 +1,19 @@
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router"; // Correction de "react-router" à "react-router-dom"
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaUserTie } from "react-icons/fa";
 
 const SignupPage = () => {
+    const [role, setRole] = useState(null);
+
+    useEffect(() => {
+        // Récupérer les paramètres de l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const roleParam = urlParams.get("role");
+        setRole(roleParam);
+    }, []);
+
     const [formData, setFormData] = useState({
         email: "",
         nom: "",
@@ -163,7 +172,7 @@ const SignupPage = () => {
                                 name="role"
                                 className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 onChange={handleInputChange}
-                                value={formData.role}
+                                value={role ? role : formData.role}
                             >
                                 <option value="">
                                     Sélectionnez une option

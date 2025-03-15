@@ -73,7 +73,7 @@ const SelectLivreurPage = () => {
     ];
 
     return (
-        <div className="w-full h-screen bg-gray-100 p-6 flex flex-col">
+        <div className="w-full min-h-full bg-gray-100 p-6 flex flex-col">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
                 Livraison - Sélection des livreurs disponibles
             </h1>

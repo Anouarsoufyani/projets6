@@ -101,7 +101,7 @@ const CreateCommandePage = () => {
     };
 
     return (
-        <div className="w-full h-screen items-center justify-center bg-gray-100 p-6 flex flex-col">
+        <div className="w-full min-h-full items-center justify-center bg-gray-100 p-6 flex flex-col">
             <div className="flex flex-col gap-6 justify-center items-center w-1/2 h-9/10 bg-white p-8 rounded-xl shadow-2xl">
                 <h1 className="text-3xl font-bold text-emerald-600 mb-4">
                     Créer une commande

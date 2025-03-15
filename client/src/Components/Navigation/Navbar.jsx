@@ -1,35 +1,8 @@
 import { Link } from "react-router";
 import { FaSignInAlt, FaUserPlus } from "react-icons/fa";
-import { MdSpaceDashboard } from "react-icons/md";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
-import toast from "react-hot-toast";
 import PropTypes from "prop-types";
 
 const Navbar = ({ isLoggedIn, navbarHeight }) => {
-    const queryClient = useQueryClient();
-
-    const { mutate: logout, error } = useMutation({
-        mutationFn: async () => {
-            const res = await fetch("/api/auth/logout", {
-                method: "POST",
-            });
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || "Something went wrong");
-            }
-
-            return data;
-        },
-        onSuccess: () => {
-            toast.success("Logout successful");
-            queryClient.invalidateQueries({ queryKey: ["authUser"] });
-        },
-        onError: () => {
-            toast.error(error.message);
-        },
-    });
-
     // const { data: authUser } = useQuery({
     //     queryKey: ["authUser"],
     // });

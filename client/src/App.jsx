@@ -30,7 +30,7 @@ function App() {
     }
 
     return (
-        <div className={`flex flex-col w-full m-0 min-h-screen`}>
+        <div className={`flex flex-col w-full m-0 h-screen`}>
             {authUser && (
                 <Sidebar
                     authUser={authUser}
@@ -48,7 +48,7 @@ function App() {
                               width: `calc(100% - ${sidebarSize})`,
                               height: `calc(100vh - ${navbarSize})`,
                           }
-                        : {}
+                        : { height: `calc(100vh - ${navbarSize})` }
                 }
             >
                 <Routes>

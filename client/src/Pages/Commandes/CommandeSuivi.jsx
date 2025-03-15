@@ -1,11 +1,12 @@
 "use client";
 import { useGetCoords } from "../../Hooks/useGetCoords";
 import { useEffect, useState, useRef } from "react";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import toast from "react-hot-toast";
+import useUserPosition from "../../Hooks/useUserPosition";
 
 const containerStyle = {
     width: "100%",
@@ -20,28 +21,28 @@ const LoadingSpinner = () => (
     </div>
 );
 
-const useUserPosition = () => {
-    const [position, setPosition] = useState([null, null]);
+// const useUserPosition = () => {
+//     const [position, setPosition] = useState([null, null]);
 
-    useEffect(() => {
-        if (!navigator.geolocation) {
-            toast.error(
-                "La géolocalisation n'est pas supportée par votre navigateur"
-            );
-            return;
-        }
+//     useEffect(() => {
+//         if (!navigator.geolocation) {
+//             toast.error(
+//                 "La géolocalisation n'est pas supportée par votre navigateur"
+//             );
+//             return;
+//         }
 
-        const watchId = navigator.geolocation.watchPosition(
-            (pos) => setPosition([pos.coords.latitude, pos.coords.longitude]),
-            (err) => toast.error(`Erreur : ${err.message}`),
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
+//         const watchId = navigator.geolocation.watchPosition(
+//             (pos) => setPosition([pos.coords.latitude, pos.coords.longitude]),
+//             (err) => toast.error(`Erreur : ${err.message}`),
+//             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+//         );
 
-        return () => navigator.geolocation.clearWatch(watchId);
-    }, []);
+//         return () => navigator.geolocation.clearWatch(watchId);
+//     }, []);
 
-    return position;
-};
+//     return position;
+// };
 
 const CommandeSuivi = () => {
     const { data: authUser } = useAuthUserQuery();
@@ -201,7 +202,7 @@ const CommandeSuivi = () => {
     });
 
     return (
-        <div className="w-full min-h-screen bg-gray-50 p-4 md:p-6 flex flex-col">
+        <div className="w-full min-h-full bg-gray-50 p-4 md:p-6 flex flex-col">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
                 Livraison - Suivi en temps réel
             </h1>
@@ -244,7 +245,7 @@ const CommandeSuivi = () => {
                         {livreur.vehicule && (
                             <div className="p-4 bg-gray-50 rounded-lg">
                                 <h3 className="font-medium text-gray-800 mb-2">
-                                    Véhicule
+                                    Détails du Vehicule
                                 </h3>
                                 <ul className="space-y-2 text-gray-700">
                                     <li className="flex justify-between">
@@ -272,6 +273,93 @@ const CommandeSuivi = () => {
                                             </span>
                                             <span className="font-medium">
                                                 {livreur.vehicule.couleur}
+                                            </span>
+                                        </li>
+                                    )}
+                                </ul>
+                            </div>
+                        )}
+
+                        {/* Commande info */ console.log("commande", commande)}
+                        {commande && (
+                            <div className="p-4 bg-gray-50 rounded-lg">
+                                <h3 className="font-medium text-gray-800 mb-2">
+                                    Détails de la Commande
+                                </h3>
+                                <ul className="space-y-2 text-gray-700">
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-600">
+                                            ID Commande:
+                                        </span>
+                                        <span className="font-medium">
+                                            {commande.data._id || "N/A"}
+                                        </span>
+                                    </li>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-600">
+                                            Nom Client:
+                                        </span>
+                                        <span className="font-medium">
+                                            {commande.data.client_id.nom ||
+                                                "N/A"}
+                                        </span>
+                                    </li>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-600">
+                                            Nom Boutique:
+                                        </span>
+                                        <span className="font-medium">
+                                            {commande.data.commercant_id
+                                                .nom_boutique || "N/A"}
+                                        </span>
+                                    </li>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-600">
+                                            Adresse Boutique:
+                                        </span>
+                                        <span className="font-medium">
+                                            {commande.data.commercant_id
+                                                .adresse_boutique.rue +
+                                                ", " +
+                                                commande.data.commercant_id
+                                                    .adresse_boutique.ville +
+                                                ", " +
+                                                commande.data.commercant_id
+                                                    .adresse_boutique
+                                                    .code_postal || "N/A"}
+                                        </span>
+                                    </li>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-600">
+                                            Total:
+                                        </span>
+                                        <span className="font-medium">
+                                            {commande.data.total
+                                                ? `${commande.data.total} €`
+                                                : "N/A"}
+                                        </span>
+                                    </li>
+                                    {commande.data.adresse_livraison && (
+                                        <li className="flex justify-between">
+                                            <span className="text-gray-600">
+                                                Adresse Client:
+                                            </span>
+                                            <span className="font-medium">
+                                                {
+                                                    commande.data
+                                                        .adresse_livraison.rue
+                                                }
+                                                ,{" "}
+                                                {
+                                                    commande.data
+                                                        .adresse_livraison.ville
+                                                }
+                                                ,{" "}
+                                                {
+                                                    commande.data
+                                                        .adresse_livraison
+                                                        .code_postal
+                                                }
                                             </span>
                                         </li>
                                     )}
@@ -319,57 +407,57 @@ const CommandeSuivi = () => {
                 </div>
 
                 <div className="w-full lg:w-2/3 shadow-xl rounded-lg overflow-hidden mt-4 lg:mt-0">
-                    <LoadScript googleMapsApiKey="AIzaSyD9buKfiAVASpx1zzEWbuSyHI05CaJyQ6c">
-                        <GoogleMap
-                            mapContainerStyle={containerStyle}
-                            center={{
-                                lat: adresseLivraison[0],
-                                lng: adresseLivraison[1],
-                            }}
-                            zoom={13}
-                            options={{
-                                mapTypeControl: false,
-                                streetViewControl: false,
-                                fullscreenControl: true,
-                                zoomControl: true,
-                            }}
-                            onLoad={onMapLoad}
-                        >
-                            {livreurPosition[0] && livreurPosition[1] && (
-                                <Marker
-                                    position={{
-                                        lat: livreurPosition[0],
-                                        lng: livreurPosition[1],
-                                    }}
-                                    icon={{
-                                        url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                                        // scaledSize: new window.google.maps.Size(
-                                        //     40,
-                                        //     40
-                                        // ),
-                                    }}
-                                    title="Livreur en déplacement"
-                                />
-                            )}
+                    {/* <LoadScript googleMapsApiKey="AIzaSyD9buKfiAVASpx1zzEWbuSyHI05CaJyQ6c"> */}
+                    <GoogleMap
+                        mapContainerStyle={containerStyle}
+                        center={{
+                            lat: adresseLivraison[0],
+                            lng: adresseLivraison[1],
+                        }}
+                        zoom={13}
+                        options={{
+                            mapTypeControl: false,
+                            streetViewControl: false,
+                            fullscreenControl: true,
+                            zoomControl: true,
+                        }}
+                        onLoad={onMapLoad}
+                    >
+                        {livreurPosition[0] && livreurPosition[1] && (
+                            <Marker
+                                position={{
+                                    lat: livreurPosition[0],
+                                    lng: livreurPosition[1],
+                                }}
+                                icon={{
+                                    url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                                    // scaledSize: new window.google.maps.Size(
+                                    //     40,
+                                    //     40
+                                    // ),
+                                }}
+                                title="Livreur en déplacement"
+                            />
+                        )}
 
-                            {adresseLivraison[0] && adresseLivraison[1] && (
-                                <Marker
-                                    position={{
-                                        lat: adresseLivraison[0],
-                                        lng: adresseLivraison[1],
-                                    }}
-                                    icon={{
-                                        url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-                                        // scaledSize: new window.google.maps.Size(
-                                        //     40,
-                                        //     40
-                                        // ),
-                                    }}
-                                    title="Destination"
-                                />
-                            )}
-                        </GoogleMap>
-                    </LoadScript>
+                        {adresseLivraison[0] && adresseLivraison[1] && (
+                            <Marker
+                                position={{
+                                    lat: adresseLivraison[0],
+                                    lng: adresseLivraison[1],
+                                }}
+                                icon={{
+                                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                                    // scaledSize: new window.google.maps.Size(
+                                    //     40,
+                                    //     40
+                                    // ),
+                                }}
+                                title="Destination"
+                            />
+                        )}
+                    </GoogleMap>
+                    {/* </LoadScript> */}
                 </div>
             </div>
         </div>

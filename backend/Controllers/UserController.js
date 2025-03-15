@@ -1,4 +1,5 @@
-import User from "../Models/User.js";
+import userModels from "../Models/User.js";
+const { User, Client, Commercant, Livreur } = userModels;
 import bcrypt from "bcryptjs";
 
 export const getUserProfile = async (req, res) => {
@@ -23,103 +24,116 @@ export const getUserProfile = async (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
+    const userId = req.user?.id; // Vérifie que req.user est défini par un middleware d'auth
+    console.log("User ID:", userId);
+
+    if (!userId) {
+        return res.status(401).json({ error: "Utilisateur non authentifié" });
+    }
+
     const {
-        fullName,
-        username,
+        nom,
         email,
-        newPassword,
+        numero,
         currentPassword,
-        bio,
-        links,
+        newPassword,
+        nom_boutique,
+        adresse_boutique,
+        vehicule,
+        position,
+        disponibilite,
+        distance_max,
+        adresses_favorites,
     } = req.body;
-    let { profilePic, coverPic } = req.body;
 
     try {
-        let profile = await User.findById(req.user._id);
-
-        if (!profile) {
-            return res
-                .status(404)
-                .json({ success: false, error: "User not found" });
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
 
-        // Password validation
-        if (
-            (newPassword && !currentPassword) ||
-            (!newPassword && currentPassword)
-        ) {
-            return res
-                .status(400)
-                .json({ success: false, error: "All fields are required" });
-        } else if (newPassword && currentPassword) {
-            const isPasswordValid = await bcrypt.compare(
+        // Champs communs
+        user.nom = nom || user.nom;
+        user.email = email || user.email;
+        user.numero = numero || user.numero;
+
+        // Mise à jour du mot de passe
+        if (newPassword) {
+            if (!currentPassword) {
+                return res
+                    .status(400)
+                    .json({ error: "Mot de passe actuel requis" });
+            }
+            const isMatch = await bcrypt.compare(
                 currentPassword,
-                profile.password
+                user.password
             );
-            if (!isPasswordValid) {
-                return res.status(400).json({
-                    success: false,
-                    error: "The passwords don't match",
-                });
+            if (!isMatch) {
+                return res
+                    .status(400)
+                    .json({ error: "Mot de passe actuel incorrect" });
             }
-            if (newPassword.length < 6) {
-                return res.status(400).json({
-                    success: false,
-                    error: "Password must be at least 6 characters",
-                });
-            }
-            const salt = await bcrypt.genSalt(10);
-            profile.password = await bcrypt.hash(newPassword, salt);
+            user.password = await bcrypt.hash(newPassword, 10);
         }
 
-        if (profilePic) {
-            if (profile.profilePic) {
-                await cloudinary.uploader.destroy(
-                    profile.profilePic.split("/").pop().split(".")[0]
-                );
-                // console.log(path.basename(profile.profilePic));
-                // console.log(profile.profilePic.split('/').pop().split('.')[0]);
-                // console.log(profile.profilePic.split('/').pop());
-            }
-            const uploadResult = await cloudinary.uploader.upload(profilePic);
-            profile.profilePic = uploadResult.secure_url;
-            // console.log(uploadResult, uploadResult.secure_url);
+        // Champs spécifiques selon le rôle
+        switch (user.role) {
+            case "commercant":
+                user.nom_boutique = nom_boutique || user.nom_boutique;
+                user.adresse_boutique =
+                    adresse_boutique || user.adresse_boutique;
+                break;
+            case "livreur":
+                // Validation spécifique pour le véhicule
+                if (vehicule) {
+                    const { type, plaque, couleur, capacite } = vehicule;
+
+                    // Si le type est voiture ou moto, la plaque est obligatoire
+                    if (
+                        (type === "voiture" || type === "moto") &&
+                        (!plaque || plaque.trim() === "")
+                    ) {
+                        return res.status(400).json({
+                            error: "La plaque d'immatriculation est obligatoire pour une voiture ou une moto",
+                        });
+                    }
+
+                    // Mise à jour du véhicule uniquement si fourni
+                    user.vehicule = {
+                        type: type || user.vehicule?.type,
+                        plaque: plaque || user.vehicule?.plaque,
+                        couleur: couleur || user.vehicule?.couleur,
+                        capacite: capacite || user.vehicule?.capacite,
+                    };
+                }
+
+                user.position = position || user.position;
+                user.disponibilite =
+                    disponibilite !== undefined
+                        ? disponibilite
+                        : user.disponibilite;
+                user.distance_max = distance_max || user.distance_max;
+                break;
+            case "client":
+                user.adresses_favorites =
+                    adresses_favorites || user.adresses_favorites;
+                break;
+            default:
+                break;
         }
-        if (coverPic) {
-            if (profile.coverPic) {
-                await cloudinary.uploader.destroy(
-                    profile.coverPic.split("/").pop().split(".")[0]
-                );
-            }
-            const uploadResult = await cloudinary.uploader.upload(coverPic);
-            profile.coverPic = uploadResult.secure_url;
-        }
 
-        // if(fullName) {
-        //     profile.fullName = fullName;
-        // }
-        // pareil mais plus simple
-        profile.fullName = fullName || profile.fullName;
-        profile.username = username || profile.username;
-        profile.email = email || profile.email;
-        profile.bio = bio || profile.bio;
-        profile.links = links || profile.links;
+        await user.save();
 
-        profile = await profile.save();
+        // Retire le mot de passe de la réponse
+        const userResponse = user.toObject();
+        delete userResponse.password;
 
-        // remove password from response
-        profile.password = null;
-
-        return res.status(200).json({
-            success: true,
-            message: "Profile updated successfully",
-            data: profile,
-        });
-    } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });
+        res.json({ success: true, user: userResponse });
+    } catch (err) {
+        console.error("Erreur dans updateProfile:", err);
+        res.status(500).json({ error: err.message });
     }
 };
-
 export const getAllUsers = async (req, res) => {
     try {
         const users = await User.find({}).select("-password");

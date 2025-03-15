@@ -5,6 +5,7 @@ import PropTypes from "prop-types";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import useUpdateProfile from "../../Hooks/useUpdateProfile";
 import toast from "react-hot-toast";
+import { averageRating } from "../User/DashboardPage";
 
 // Initial form structure with empty values
 const initialForm = {
@@ -128,6 +129,12 @@ const ProfilePage = () => {
                     </button>
                 </div>
 
+<<<<<<< HEAD
+=======
+                {/* Contenu */}
+
+                
+>>>>>>> 248d9c35c0f273d93a3111224f06dbdb720547be
                 {edit ? (
                     <form
                         onSubmit={handleSubmit}
@@ -156,7 +163,28 @@ const ProfilePage = () => {
                             pattern="^0[1-9](\s?\d{2}){4}$"
                         />
 
+<<<<<<< HEAD
                         {/* Role-specific fields */}
+=======
+                        {/* Affichage de la note globale récupérée de l'URL */}
+            <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
+                <h2 className="text-lg font-semibold text-emerald-800 mb-2">Note Globale</h2>
+                <div className="flex items-center text-2xl font-bold text-yellow-500">
+                    {averageRating}{" "}
+                    <span className="ml-2 flex">
+                        {[...Array(5)].map((_, i) =>
+                            i < Math.round(averageRating) ? (
+                                <FaStar key={i} className="text-yellow-500" />
+                            ) : (
+                                <FaRegStar key={i} className="text-gray-300" />
+                            )
+                        )}
+                    </span>
+                </div>
+            </div>
+
+                        {/* Champs spécifiques selon le rôle */}
+>>>>>>> 248d9c35c0f273d93a3111224f06dbdb720547be
                         {authUser.role === "commercant" && (
                             <>
                                 <FormField

@@ -27,6 +27,14 @@ const fakeLivreurs = [
         distance: "4.0 km",
         commandesEnCours: 0,
     },
+    {
+        id: 1,
+        name: "Messi vehicule",
+        position: [78.8566, 2.3522], // Paris
+        statut: "Disponible",
+        distance: "8.3 km",
+        commandesEnCours: 1,
+    }
 ];
 
 const SelectLivreurPage = () => {
@@ -49,79 +57,51 @@ const SelectLivreurPage = () => {
         return () => clearInterval(interval);
     }, []);
 
+    //filtre les livreurs dispo
+    const livreursDisponibles = livreurs.filter(
+        (livreur) => livreur.statut === "Disponible"
+    );
+
     // Colonnes pour la table des livreurs
-    const columns = [
-        "ID",
-        "Nom",
-        "Position",
-        "Statut",
-        "Distance",
-        "Commandes en cours",
-    ];
+    const columns = ["ID", "Nom", "Position", "Statut", "Distance", "Commandes en cours"];
 
     return (
         <div className="w-full h-screen bg-gray-100 p-6 flex flex-col">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
-                Livraison - Sélection de livreurs
+                Livraison - Sélection des livreurs disponibles
             </h1>
-            <div className="flex flex-1 gap-5  rounded-lg">
+            <div className="flex flex-1 gap-5 rounded-lg">
                 {/* Section Tableaux Livreurs */}
                 <div className="w-4/11 bg-white p-4 rounded-lg shadow-md">
                     <h2 className="text-lg font-semibold text-emerald-800 mb-4">
-                        Livreurs connectés
+                        Livreurs disponibles
                     </h2>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead className="bg-gray-50 border-b">
                                 <tr>
                                     {columns.map((column) => (
-                                        <th
-                                            key={column}
-                                            className="py-2 px-3 text-sm font-semibold text-gray-700"
-                                        >
+                                        <th key={column} className="py-2 px-3 text-sm font-semibold text-gray-700">
                                             {column}
                                         </th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {livreurs.map((livreur) => (
-                                    <tr
-                                        key={livreur.id}
-                                        className="hover:bg-gray-50 transition-colors"
-                                    >
+                                {livreursDisponibles.map((livreur) => (
+                                    <tr key={livreur.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="py-2 px-3">{livreur.id}</td>
+                                        <td className="py-2 px-3">{livreur.name}</td>
                                         <td className="py-2 px-3">
-                                            {livreur.id}
+                                            {`${livreur.position[0].toFixed(4)}, ${livreur.position[1].toFixed(4)}`}
                                         </td>
                                         <td className="py-2 px-3">
-                                            {livreur.name}
-                                        </td>
-                                        <td className="py-2 px-3">{`${livreur.position[0].toFixed(
-                                            4
-                                        )}, ${livreur.position[1].toFixed(
-                                            4
-                                        )}`}</td>
-                                        <td className="py-2 px-3">
-                                            <span
-                                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    livreur.statut ===
-                                                    "Disponible"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : livreur.statut ===
-                                                          "En livraison"
-                                                        ? "bg-yellow-100 text-yellow-800"
-                                                        : "bg-gray-100 text-gray-800"
-                                                }`}
-                                            >
+                                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                 {livreur.statut}
                                             </span>
                                         </td>
-                                        <td className="py-2 px-3">
-                                            {livreur.distance}
-                                        </td>
-                                        <td className="py-2 px-3">
-                                            {livreur.commandesEnCours}
-                                        </td>
+                                        <td className="py-2 px-3">{livreur.distance}</td>
+                                        <td className="py-2 px-3">{livreur.commandesEnCours}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -130,7 +110,7 @@ const SelectLivreurPage = () => {
                 </div>
 
                 {/* Map Container */}
-                <div className="w-7/11 ">
+                <div className="w-7/11">
                     <MapContainer
                         center={[48.8566, 2.3522]} // Paris
                         zoom={13}
@@ -140,11 +120,8 @@ const SelectLivreurPage = () => {
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         />
-                        {livreurs.map((livreur) => (
-                            <Marker
-                                key={livreur.id}
-                                position={livreur.position}
-                            >
+                        {livreursDisponibles.map((livreur) => (
+                            <Marker key={livreur.id} position={livreur.position}>
                                 <Popup>
                                     {livreur.name} - 📍 {livreur.statut}
                                 </Popup>

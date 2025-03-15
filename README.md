@@ -22,6 +22,7 @@ Ce projet vise à créer une plateforme de gestion des livraisons permettant aux
 ### 3. **Système de Commande** (🔴 Priorité haute)
 
 -   Optimisation du processus de création des commandes.
+-   Recuperation des coordonnees en fonction d'une adresse ✅.
 -   Génération d'un lien de suivi pour chaque acteur ✅.
 -   Mise en place d'un système de notifications en temps réel (WebSockets) 📌.
 -   Lorsque le client commande, le commercant doit confirmer la validation de la commande 📌.

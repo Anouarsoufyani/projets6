@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import toast from "react-hot-toast";
 
 const containerStyle = {
@@ -43,6 +44,9 @@ const useUserPosition = () => {
 };
 
 const CommandeSuivi = () => {
+    const { data: authUser } = useAuthUserQuery();
+    console.log("authUser", authUser.role);
+
     const position = useUserPosition();
     const [directionsResponse, setDirectionsResponse] = useState(null);
     const [distance, setDistance] = useState("");

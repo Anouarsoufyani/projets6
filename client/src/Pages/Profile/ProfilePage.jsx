@@ -1,118 +1,78 @@
+"use client";
+
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import useUpdateProfile from "../../Hooks/useUpdateProfile";
 import toast from "react-hot-toast";
+
+// Initial form structure with empty values
+const initialForm = {
+    nom: "",
+    email: "",
+    numero: "",
+    currentPassword: "",
+    newPassword: "",
+    nom_boutique: "",
+    adresse_boutique: { rue: "", ville: "", code_postal: "", lat: "", lng: "" },
+    vehicule: { type: "", plaque: "", couleur: "", capacite: "" },
+    position: { lat: "", lng: "" },
+    disponibilite: false,
+    distance_max: "",
+    adresses_favorites: [
+        { nom: "", rue: "", ville: "", code_postal: "", lat: "", lng: "" },
+    ],
+};
 
 const ProfilePage = () => {
     const [edit, setEdit] = useState(false);
     const { data: authUser, isLoading } = useAuthUserQuery();
     const { updateProfile, isUpdatingProfile } = useUpdateProfile();
+    const [formData, setFormData] = useState(initialForm);
 
-    const [formData, setFormData] = useState({
-        nom: "",
-        email: "",
-        numero: "",
-        currentPassword: "",
-        newPassword: "",
-        // Champs spécifiques par rôle
-        nom_boutique: "",
-        adresse_boutique: {
-            rue: "",
-            ville: "",
-            code_postal: "",
-            lat: "",
-            lng: "",
-        },
-        vehicule: { type: "", plaque: "", couleur: "", capacite: "" },
-        position: { lat: "", lng: "" },
-        disponibilite: false,
-        distance_max: "",
-        adresses_favorites: [
-            { nom: "", rue: "", ville: "", code_postal: "", lat: "", lng: "" },
-        ],
-    });
-
-    // Initialisation des données utilisateur
+    // Initialize form data when user data is available
     useEffect(() => {
         if (authUser) {
             setFormData({
-                nom: authUser.nom || "",
-                email: authUser.email || "",
-                numero: authUser.numero || "",
+                ...initialForm,
+                ...authUser,
                 currentPassword: "",
                 newPassword: "",
-                nom_boutique: authUser.nom_boutique || "",
-                adresse_boutique: authUser.adresse_boutique || {
-                    rue: "",
-                    ville: "",
-                    code_postal: "",
-                    lat: "",
-                    lng: "",
-                },
-                vehicule: authUser.vehicule || {
-                    type: "",
-                    plaque: "",
-                    couleur: "",
-                    capacite: "",
-                },
-                position: authUser.position || { lat: "", lng: "" },
-                disponibilite: authUser.disponibilite || false,
-                distance_max: authUser.distance_max || "",
                 adresses_favorites:
                     authUser.adresses_favorites?.length > 0
                         ? authUser.adresses_favorites
-                        : [
-                              {
-                                  nom: "",
-                                  rue: "",
-                                  ville: "",
-                                  code_postal: "",
-                                  lat: "",
-                                  lng: "",
-                              },
-                          ],
+                        : initialForm.adresses_favorites,
             });
         }
     }, [authUser]);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-    };
+    // Form change handlers
+    const handleChange = (e, field = null, subField = null, index = null) => {
+        const { name, value, type, checked } = e.target;
 
-    const handleNestedChange = (e, field, subField) => {
-        setFormData({
-            ...formData,
-            [field]: { ...formData[field], [subField]: e.target.value },
-        });
-    };
-
-    const handleAdresseFavoriteChange = (e, index, field) => {
-        const newAdresses = [...formData.adresses_favorites];
-        newAdresses[index][field] = e.target.value;
-        setFormData({ ...formData, adresses_favorites: newAdresses });
-    };
-
-    const addAdresseFavorite = () => {
-        setFormData({
-            ...formData,
-            adresses_favorites: [
-                ...formData.adresses_favorites,
-                {
-                    nom: "",
-                    rue: "",
-                    ville: "",
-                    code_postal: "",
-                    lat: "",
-                    lng: "",
-                },
-            ],
-        });
+        if (field && subField) {
+            // Handle nested object changes
+            setFormData((prev) => ({
+                ...prev,
+                [field]: { ...prev[field], [subField]: value },
+            }));
+        } else if (field && index !== null) {
+            // Handle array of objects changes
+            const newArray = [...formData[field]];
+            newArray[index][name] = value;
+            setFormData((prev) => ({ ...prev, [field]: newArray }));
+        } else {
+            // Handle direct field changes
+            setFormData((prev) => ({
+                ...prev,
+                [name]: type === "checkbox" ? checked : value,
+            }));
+        }
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!formData.currentPassword && formData.newPassword) {
+        if (formData.newPassword && !formData.currentPassword) {
             toast.error(
                 "Veuillez entrer votre mot de passe actuel pour en définir un nouveau"
             );
@@ -124,9 +84,7 @@ const ProfilePage = () => {
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <span className="loading loading-spinner loading-lg text-emerald-600"></span>
-            </div>
+            <div className="flex justify-center items-center h-screen"></div>
         );
     }
 
@@ -142,7 +100,7 @@ const ProfilePage = () => {
         <main className="w-full min-h-screen bg-gray-100 p-6">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">Profil</h1>
             <div className="bg-white rounded-lg shadow-md p-6">
-                {/* En-tête */}
+                {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-6">
                         <img
@@ -170,152 +128,87 @@ const ProfilePage = () => {
                     </button>
                 </div>
 
-                {/* Contenu */}
                 {edit ? (
                     <form
                         onSubmit={handleSubmit}
                         className="grid grid-cols-2 gap-6"
                     >
-                        {/* Champs communs */}
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-700">
-                                Nom
-                            </label>
-                            <input
-                                type="text"
-                                name="nom"
-                                value={formData.nom}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-700">
-                                Email
-                            </label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-700">
-                                Numéro
-                            </label>
-                            <input
-                                type="tel"
-                                name="numero"
-                                value={formData.numero}
-                                onChange={handleInputChange}
-                                pattern="^0[1-9](\s?\d{2}){4}$"
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                            />
-                        </div>
+                        {/* Common fields */}
+                        <FormField
+                            label="Nom"
+                            name="nom"
+                            value={formData.nom}
+                            onChange={handleChange}
+                        />
+                        <FormField
+                            label="Email"
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                        />
+                        <FormField
+                            label="Numéro"
+                            name="numero"
+                            type="tel"
+                            value={formData.numero}
+                            onChange={handleChange}
+                            pattern="^0[1-9](\s?\d{2}){4}$"
+                        />
 
-                        {/* Champs spécifiques selon le rôle */}
+                        {/* Role-specific fields */}
                         {authUser.role === "commercant" && (
                             <>
-                                <div>
-                                    <label className="block mb-1 text-sm font-medium text-gray-700">
-                                        Nom de la boutique
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="nom_boutique"
-                                        value={formData.nom_boutique}
-                                        onChange={handleInputChange}
-                                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                    />
-                                </div>
+                                <FormField
+                                    label="Nom de la boutique"
+                                    name="nom_boutique"
+                                    value={formData.nom_boutique}
+                                    onChange={handleChange}
+                                />
                                 <div className="col-span-2">
                                     <label className="block mb-1 text-sm font-medium text-gray-700">
                                         Adresse de la boutique
                                     </label>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <input
-                                            type="text"
-                                            name="rue"
-                                            placeholder="Rue"
-                                            value={
-                                                formData.adresse_boutique.rue
-                                            }
-                                            onChange={(e) =>
-                                                handleNestedChange(
-                                                    e,
-                                                    "adresse_boutique",
-                                                    "rue"
-                                                )
-                                            }
-                                            className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                        />
-                                        <input
-                                            type="text"
-                                            name="ville"
-                                            placeholder="Ville"
-                                            value={
-                                                formData.adresse_boutique.ville
-                                            }
-                                            onChange={(e) =>
-                                                handleNestedChange(
-                                                    e,
-                                                    "adresse_boutique",
-                                                    "ville"
-                                                )
-                                            }
-                                            className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                        />
-                                        <input
-                                            type="text"
-                                            name="code_postal"
-                                            placeholder="Code postal"
-                                            value={
-                                                formData.adresse_boutique
-                                                    .code_postal
-                                            }
-                                            onChange={(e) =>
-                                                handleNestedChange(
-                                                    e,
-                                                    "adresse_boutique",
-                                                    "code_postal"
-                                                )
-                                            }
-                                            className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                        />
-                                        <input
-                                            type="number"
-                                            name="lat"
-                                            placeholder="Latitude"
-                                            value={
-                                                formData.adresse_boutique.lat
-                                            }
-                                            onChange={(e) =>
-                                                handleNestedChange(
-                                                    e,
-                                                    "adresse_boutique",
-                                                    "lat"
-                                                )
-                                            }
-                                            className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                        />
-                                        <input
-                                            type="number"
-                                            name="lng"
-                                            placeholder="Longitude"
-                                            value={
-                                                formData.adresse_boutique.lng
-                                            }
-                                            onChange={(e) =>
-                                                handleNestedChange(
-                                                    e,
-                                                    "adresse_boutique",
-                                                    "lng"
-                                                )
-                                            }
-                                            className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                        />
+                                        {[
+                                            "rue",
+                                            "ville",
+                                            "code_postal",
+                                            "lat",
+                                            "lng",
+                                        ].map((field) => (
+                                            <input
+                                                key={field}
+                                                type={
+                                                    field === "lat" ||
+                                                    field === "lng"
+                                                        ? "number"
+                                                        : "text"
+                                                }
+                                                name={field}
+                                                placeholder={
+                                                    field
+                                                        .charAt(0)
+                                                        .toUpperCase() +
+                                                    field
+                                                        .slice(1)
+                                                        .replace("_", " ")
+                                                }
+                                                value={
+                                                    formData.adresse_boutique[
+                                                        field
+                                                    ]
+                                                }
+                                                onChange={(e) =>
+                                                    handleChange(
+                                                        e,
+                                                        "adresse_boutique",
+                                                        field
+                                                    )
+                                                }
+                                                className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                                            />
+                                        ))}
                                     </div>
                                 </div>
                             </>
@@ -331,97 +224,63 @@ const ProfilePage = () => {
                                         name="type"
                                         value={formData.vehicule.type}
                                         onChange={(e) =>
-                                            handleNestedChange(
-                                                e,
-                                                "vehicule",
-                                                "type"
-                                            )
+                                            handleChange(e, "vehicule", "type")
                                         }
                                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
                                     >
                                         <option value="">Sélectionner</option>
-                                        <option value="voiture">Voiture</option>
-                                        <option value="moto">Moto</option>
-                                        <option value="vélo">Vélo</option>
+                                        {["voiture", "moto", "vélo"].map(
+                                            (type) => (
+                                                <option key={type} value={type}>
+                                                    {type
+                                                        .charAt(0)
+                                                        .toUpperCase() +
+                                                        type.slice(1)}
+                                                </option>
+                                            )
+                                        )}
                                     </select>
                                 </div>
-                                <div>
-                                    <label className="block mb-1 text-sm font-medium text-gray-700">
-                                        Plaque
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="plaque"
-                                        value={formData.vehicule.plaque}
-                                        onChange={(e) =>
-                                            handleNestedChange(
-                                                e,
-                                                "vehicule",
-                                                "plaque"
-                                            )
+
+                                {["plaque", "couleur"].map((field) => (
+                                    <FormField
+                                        key={field}
+                                        label={
+                                            field.charAt(0).toUpperCase() +
+                                            field.slice(1)
                                         }
-                                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block mb-1 text-sm font-medium text-gray-700">
-                                        Couleur
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="couleur"
-                                        value={formData.vehicule.couleur}
+                                        name={field}
+                                        value={formData.vehicule[field]}
                                         onChange={(e) =>
-                                            handleNestedChange(
-                                                e,
-                                                "vehicule",
-                                                "couleur"
-                                            )
+                                            handleChange(e, "vehicule", field)
                                         }
-                                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
                                     />
-                                </div>
-                                <div>
-                                    <label className="block mb-1 text-sm font-medium text-gray-700">
-                                        Capacité
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="capacite"
-                                        value={formData.vehicule.capacite}
-                                        onChange={(e) =>
-                                            handleNestedChange(
-                                                e,
-                                                "vehicule",
-                                                "capacite"
-                                            )
-                                        }
-                                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block mb-1 text-sm font-medium text-gray-700">
-                                        Distance max (km)
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="distance_max"
-                                        value={formData.distance_max}
-                                        onChange={handleInputChange}
-                                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                    />
-                                </div>
+                                ))}
+
+                                <FormField
+                                    label="Capacité"
+                                    name="capacite"
+                                    type="number"
+                                    value={formData.vehicule.capacite}
+                                    onChange={(e) =>
+                                        handleChange(e, "vehicule", "capacite")
+                                    }
+                                />
+
+                                <FormField
+                                    label="Distance max (km)"
+                                    name="distance_max"
+                                    type="number"
+                                    value={formData.distance_max}
+                                    onChange={handleChange}
+                                />
+
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
                                         name="disponibilite"
                                         checked={formData.disponibilite}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                disponibilite: e.target.checked,
-                                            })
-                                        }
+                                        onChange={handleChange}
                                         className="h-4 w-4 text-emerald-600 border-gray-300 rounded"
                                     />
                                     <label className="text-sm font-medium text-gray-700">
@@ -442,90 +301,64 @@ const ProfilePage = () => {
                                             key={index}
                                             className="grid grid-cols-3 gap-2 mb-2"
                                         >
-                                            <input
-                                                type="text"
-                                                placeholder="Nom"
-                                                value={adresse.nom}
-                                                onChange={(e) =>
-                                                    handleAdresseFavoriteChange(
-                                                        e,
-                                                        index,
-                                                        "nom"
-                                                    )
-                                                }
-                                                className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="Rue"
-                                                value={adresse.rue}
-                                                onChange={(e) =>
-                                                    handleAdresseFavoriteChange(
-                                                        e,
-                                                        index,
-                                                        "rue"
-                                                    )
-                                                }
-                                                className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="Ville"
-                                                value={adresse.ville}
-                                                onChange={(e) =>
-                                                    handleAdresseFavoriteChange(
-                                                        e,
-                                                        index,
-                                                        "ville"
-                                                    )
-                                                }
-                                                className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="Code postal"
-                                                value={adresse.code_postal}
-                                                onChange={(e) =>
-                                                    handleAdresseFavoriteChange(
-                                                        e,
-                                                        index,
-                                                        "code_postal"
-                                                    )
-                                                }
-                                                className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Latitude"
-                                                value={adresse.lat}
-                                                onChange={(e) =>
-                                                    handleAdresseFavoriteChange(
-                                                        e,
-                                                        index,
-                                                        "lat"
-                                                    )
-                                                }
-                                                className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder="Longitude"
-                                                value={adresse.lng}
-                                                onChange={(e) =>
-                                                    handleAdresseFavoriteChange(
-                                                        e,
-                                                        index,
-                                                        "lng"
-                                                    )
-                                                }
-                                                className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                            />
+                                            {[
+                                                "nom",
+                                                "rue",
+                                                "ville",
+                                                "code_postal",
+                                                "lat",
+                                                "lng",
+                                            ].map((field) => (
+                                                <input
+                                                    key={field}
+                                                    type={
+                                                        field === "lat" ||
+                                                        field === "lng"
+                                                            ? "number"
+                                                            : "text"
+                                                    }
+                                                    placeholder={
+                                                        field
+                                                            .charAt(0)
+                                                            .toUpperCase() +
+                                                        field
+                                                            .slice(1)
+                                                            .replace("_", " ")
+                                                    }
+                                                    value={adresse[field]}
+                                                    name={field}
+                                                    onChange={(e) =>
+                                                        handleChange(
+                                                            e,
+                                                            "adresses_favorites",
+                                                            null,
+                                                            index
+                                                        )
+                                                    }
+                                                    className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                                                />
+                                            ))}
                                         </div>
                                     )
                                 )}
                                 <button
                                     type="button"
-                                    onClick={addAdresseFavorite}
+                                    onClick={() =>
+                                        setFormData({
+                                            ...formData,
+                                            adresses_favorites: [
+                                                ...formData.adresses_favorites,
+                                                {
+                                                    nom: "",
+                                                    rue: "",
+                                                    ville: "",
+                                                    code_postal: "",
+                                                    lat: "",
+                                                    lng: "",
+                                                },
+                                            ],
+                                        })
+                                    }
                                     className="text-emerald-600 hover:underline"
                                 >
                                     + Ajouter une adresse
@@ -533,33 +366,23 @@ const ProfilePage = () => {
                             </div>
                         )}
 
-                        {/* Champs mot de passe */}
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-700">
-                                Mot de passe actuel
-                            </label>
-                            <input
-                                type="password"
-                                name="currentPassword"
-                                value={formData.currentPassword}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block mb-1 text-sm font-medium text-gray-700">
-                                Nouveau mot de passe
-                            </label>
-                            <input
-                                type="password"
-                                name="newPassword"
-                                value={formData.newPassword}
-                                onChange={handleInputChange}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                            />
-                        </div>
+                        {/* Password fields */}
+                        <FormField
+                            label="Mot de passe actuel"
+                            name="currentPassword"
+                            type="password"
+                            value={formData.currentPassword}
+                            onChange={handleChange}
+                        />
+                        <FormField
+                            label="Nouveau mot de passe"
+                            name="newPassword"
+                            type="password"
+                            value={formData.newPassword}
+                            onChange={handleChange}
+                        />
 
-                        {/* Bouton de soumission */}
+                        {/* Submit button */}
                         <div className="col-span-2 flex justify-end">
                             <button
                                 type="submit"
@@ -579,18 +402,18 @@ const ProfilePage = () => {
                                 Informations
                             </p>
                             <ul className="space-y-2 text-gray-700">
-                                <li>
-                                    <strong>Nom :</strong> {authUser.nom}
-                                </li>
-                                <li>
-                                    <strong>Email :</strong> {authUser.email}
-                                </li>
-                                <li>
-                                    <strong>Numéro :</strong> {authUser.numero}
-                                </li>
-                                <li>
-                                    <strong>Rôle :</strong> {authUser.role}
-                                </li>
+                                {["nom", "email", "numero", "role"].map(
+                                    (field) => (
+                                        <li key={field}>
+                                            <strong>
+                                                {field.charAt(0).toUpperCase() +
+                                                    field.slice(1)}{" "}
+                                                :
+                                            </strong>{" "}
+                                            {authUser[field]}
+                                        </li>
+                                    )
+                                )}
                             </ul>
                         </div>
                         <div>
@@ -657,6 +480,41 @@ const ProfilePage = () => {
             </div>
         </main>
     );
+};
+
+// Reusable form field component with PropTypes validation
+function FormField({ label, name, value, onChange, type, pattern }) {
+    return (
+        <div>
+            <label className="block mb-1 text-sm font-medium text-gray-700">
+                {label}
+            </label>
+            <input
+                type={type}
+                name={name}
+                value={value}
+                onChange={onChange}
+                pattern={pattern}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+            />
+        </div>
+    );
+}
+
+// PropTypes validation
+FormField.propTypes = {
+    label: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    onChange: PropTypes.func.isRequired,
+    type: PropTypes.string,
+    pattern: PropTypes.string,
+};
+
+// Default props
+FormField.defaultProps = {
+    type: "text",
+    pattern: null,
 };
 
 export default ProfilePage;

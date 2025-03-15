@@ -1,5 +1,5 @@
 import { generateTokenAndSetCookie } from "../Lib/utils/generateToken.js";
-import userModels from "../Models/Users/User.js";
+import userModels from "../Models/User.js";
 const { User, Client, Commercant, Livreur } = userModels;
 import bcrypt from "bcryptjs";
 

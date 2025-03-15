@@ -5,6 +5,8 @@ const app = express();
 dotenv.config();
 
 import authRoutes from "./Routes/AuthRoutes.js";
+import commandeRoutes from "./Routes/CommandeRoutes.js";
+import userRoutes from "./Routes/UserRoutes.js";
 
 import connectDB from "./DB/Connect.js";
 
@@ -16,6 +18,8 @@ app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use("/api/auth", authRoutes);
+app.use("/api/commandes", commandeRoutes);
+app.use("/api/user", userRoutes);
 
 app.listen(process.env.PORT, () => {
     connectDB();

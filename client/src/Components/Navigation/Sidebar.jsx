@@ -89,11 +89,6 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
                       label: "Profil",
                   },
                   {
-                      to: "/produits",
-                      icon: <AiOutlineShoppingCart className="w-5 h-5" />,
-                      label: "Produits",
-                  },
-                  {
                       to: "/livraison",
                       icon: <TbTruckDelivery className="w-5 h-5" />,
                       label: "Livraisons",

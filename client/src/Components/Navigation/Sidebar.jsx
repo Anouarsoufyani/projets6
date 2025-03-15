@@ -2,7 +2,6 @@ import { Link, useLocation } from "react-router";
 import { FaSignInAlt } from "react-icons/fa";
 import { FaRegListAlt } from "react-icons/fa";
 import { LuUserRound } from "react-icons/lu";
-import { AiOutlineShoppingCart } from "react-icons/ai";
 import { TbTruckDelivery } from "react-icons/tb";
 import { MdOutlineSpaceDashboard } from "react-icons/md";
 import PropTypes from "prop-types";
@@ -87,11 +86,6 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
                       to: "/profil",
                       icon: <LuUserRound className="w-5 h-5" />,
                       label: "Profil",
-                  },
-                  {
-                      to: "/livraison",
-                      icon: <TbTruckDelivery className="w-5 h-5" />,
-                      label: "Livraisons",
                   },
                   {
                       to: "/livreurs",

@@ -34,7 +34,7 @@ const fakeLivreurs = [
         statut: "Disponible",
         distance: "8.3 km",
         commandesEnCours: 1,
-    }
+    },
 ];
 
 const SelectLivreurPage = () => {
@@ -63,7 +63,14 @@ const SelectLivreurPage = () => {
     );
 
     // Colonnes pour la table des livreurs
-    const columns = ["ID", "Nom", "Position", "Statut", "Distance", "Commandes en cours"];
+    const columns = [
+        "ID",
+        "Nom",
+        "Position",
+        "Statut",
+        "Distance",
+        "Commandes en cours",
+    ];
 
     return (
         <div className="w-full h-screen bg-gray-100 p-6 flex flex-col">
@@ -81,7 +88,10 @@ const SelectLivreurPage = () => {
                             <thead className="bg-gray-50 border-b">
                                 <tr>
                                     {columns.map((column) => (
-                                        <th key={column} className="py-2 px-3 text-sm font-semibold text-gray-700">
+                                        <th
+                                            key={column}
+                                            className="py-2 px-3 text-sm font-semibold text-gray-700"
+                                        >
                                             {column}
                                         </th>
                                     ))}
@@ -89,19 +99,34 @@ const SelectLivreurPage = () => {
                             </thead>
                             <tbody className="divide-y divide-gray-200">
                                 {livreursDisponibles.map((livreur) => (
-                                    <tr key={livreur.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="py-2 px-3">{livreur.id}</td>
-                                        <td className="py-2 px-3">{livreur.name}</td>
+                                    <tr
+                                        key={livreur.id}
+                                        className="hover:bg-gray-50 transition-colors"
+                                    >
                                         <td className="py-2 px-3">
-                                            {`${livreur.position[0].toFixed(4)}, ${livreur.position[1].toFixed(4)}`}
+                                            {livreur.id}
+                                        </td>
+                                        <td className="py-2 px-3">
+                                            {livreur.name}
+                                        </td>
+                                        <td className="py-2 px-3">
+                                            {`${livreur.position[0].toFixed(
+                                                4
+                                            )}, ${livreur.position[1].toFixed(
+                                                4
+                                            )}`}
                                         </td>
                                         <td className="py-2 px-3">
                                             <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                 {livreur.statut}
                                             </span>
                                         </td>
-                                        <td className="py-2 px-3">{livreur.distance}</td>
-                                        <td className="py-2 px-3">{livreur.commandesEnCours}</td>
+                                        <td className="py-2 px-3">
+                                            {livreur.distance}
+                                        </td>
+                                        <td className="py-2 px-3">
+                                            {livreur.commandesEnCours}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -121,7 +146,10 @@ const SelectLivreurPage = () => {
                             attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         />
                         {livreursDisponibles.map((livreur) => (
-                            <Marker key={livreur.id} position={livreur.position}>
+                            <Marker
+                                key={livreur.id}
+                                position={livreur.position}
+                            >
                                 <Popup>
                                     {livreur.name} - 📍 {livreur.statut}
                                 </Popup>

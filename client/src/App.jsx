@@ -7,7 +7,6 @@ import ProfilePage from "./Pages/Profile/ProfilePage";
 import DashboardPage from "./Pages/User/DashboardPage";
 import Navbar from "./Components/Navigation/Navbar";
 import Sidebar from "./Components/Navigation/Sidebar";
-import LivraisonPage from "./Pages/Livraisons/LivraisonPage";
 import SelectLivreurPage from "./Pages/Livraisons/SelectLivreurPage";
 import CommandesListePage from "./Pages/Commandes/CommandesListePage";
 // import RightPanel from "./Components/common/RightPanel"
@@ -105,16 +104,6 @@ function App() {
                             )
                         }
                     />
-                    <Route
-                        path="/livraison"
-                        element={
-                            authUser ? (
-                                <LivraisonPage />
-                            ) : (
-                                <Navigate to="/login" />
-                            )
-                        }
-                    />
 
                     <Route
                         path="/livreurs"
@@ -147,7 +136,6 @@ function App() {
                             )
                         }
                     />
-
                     <Route
                         path="/livraison/:id"
                         element={

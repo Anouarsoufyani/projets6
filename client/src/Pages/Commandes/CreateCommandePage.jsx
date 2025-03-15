@@ -1,11 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useState } from "react";
-import { Link } from "react-router"; // Corrigé pour react-router-dom
 import {
     FaUser,
     FaStore,
-    FaBox,
     FaMapMarkerAlt,
     FaMoneyBillWave,
 } from "react-icons/fa";
@@ -14,7 +12,6 @@ const CreateCommandePage = () => {
     const [formData, setFormData] = useState({
         client_id: "",
         commercant_id: "",
-        produits: [{ produit_id: "", quantite: 1, prix_unitaire: 0 }],
         adresse_livraison: {
             rue: "",
             ville: "",
@@ -49,7 +46,6 @@ const CreateCommandePage = () => {
             setFormData({
                 client_id: "",
                 commercant_id: "",
-                produits: [{ produit_id: "", quantite: 1, prix_unitaire: 0 }],
                 adresse_livraison: {
                     rue: "",
                     ville: "",
@@ -104,25 +100,9 @@ const CreateCommandePage = () => {
         });
     };
 
-    const handleProduitChange = (index, e) => {
-        const newProduits = [...formData.produits];
-        newProduits[index][e.target.name] = e.target.value;
-        setFormData({ ...formData, produits: newProduits });
-    };
-
-    const addProduit = () => {
-        setFormData({
-            ...formData,
-            produits: [
-                ...formData.produits,
-                { produit_id: "", quantite: 1, prix_unitaire: 0 },
-            ],
-        });
-    };
-
     return (
-        <main className="flex justify-center items-center w-full h-[95vh] bg-gray-100">
-            <div className="flex flex-col gap-6 justify-center items-center w-1/2 bg-white p-8 rounded-xl shadow-2xl">
+        <div className="w-full h-screen items-center justify-center bg-gray-100 p-6 flex flex-col">
+            <div className="flex flex-col gap-6 justify-center items-center w-1/2 h-9/10 bg-white p-8 rounded-xl shadow-2xl">
                 <h1 className="text-3xl font-bold text-emerald-600 mb-4">
                     Créer une commande
                 </h1>
@@ -164,57 +144,6 @@ const CreateCommandePage = () => {
                                 value={formData.commercant_id}
                             />
                         </div>
-                    </div>
-
-                    {/* Produits */}
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-gray-700">
-                            Produits
-                        </label>
-                        {formData.produits.map((produit, index) => (
-                            <div key={index} className="flex gap-2">
-                                <div className="relative flex-1">
-                                    <FaBox className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
-                                    <input
-                                        type="text"
-                                        placeholder="ID du produit"
-                                        name="produit_id"
-                                        className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                        onChange={(e) =>
-                                            handleProduitChange(index, e)
-                                        }
-                                        value={produit.produit_id}
-                                    />
-                                </div>
-                                <input
-                                    type="number"
-                                    placeholder="Quantité"
-                                    name="quantite"
-                                    className="w-20 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                    onChange={(e) =>
-                                        handleProduitChange(index, e)
-                                    }
-                                    value={produit.quantite}
-                                />
-                                <input
-                                    type="number"
-                                    placeholder="Prix unitaire"
-                                    name="prix_unitaire"
-                                    className="w-28 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                    onChange={(e) =>
-                                        handleProduitChange(index, e)
-                                    }
-                                    value={produit.prix_unitaire}
-                                />
-                            </div>
-                        ))}
-                        <button
-                            type="button"
-                            onClick={addProduit}
-                            className="text-emerald-600 hover:underline mt-2"
-                        >
-                            + Ajouter un produit
-                        </button>
                     </div>
 
                     {/* Adresse de livraison */}
@@ -282,12 +211,6 @@ const CreateCommandePage = () => {
                                 type="number"
                                 name="total"
                                 className="pl-10 w-full p-3 border border-gray-300 rounded-md bg-gray-100"
-                                value={formData.produits.reduce(
-                                    (acc, p) =>
-                                        acc + p.quantite * p.prix_unitaire,
-                                    0
-                                )}
-                                readOnly
                             />
                         </div>
                     </div>
@@ -304,19 +227,8 @@ const CreateCommandePage = () => {
                         )}
                     </button>
                 </form>
-                <div className="mt-4 text-center">
-                    <p className="text-gray-600">
-                        Retourner au tableau de bord ?{" "}
-                        <Link
-                            to="/dashboard"
-                            className="text-emerald-600 font-semibold hover:underline"
-                        >
-                            Dashboard
-                        </Link>
-                    </p>
-                </div>
             </div>
-        </main>
+        </div>
     );
 };
 

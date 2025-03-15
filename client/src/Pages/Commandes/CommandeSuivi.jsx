@@ -71,9 +71,15 @@ const CommandeSuivi = () => {
                     throw new Error(data.error || "Erreur lors du chargement");
                 }
 
+                if (data.error === "Forbidden : Access denied") {
+                    // Redirection dans le frontend
+                }
                 return data;
             } catch (error) {
                 toast.error(error.message);
+                if (error.message === "Forbidden : Access denied") {
+                    window.location.href = "/commandes";
+                }
                 throw error;
             }
         },

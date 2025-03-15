@@ -49,11 +49,6 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
                       label: "Profil",
                   },
                   {
-                      to: "/livraisons",
-                      icon: <TbTruckDelivery className="w-5 h-5" />,
-                      label: "Livraisons",
-                  },
-                  {
                       to: "/commandes",
                       icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Commandes",

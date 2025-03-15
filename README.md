@@ -14,7 +14,11 @@ Ce projet vise à créer une plateforme de gestion des livraisons permettant aux
 
 ### 2. **Gestion des Itinéraires et Suivi des Commandes** (🔴 Priorité haute)
 
--   Intégration de Google Maps pour l'affichage des itinéraires et positions en temps réel ✅.
+-   Intégration de Google Maps pour l'affichage des itinéraires et positions ✅.
+-   Intégration de Google Maps pour l'affichage des itinéraires et positions en temps réel 📌.
+-   Mettre a jour et partager la position du livreur aux autres 📌.
+-   Recuperer la position du livreur et l'afficher dans la liste des livreurs disponibles lorsqu'il souhaite travailler 📌.
+-   Securisation des routes pour les suivis de commandes ✅.
 -   API de gestion des commandes et itinéraires (les itinéraires doivent être recalculés en fonction de la position du livreur uniquement).
 -   Suivi des commandes en direct pour tous les acteurs impliqués ✅.
 -   Calcul optimisé de l'itinéraire en fonction du trafic en temps réel (partiellement implémenté, à améliorer).

@@ -6,6 +6,10 @@ Ce projet vise à créer une plateforme de gestion des livraisons permettant aux
 
 ## 🚀 Fonctionnalités Principales
 
+### Systeme de validation de livreur (upload de documents et verification par admin)
+
+### Profile admin
+
 ### 1. **Modélisation et Base de Données** (🔴 Priorité haute)
 
 -   Conception optimisée et normalisée de la base de données.

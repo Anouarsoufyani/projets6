@@ -6,7 +6,7 @@ import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import toast from "react-hot-toast";
-import useUserPosition from "../../Hooks/useUserPosition";
+import useLivreurTracking from "../../Hooks/useLivreurTracking";
 
 const containerStyle = {
     width: "100%",
@@ -48,7 +48,6 @@ const CommandeSuivi = () => {
     const { data: authUser } = useAuthUserQuery();
     console.log("authUser", authUser.role);
 
-    const position = useUserPosition();
     const [directionsResponse, setDirectionsResponse] = useState(null);
     const [distance, setDistance] = useState("");
     const [duration, setDuration] = useState("");
@@ -56,6 +55,9 @@ const CommandeSuivi = () => {
     const directionsRendererRef = useRef(null);
 
     const { id } = useParams();
+
+    // Utiliser le hook useLivreurTracking pour suivre la position du livreur
+    const { livreurPosition, livreurStatus, isLoading: isLoadingLivreur } = useLivreurTracking(id);
 
     const { data: commande, isLoading } = useQuery({
         queryKey: ["getCommande", id],
@@ -88,41 +90,36 @@ const CommandeSuivi = () => {
     });
 
     const livreur = commande?.data?.livreur_id || {};
-    const livreurPosition =
-        position[0] && position[1] ? position : [48.8466, 2.3622];
-    // const adresseLivraison = [
-    //     commande?.data?.adresse_livraison?.lat || 48.8066,
-    //     commande?.data?.adresse_livraison?.lng || 2.3022,
-    // ];
+    
+    // Utiliser la position du livreur depuis le tracking
+    const livreurCoords = livreurPosition ? 
+        [livreurPosition.lat, livreurPosition.lng] : 
+        [48.8466, 2.3622]; // position par défaut si non disponible
 
     // Avoir la geolocalisation exacte grace a l'adresse
-    const adresseClient = //on mets l'adresse du client bien formatee
-        commande?.data?.adresse_livraison?.rue +
+    const adresseClient = commande?.data?.adresse_livraison?.rue +
         ", " +
         commande?.data?.adresse_livraison?.ville +
         ", " +
         commande?.data?.adresse_livraison?.code_postal;
-    console.log("adresseClient", adresseClient);
-    const coords = useGetCoords(adresseClient); // on utilise l'api google maps geocoding pour avoir les coordonnees
-    console.log("coords", coords);
-    const adresseLivraison = [coords?.data?.lat, coords?.data?.lng]; // on formate les coordonnees
-    console.log("adresseLivraison", adresseLivraison);
+    
+    const coords = useGetCoords(adresseClient);
+    const adresseLivraison = [coords?.data?.lat, coords?.data?.lng];
 
     // Calculate route using DirectionsService
     const calculateRoute = async () => {
-        if (!livreurPosition[0] || !adresseLivraison[0]) {
+        if (!livreurCoords[0] || !adresseLivraison[0]) {
             console.log("Route non calculée : positions invalides");
             return;
         }
 
         try {
             // Create DirectionsService object
-            const directionsService =
-                new window.google.maps.DirectionsService();
+            const directionsService = new window.google.maps.DirectionsService();
 
             // Execute route calculation
             const results = await directionsService.route({
-                origin: { lat: livreurPosition[0], lng: livreurPosition[1] },
+                origin: { lat: livreurCoords[0], lng: livreurCoords[1] },
                 destination: {
                     lat: adresseLivraison[0],
                     lng: adresseLivraison[1],
@@ -146,25 +143,24 @@ const CommandeSuivi = () => {
 
         // Create DirectionsRenderer
         if (!directionsRendererRef.current) {
-            directionsRendererRef.current =
-                new window.google.maps.DirectionsRenderer({
-                    map,
-                    suppressMarkers: true, // We'll use our custom markers
-                    polylineOptions: {
-                        strokeColor: "#10b981", // emerald-500
-                        strokeWeight: 5,
-                        strokeOpacity: 0.8,
-                    },
-                });
+            directionsRendererRef.current = new window.google.maps.DirectionsRenderer({
+                map,
+                suppressMarkers: true, // We'll use our custom markers
+                polylineOptions: {
+                    strokeColor: "#10b981", // emerald-500
+                    strokeWeight: 5,
+                    strokeOpacity: 0.8,
+                },
+            });
         }
     };
-
-    // Update route when positions change
+    
+    // Update route when positions change - avec une vérification pour éviter les appels inutiles
     useEffect(() => {
-        if (mapRef.current && livreurPosition[0] && adresseLivraison[0]) {
+        if (mapRef.current && livreurCoords[0] && adresseLivraison[0]) {
             calculateRoute();
         }
-    }, [livreurPosition]);
+    }, [livreurPosition]); // Ne dépend que de la position du livreur
 
     // Update DirectionsRenderer when route changes
     useEffect(() => {
@@ -173,7 +169,7 @@ const CommandeSuivi = () => {
         }
     }, [directionsResponse]);
 
-    if (isLoading) {
+    if (isLoading || isLoadingLivreur) {
         return <LoadingSpinner />;
     }
 
@@ -184,8 +180,7 @@ const CommandeSuivi = () => {
         const durationMatch = duration.match(/(\d+)\s*mins?/);
         if (durationMatch && durationMatch[1]) {
             estimatedArrival.setMinutes(
-                estimatedArrival.getMinutes() +
-                    Number.parseInt(durationMatch[1])
+                estimatedArrival.getMinutes() + Number.parseInt(durationMatch[1])
             );
         } else {
             // Fallback to 15 minutes if parsing fails
@@ -200,6 +195,27 @@ const CommandeSuivi = () => {
         hour: "2-digit",
         minute: "2-digit",
     });
+
+    // Calculer le pourcentage de progression basé sur le temps écoulé
+    const calculateProgressPercentage = () => {
+        if (!duration) return 0;
+        
+        // Extraire les minutes à partir de la durée (ex: "15 mins")
+        const durationMatch = duration.match(/(\d+)\s*mins?/);
+        if (!durationMatch || !durationMatch[1]) return 0;
+        
+        const totalMinutes = Number.parseInt(durationMatch[1]);
+        if (totalMinutes <= 0) return 100; // Si la durée est 0, on est arrivé
+        
+        // Estimer le temps déjà écoulé
+        // Si le livreur a déjà parcouru une partie du chemin
+        const minutesRemaining = (estimatedArrival - new Date()) / (1000 * 60);
+        const minutesElapsed = totalMinutes - minutesRemaining;
+        
+        // Calculer le pourcentage (limité entre 0 et 100)
+        const percentage = Math.max(0, Math.min(100, (minutesElapsed / totalMinutes) * 100));
+        return Math.round(percentage);
+    };
 
     return (
         <div className="w-full min-h-full bg-gray-50 p-4 md:p-6 flex flex-col">
@@ -280,7 +296,7 @@ const CommandeSuivi = () => {
                             </div>
                         )}
 
-                        {/* Commande info */ console.log("commande", commande)}
+                        {/* Commande info */}
                         {commande && (
                             <div className="p-4 bg-gray-50 rounded-lg">
                                 <h3 className="font-medium text-gray-800 mb-2">
@@ -374,7 +390,15 @@ const CommandeSuivi = () => {
                             </h3>
                             <div className="space-y-2">
                                 <p className="text-blue-700 font-medium">
-                                    En route
+                                    {livreurStatus?.status === "en_livraison" 
+                                        ? "En cours de livraison" 
+                                        : livreurStatus?.status === "commande_prise" 
+                                            ? "Commande récupérée" 
+                                            : livreurStatus?.status === "en_route_vers_commercant" 
+                                                ? "En route vers le commerçant" 
+                                                : livreurStatus?.status === "arrive" 
+                                                    ? "Arrivé à destination" 
+                                                    : "En route"}
                                 </p>
                                 <p className="text-sm text-gray-600">
                                     Arrivée estimée:{" "}
@@ -399,7 +423,12 @@ const CommandeSuivi = () => {
                                     </p>
                                 )}
                                 <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                                    <div className="bg-blue-600 h-2.5 rounded-full w-2/3"></div>
+                                    <div 
+                                        className="bg-blue-600 h-2.5 rounded-full" 
+                                        style={{ 
+                                            width: `${calculateProgressPercentage()}%` 
+                                        }}
+                                    ></div>
                                 </div>
                             </div>
                         </div>
@@ -423,11 +452,11 @@ const CommandeSuivi = () => {
                         }}
                         onLoad={onMapLoad}
                     >
-                        {livreurPosition[0] && livreurPosition[1] && (
+                        {livreurCoords[0] && livreurCoords[1] && (
                             <Marker
                                 position={{
-                                    lat: livreurPosition[0],
-                                    lng: livreurPosition[1],
+                                    lat: livreurCoords[0],
+                                    lng: livreurCoords[1],
                                 }}
                                 icon={{
                                     url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",

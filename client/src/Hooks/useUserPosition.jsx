@@ -19,7 +19,7 @@ const useUserPosition = () => {
         );
 
         return () => navigator.geolocation.clearWatch(watchId);
-    }, []);
+    }, [position]);
 
     return position;
 };

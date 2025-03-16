@@ -1,9 +1,12 @@
 import { FaStar, FaRegStar } from "react-icons/fa";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import useToggleActive from "../../Hooks/useToggleActive";
-import { useState, useEffect } from "react";
+// import { useState, useEffect } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import PropTypes from "prop-types";
+import useDeliveryPosition from "../../Hooks/useDeliveryPosition";
+import { useGetUserCommandes } from "../../Hooks/useGetCommandes";
+// import useReviews from "../../hooks/useReviews";
 
 const fakeReviews = [
     {
@@ -40,42 +43,6 @@ const containerStyle = {
     width: "100%",
     height: "100%",
     borderRadius: "8px",
-};
-
-// 🔥 Hook amélioré pour gérer la position GPS
-const useUserPosition = () => {
-    const [position, setPosition] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    useEffect(() => {
-        if (!navigator.geolocation) {
-            setError(
-                "La géolocalisation n'est pas supportée par votre navigateur."
-            );
-            setLoading(false);
-            return;
-        }
-
-        const watchId = navigator.geolocation.watchPosition(
-            (pos) => {
-                setPosition({
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                });
-                setLoading(false);
-            },
-            (err) => {
-                setError(`Erreur : ${err.message}`);
-                setLoading(false);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-
-        return () => navigator.geolocation.clearWatch(watchId);
-    }, []);
-
-    return { position, loading, error };
 };
 
 const getAverageRating = (reviews) => {
@@ -125,20 +92,21 @@ ReviewCard.propTypes = {
 const DashboardPage = () => {
     const { data: authUser } = useAuthUserQuery();
     const { toggleActive, isToggleActive } = useToggleActive();
-    const { position, loading, error } = useUserPosition();
-    console.log("position", position);
-
-    // const [mapKey, setMapKey] = useState(0);
-
-    // useEffect(() => {
-    //     if (authUser?.disponibilite) {
-    //         setMapKey((prevKey) => prevKey + 1); // Change la clé pour forcer le rechargement de la carte
-    //     }
-    // }, [authUser?.disponibilite]);
+    const { data: commandesData } = useGetUserCommandes();
+    const commandeEnCours = commandesData?.commandes?.find(
+        (cmd) => cmd.statut === "en_livraison"
+    );
+    const { position, loading, error } = useDeliveryPosition(
+        authUser?.disponibilite, 
+        authUser?._id,
+        commandeEnCours?._id
+    );
+    // const { reviews, getAverageRating } = useReviews();
 
     const handleToggleActive = async () => {
         if (!authUser?._id) return;
         await toggleActive(authUser._id);
+        window.location.reload();
     };
 
     return (
@@ -159,9 +127,6 @@ const DashboardPage = () => {
                         <button
                             onClick={() => {
                                 handleToggleActive();
-                                setTimeout(() => {
-                                    window.location.reload();
-                                });
                             }}
                             disabled={isToggleActive}
                             className={`${
@@ -187,10 +152,6 @@ const DashboardPage = () => {
                             ) : error ? (
                                 <p className="text-red-500">{error}</p>
                             ) : position ? (
-                                // <LoadScript
-                                //     googleMapsApiKey="AIzaSyD9buKfiAVASpx1zzEWbuSyHI05CaJyQ6c"
-                                //     key={mapKey}
-                                // >
                                 <GoogleMap
                                     mapContainerStyle={containerStyle}
                                     center={position}
@@ -210,7 +171,6 @@ const DashboardPage = () => {
                                     />
                                 </GoogleMap>
                             ) : (
-                                // </LoadScript>
                                 <p className="text-gray-600">
                                     Impossible de récupérer votre position.
                                 </p>

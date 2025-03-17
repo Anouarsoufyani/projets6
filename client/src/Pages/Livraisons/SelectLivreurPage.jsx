@@ -13,21 +13,34 @@ const mapContainerStyle = {
     borderRadius: "0.5rem",
 };
 
-const center = {
-    lat: 46.603354, // Centre de la France
-    lng: 1.888334,
-};
+// const center = {
+//     lat: 46.603354, // Centre de la France
+//     lng: 1.888334,
+// };
 
 const SelectLivreurPage = () => {
     const { data: livreurs, isLoading, error } = useAvailableLivreurs();
     const [selectedLivreur, setSelectedLivreur] = useState(null);
     const [selectedMarker, setSelectedMarker] = useState(null);
-    const [mapCenter, setMapCenter] = useState(center);
-    const [mapZoom, setMapZoom] = useState(6);
+    const [mapZoom, setMapZoom] = useState(13);
     const { data: authUser } = useAuthUserQuery();
     const adresseCommercantFormatee = authUser.adresse_boutique.rue + ", " + authUser.adresse_boutique.ville + ", " + authUser.adresse_boutique.code_postal;
     const position = useGetCoords(adresseCommercantFormatee);
+    const center = position.data;
     
+    // Initialiser avec une position par défaut pour la France
+    const [mapCenter, setMapCenter] = useState({
+        lat: 46.603354, // Centre de la France
+        lng: 1.888334,
+    });
+
+    // Mettre à jour le centre de la carte quand les coordonnées sont chargées
+    useEffect(() => {
+        if (position.data) {
+            setMapCenter(position.data);
+        }
+    }, [position.data]);
+
     // Utiliser notre hook personnalisé pour les directions
     const { 
         distance, 
@@ -294,7 +307,7 @@ const SelectLivreurPage = () => {
                                     padding: "5px"
                                 }}
                             />
-                            <InfoWindow
+                            {/* <InfoWindow
                                 position={{
                                     lat: position.data.lat + 0.0005,
                                     lng: position.data.lng 
@@ -304,7 +317,7 @@ const SelectLivreurPage = () => {
                                     <p className="font-semibold">Votre commerce</p>
                                     <p className="text-xs">{adresseCommercantFormatee}</p>
                                 </div>
-                            </InfoWindow>
+                            </InfoWindow> */}
                         </>
                         )}
                         {livreurs && livreurs.map((livreur) => {

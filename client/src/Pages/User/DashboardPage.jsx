@@ -109,6 +109,8 @@ const DashboardPage = () => {
         window.location.reload();
     };
 
+    
+
     return (
         <div className="w-full h-full bg-gray-100 p-6">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
@@ -169,6 +171,7 @@ const DashboardPage = () => {
                                             url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
                                         }}
                                     />
+                                    
                                 </GoogleMap>
                             ) : (
                                 <p className="text-gray-600">

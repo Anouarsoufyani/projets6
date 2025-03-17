@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { useAvailableLivreurs } from "../../Hooks/useAvailableLivreurs";
 // import { useQuery } from "@tanstack/react-query";
+import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
+import { useGetCoords } from "../../Hooks/useGetCoords";
 import { toast } from "react-hot-toast";
+import useGoogleMapDirections from "../../Hooks/useGoogleMapDirections";
 
 const mapContainerStyle = {
     width: "100%",
@@ -21,6 +24,76 @@ const SelectLivreurPage = () => {
     const [selectedMarker, setSelectedMarker] = useState(null);
     const [mapCenter, setMapCenter] = useState(center);
     const [mapZoom, setMapZoom] = useState(6);
+    const { data: authUser } = useAuthUserQuery();
+    const adresseCommercantFormatee = authUser.adresse_boutique.rue + ", " + authUser.adresse_boutique.ville + ", " + authUser.adresse_boutique.code_postal;
+    const position = useGetCoords(adresseCommercantFormatee);
+    
+    // Utiliser notre hook personnalisé pour les directions
+    const { 
+        distance, 
+        duration, 
+        calculateRoute, 
+        onMapLoad, 
+        clearDirections 
+    } = useGoogleMapDirections({
+        strokeColor: "#10b981", // emerald-500
+        strokeWeight: 5,
+        strokeOpacity: 0.8,
+        suppressMarkers: true
+    });
+
+    // Fonction pour calculer l'itinéraire
+    // const calculateRoute = async (livreurPos, commercePos) => {
+    //     if (!livreurPos || !commercePos) {
+    //         console.log("Positions invalides pour le calcul d'itinéraire");
+    //         return;
+    //     }
+
+    //     try {
+    //         // Créer un objet DirectionsService
+    //         const directionsService = new window.google.maps.DirectionsService();
+
+    //         // Exécuter le calcul d'itinéraire
+    //         const results = await directionsService.route({
+    //             origin: { lat: livreurPos.lat, lng: livreurPos.lng },
+    //             destination: { lat: commercePos.lat, lng: commercePos.lng },
+    //             travelMode: window.google.maps.TravelMode.DRIVING,
+    //         });
+
+    //         // Stocker la réponse et extraire les informations
+    //         setDirectionsResponse(results);
+    //         setDistance(results.routes[0].legs[0].distance.text);
+    //         setDuration(results.routes[0].legs[0].duration.text);
+    //     } catch (error) {
+    //         console.error("Erreur lors du calcul de l'itinéraire:", error);
+    //         toast.error(`Erreur : ${error.message}`);
+    //     }
+    // };
+
+    // Configuration du DirectionsRenderer lors du chargement de la carte
+    // const onMapLoad = (map) => {
+    //     mapRef.current = map;
+
+    //     // Créer DirectionsRenderer s'il n'existe pas
+    //     if (!directionsRendererRef.current) {
+    //         directionsRendererRef.current = new window.google.maps.DirectionsRenderer({
+    //             map,
+    //             suppressMarkers: true, // Nous utilisons nos propres marqueurs
+    //             polylineOptions: {
+    //                 strokeColor: "#10b981", // emerald-500
+    //                 strokeWeight: 5,
+    //                 strokeOpacity: 0.8,
+    //             },
+    //         });
+    //     }
+    // };
+
+    // Mettre à jour DirectionsRenderer lorsque l'itinéraire change
+    // useEffect(() => {
+    //     if (directionsRendererRef.current && directionsResponse) {
+    //         directionsRendererRef.current.setDirections(directionsResponse);
+    //     }
+    // }, [directionsResponse]);
 
     // Utiliser useQuery avec un petit intervalle de rafraîchissement pour la mise à jour des positions
     // const { data: livreursPositions = {}, isLoading: isLoadingPositions } = useQuery({
@@ -69,18 +142,25 @@ const SelectLivreurPage = () => {
     ];
 
     const handleSelectLivreur = (livreur) => {
+        // Nettoyer les directions précédentes avant tout
+        clearDirections();
+        
         setSelectedLivreur(livreur);
         // Centrer la carte sur le livreur sélectionné
-        const position =
-        //  livreursPositions[livreur._id]
-        //   || 
-          livreur.position;
-        setMapCenter({ lat: position.lat, lng: position.lng });
+        const livreurPosition = livreur.position;
+        setMapCenter({ lat: livreurPosition.lat, lng: livreurPosition.lng });
         setMapZoom(12); // Zoom plus proche
+        
+        // Calculer l'itinéraire si les positions sont disponibles
+        if (position.data && livreurPosition) {
+            calculateRoute(
+                { lat: livreurPosition.lat, lng: livreurPosition.lng },
+                { lat: position.data.lat, lng: position.data.lng }
+            );
+        }
         
         // Afficher confirmation ou détails supplémentaires
         toast.success(`Livreur ${livreur.nom} sélectionné`);
-        // Ici logique de sélection du livreur (par exemple, redirection ou ouverture modale)
     };
 
     // Gérer le cas où il n'y a pas de livreurs disponibles
@@ -102,6 +182,13 @@ const SelectLivreurPage = () => {
             </div>
         );
     }
+
+   
+
+    
+    console.log(position.data);
+
+
 
     return (
         <div className="w-full h-full bg-gray-100 p-6 flex flex-col">
@@ -127,10 +214,27 @@ const SelectLivreurPage = () => {
                         </button>
                         <button 
                             className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
-                            onClick={() => setSelectedLivreur(null)}
+                            onClick={() => {
+                                clearDirections();
+                                setSelectedLivreur(null);
+                            }}
                         >
                             Annuler
                         </button>
+                    </div>
+                </div>
+            )}
+            
+            {selectedLivreur && distance && duration && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <span className="font-semibold">Distance du point de collecte: </span>
+                            <span className="text-blue-700">{distance}</span>
+                            <span className="mx-2">•</span>
+                            <span className="font-semibold">Durée estimée: </span>
+                            <span className="text-blue-700">{duration}</span>
+                        </div>
                     </div>
                 </div>
             )}
@@ -164,7 +268,45 @@ const SelectLivreurPage = () => {
                             mapTypeControl: true,
                             zoomControl: true,
                         }}
+                        onLoad={onMapLoad}
                     >
+
+
+
+                        {position.data && (
+                            <>
+                            <Marker
+                                position={{
+                                    lat: position.data.lat,
+                                    lng: position.data.lng,
+                                }}
+                                icon={{
+                                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                                    scaledSize: new window.google.maps.Size(60, 60)
+                                }}
+                                label={{
+                                    text: "Votre Boutique",
+                                    color: "black",
+                                    fontWeight: "bold",
+                                    fontSize: "14px",
+                                    className: "marker-label",
+                                    background: "#2a9d8f",
+                                    padding: "5px"
+                                }}
+                            />
+                            <InfoWindow
+                                position={{
+                                    lat: position.data.lat + 0.0005,
+                                    lng: position.data.lng 
+                                }}
+                            >
+                                <div className="p-1">
+                                    <p className="font-semibold">Votre commerce</p>
+                                    <p className="text-xs">{adresseCommercantFormatee}</p>
+                                </div>
+                            </InfoWindow>
+                        </>
+                        )}
                         {livreurs && livreurs.map((livreur) => {
                             // Utiliser la position en temps réel si disponible
                             // const realTimePosition = livreursPositions[livreur._id];
@@ -227,22 +369,7 @@ const SelectLivreurPage = () => {
                         )}
                     </GoogleMap>
                     
-                    <div className="mt-2 bg-white p-2 rounded shadow-sm">
-                        <div className="flex text-xs gap-4">
-                            <div className="flex items-center">
-                                <span className="w-3 h-3 rounded-full bg-blue-500 inline-block mr-1"></span>
-                                Position en temps réel
-                            </div>
-                            <div className="flex items-center">
-                                <span className="w-3 h-3 rounded-full bg-green-500 inline-block mr-1"></span>
-                                Dernière position connue
-                            </div>
-                            <div className="flex items-center">
-                                <span className="w-3 h-3 rounded-full bg-red-500 inline-block mr-1"></span>
-                                Livreur sélectionné
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
 
                 <div className="md:w-5/12 w-full bg-white p-4 rounded-lg shadow-md overflow-auto">

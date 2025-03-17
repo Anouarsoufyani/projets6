@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import toast from "react-hot-toast";
 import useLivreurTracking from "../../Hooks/useLivreurTracking";
+import useGoogleMapDirections from "../../Hooks/useGoogleMapDirections";
 
 const containerStyle = {
     width: "100%",
@@ -48,16 +49,23 @@ const CommandeSuivi = () => {
     const { data: authUser } = useAuthUserQuery();
     console.log("authUser", authUser.role);
 
-    const [directionsResponse, setDirectionsResponse] = useState(null);
-    const [distance, setDistance] = useState("");
-    const [duration, setDuration] = useState("");
-    const mapRef = useRef(null);
-    const directionsRendererRef = useRef(null);
-
     const { id } = useParams();
 
     // Utiliser le hook useLivreurTracking pour suivre la position du livreur
     const { livreurPosition, livreurStatus, isLoading: isLoadingLivreur } = useLivreurTracking(id);
+
+    // Utiliser notre hook personnalisé pour les directions
+    const { 
+        distance, 
+        duration, 
+        calculateRoute, 
+        onMapLoad 
+    } = useGoogleMapDirections({
+        strokeColor: "#10b981", // emerald-500
+        strokeWeight: 5,
+        strokeOpacity: 0.8,
+        suppressMarkers: true
+    });
 
     const { data: commande, isLoading } = useQuery({
         queryKey: ["getCommande", id],
@@ -106,68 +114,15 @@ const CommandeSuivi = () => {
     const coords = useGetCoords(adresseClient);
     const adresseLivraison = [coords?.data?.lat, coords?.data?.lng];
 
-    // Calculate route using DirectionsService
-    const calculateRoute = async () => {
-        if (!livreurCoords[0] || !adresseLivraison[0]) {
-            console.log("Route non calculée : positions invalides");
-            return;
-        }
-
-        try {
-            // Create DirectionsService object
-            const directionsService = new window.google.maps.DirectionsService();
-
-            // Execute route calculation
-            const results = await directionsService.route({
-                origin: { lat: livreurCoords[0], lng: livreurCoords[1] },
-                destination: {
-                    lat: adresseLivraison[0],
-                    lng: adresseLivraison[1],
-                },
-                travelMode: window.google.maps.TravelMode.DRIVING,
-            });
-
-            // Store the response and extract info
-            setDirectionsResponse(results);
-            setDistance(results.routes[0].legs[0].distance.text);
-            setDuration(results.routes[0].legs[0].duration.text);
-        } catch (error) {
-            console.error("Erreur lors du calcul de l'itinéraire:", error);
-            toast.error(`Erreur : ${error.message}`);
-        }
-    };
-
-    // Setup DirectionsRenderer when map loads
-    const onMapLoad = (map) => {
-        mapRef.current = map;
-
-        // Create DirectionsRenderer
-        if (!directionsRendererRef.current) {
-            directionsRendererRef.current = new window.google.maps.DirectionsRenderer({
-                map,
-                suppressMarkers: true, // We'll use our custom markers
-                polylineOptions: {
-                    strokeColor: "#10b981", // emerald-500
-                    strokeWeight: 5,
-                    strokeOpacity: 0.8,
-                },
-            });
-        }
-    };
-    
-    // Update route when positions change - avec une vérification pour éviter les appels inutiles
+    // Update route when positions change
     useEffect(() => {
-        if (mapRef.current && livreurCoords[0] && adresseLivraison[0]) {
-            calculateRoute();
+        if (livreurCoords[0] && adresseLivraison[0]) {
+            calculateRoute(
+                { lat: livreurCoords[0], lng: livreurCoords[1] },
+                { lat: adresseLivraison[0], lng: adresseLivraison[1] }
+            );
         }
-    }, [livreurPosition]); // Ne dépend que de la position du livreur
-
-    // Update DirectionsRenderer when route changes
-    useEffect(() => {
-        if (directionsRendererRef.current && directionsResponse) {
-            directionsRendererRef.current.setDirections(directionsResponse);
-        }
-    }, [directionsResponse]);
+    }, [livreurPosition, adresseLivraison[0], adresseLivraison[1]]);
 
     if (isLoading || isLoadingLivreur) {
         return <LoadingSpinner />;

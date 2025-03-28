@@ -2,7 +2,6 @@ import { Route, Routes, Navigate } from "react-router";
 import SignupPage from "./Pages/Auth/SignUp/SignupPage";
 import LoginPage from "./Pages/Auth/Login/LoginPage";
 import HomePage from "./Pages/Home/HomePage";
-// import NotificationPage from "./Pages/Notification/NotificationPage"
 import ProfilePage from "./Pages/Profile/ProfilePage";
 import DashboardPageLivreur from "./Pages/User/DashboardPageLivreur";
 import DashboardPageCommercant from "./Pages/User/DashboardPageCommercant";
@@ -10,7 +9,7 @@ import Navbar from "./Components/Navigation/Navbar";
 import Sidebar from "./Components/Navigation/Sidebar";
 import SelectLivreurPage from "./Pages/Livraisons/SelectLivreurPage";
 import CommandesListePage from "./Pages/Commandes/CommandesListePage";
-// import RightPanel from "./Components/common/RightPanel"
+import JustificativePage from "./Pages/Livraisons/JustificativePage";
 import { Toaster } from "react-hot-toast";
 import { useAuthUserQuery } from "./Hooks/useAuthQueries";
 import CreateCommandePage from "./Pages/Commandes/CreateCommandePage";
@@ -161,8 +160,6 @@ function App() {
                     />
                 </Routes>
             </div>
-
-            {/* {authUser && <RightPanel />} */}
             <Toaster />
         </div>
     );

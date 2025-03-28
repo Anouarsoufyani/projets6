@@ -4,7 +4,8 @@ import LoginPage from "./Pages/Auth/Login/LoginPage";
 import HomePage from "./Pages/Home/HomePage";
 // import NotificationPage from "./Pages/Notification/NotificationPage"
 import ProfilePage from "./Pages/Profile/ProfilePage";
-import DashboardPage from "./Pages/User/DashboardPage";
+import DashboardPageLivreur from "./Pages/User/DashboardPageLivreur";
+import DashboardPageCommercant from "./Pages/User/DashboardPageCommercant";
 import Navbar from "./Components/Navigation/Navbar";
 import Sidebar from "./Components/Navigation/Sidebar";
 import SelectLivreurPage from "./Pages/Livraisons/SelectLivreurPage";
@@ -58,7 +59,11 @@ function App() {
                             !authUser ? (
                                 <HomePage navbarHeight={navbarSize} />
                             ) : (
-                                <Navigate to="/dashboard" />
+                                authUser.role === "client" ? (
+                                    <Navigate to="/commandes" />
+                                ) : (
+                                    <Navigate to="/dashboard" />
+                                )
                             )
                         }
                     />
@@ -78,7 +83,15 @@ function App() {
                         path="/dashboard"
                         element={
                             authUser ? (
-                                <DashboardPage />
+                                authUser.role === "livreur" ? (
+                                    <DashboardPageLivreur />
+                                ) : authUser.role === "commercant" ? (
+                                    <DashboardPageCommercant />
+                                ) : authUser.role === "client" ? (
+                                    <Navigate to="/commandes" />
+                                ) : (
+                                    <Navigate to="/login" />
+                                )
                             ) : (
                                 <Navigate to="/login" />
                             )

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { useAvailableLivreurs } from "../../Hooks/useAvailableLivreurs";
 // import { useQuery } from "@tanstack/react-query";
@@ -26,7 +26,6 @@ const SelectLivreurPage = () => {
     const { data: authUser } = useAuthUserQuery();
     const adresseCommercantFormatee = authUser.adresse_boutique.rue + ", " + authUser.adresse_boutique.ville + ", " + authUser.adresse_boutique.code_postal;
     const position = useGetCoords(adresseCommercantFormatee);
-    const center = position.data;
     
     // Initialiser avec une position par défaut pour la France
     const [mapCenter, setMapCenter] = useState({

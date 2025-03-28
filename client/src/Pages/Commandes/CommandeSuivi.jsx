@@ -1,6 +1,6 @@
 "use client";
 import { useGetCoords } from "../../Hooks/useGetCoords";
-import { useEffect, useState, useRef } from "react";
+import { useEffect } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";

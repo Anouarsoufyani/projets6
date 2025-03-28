@@ -1,11 +1,13 @@
 "use client";
 import { useGetCoords } from "../../Hooks/useGetCoords";
-import { useEffect, useState, useRef } from "react";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { useEffect } from "react";
+import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import toast from "react-hot-toast";
+import useLivreurTracking from "../../Hooks/useLivreurTracking";
+import useGoogleMapDirections from "../../Hooks/useGoogleMapDirections";
 
 const containerStyle = {
     width: "100%",
@@ -20,41 +22,50 @@ const LoadingSpinner = () => (
     </div>
 );
 
-const useUserPosition = () => {
-    const [position, setPosition] = useState([null, null]);
+// const useUserPosition = () => {
+//     const [position, setPosition] = useState([null, null]);
 
-    useEffect(() => {
-        if (!navigator.geolocation) {
-            toast.error(
-                "La géolocalisation n'est pas supportée par votre navigateur"
-            );
-            return;
-        }
+//     useEffect(() => {
+//         if (!navigator.geolocation) {
+//             toast.error(
+//                 "La géolocalisation n'est pas supportée par votre navigateur"
+//             );
+//             return;
+//         }
 
-        const watchId = navigator.geolocation.watchPosition(
-            (pos) => setPosition([pos.coords.latitude, pos.coords.longitude]),
-            (err) => toast.error(`Erreur : ${err.message}`),
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
+//         const watchId = navigator.geolocation.watchPosition(
+//             (pos) => setPosition([pos.coords.latitude, pos.coords.longitude]),
+//             (err) => toast.error(`Erreur : ${err.message}`),
+//             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+//         );
 
-        return () => navigator.geolocation.clearWatch(watchId);
-    }, []);
+//         return () => navigator.geolocation.clearWatch(watchId);
+//     }, []);
 
-    return position;
-};
+//     return position;
+// };
 
 const CommandeSuivi = () => {
     const { data: authUser } = useAuthUserQuery();
     console.log("authUser", authUser.role);
 
-    const position = useUserPosition();
-    const [directionsResponse, setDirectionsResponse] = useState(null);
-    const [distance, setDistance] = useState("");
-    const [duration, setDuration] = useState("");
-    const mapRef = useRef(null);
-    const directionsRendererRef = useRef(null);
-
     const { id } = useParams();
+
+    // Utiliser le hook useLivreurTracking pour suivre la position du livreur
+    const { livreurPosition, livreurStatus, isLoading: isLoadingLivreur } = useLivreurTracking(id);
+
+    // Utiliser notre hook personnalisé pour les directions
+    const { 
+        distance, 
+        duration, 
+        calculateRoute, 
+        onMapLoad 
+    } = useGoogleMapDirections({
+        strokeColor: "#10b981", // emerald-500
+        strokeWeight: 5,
+        strokeOpacity: 0.8,
+        suppressMarkers: true
+    });
 
     const { data: commande, isLoading } = useQuery({
         queryKey: ["getCommande", id],
@@ -87,92 +98,33 @@ const CommandeSuivi = () => {
     });
 
     const livreur = commande?.data?.livreur_id || {};
-    const livreurPosition =
-        position[0] && position[1] ? position : [48.8466, 2.3622];
-    // const adresseLivraison = [
-    //     commande?.data?.adresse_livraison?.lat || 48.8066,
-    //     commande?.data?.adresse_livraison?.lng || 2.3022,
-    // ];
+    
+    // Utiliser la position du livreur depuis le tracking
+    const livreurCoords = livreurPosition ? 
+        [livreurPosition.lat, livreurPosition.lng] : 
+        [48.8466, 2.3622]; // position par défaut si non disponible
 
     // Avoir la geolocalisation exacte grace a l'adresse
-    const adresseClient = //on mets l'adresse du client bien formatee
-        commande?.data?.adresse_livraison?.rue +
+    const adresseClient = commande?.data?.adresse_livraison?.rue +
         ", " +
         commande?.data?.adresse_livraison?.ville +
         ", " +
         commande?.data?.adresse_livraison?.code_postal;
-    console.log("adresseClient", adresseClient);
-    const coords = useGetCoords(adresseClient); // on utilise l'api google maps geocoding pour avoir les coordonnees
-    console.log("coords", coords);
-    const adresseLivraison = [coords?.data?.lat, coords?.data?.lng]; // on formate les coordonnees
-    console.log("adresseLivraison", adresseLivraison);
-
-    // Calculate route using DirectionsService
-    const calculateRoute = async () => {
-        if (!livreurPosition[0] || !adresseLivraison[0]) {
-            console.log("Route non calculée : positions invalides");
-            return;
-        }
-
-        try {
-            // Create DirectionsService object
-            const directionsService =
-                new window.google.maps.DirectionsService();
-
-            // Execute route calculation
-            const results = await directionsService.route({
-                origin: { lat: livreurPosition[0], lng: livreurPosition[1] },
-                destination: {
-                    lat: adresseLivraison[0],
-                    lng: adresseLivraison[1],
-                },
-                travelMode: window.google.maps.TravelMode.DRIVING,
-            });
-
-            // Store the response and extract info
-            setDirectionsResponse(results);
-            setDistance(results.routes[0].legs[0].distance.text);
-            setDuration(results.routes[0].legs[0].duration.text);
-        } catch (error) {
-            console.error("Erreur lors du calcul de l'itinéraire:", error);
-            toast.error(`Erreur : ${error.message}`);
-        }
-    };
-
-    // Setup DirectionsRenderer when map loads
-    const onMapLoad = (map) => {
-        mapRef.current = map;
-
-        // Create DirectionsRenderer
-        if (!directionsRendererRef.current) {
-            directionsRendererRef.current =
-                new window.google.maps.DirectionsRenderer({
-                    map,
-                    suppressMarkers: true, // We'll use our custom markers
-                    polylineOptions: {
-                        strokeColor: "#10b981", // emerald-500
-                        strokeWeight: 5,
-                        strokeOpacity: 0.8,
-                    },
-                });
-        }
-    };
+    
+    const coords = useGetCoords(adresseClient);
+    const adresseLivraison = [coords?.data?.lat, coords?.data?.lng];
 
     // Update route when positions change
     useEffect(() => {
-        if (mapRef.current && livreurPosition[0] && adresseLivraison[0]) {
-            calculateRoute();
+        if (livreurCoords[0] && adresseLivraison[0]) {
+            calculateRoute(
+                { lat: livreurCoords[0], lng: livreurCoords[1] },
+                { lat: adresseLivraison[0], lng: adresseLivraison[1] }
+            );
         }
-    }, [livreurPosition]);
+    }, [livreurPosition, adresseLivraison[0], adresseLivraison[1]]);
 
-    // Update DirectionsRenderer when route changes
-    useEffect(() => {
-        if (directionsRendererRef.current && directionsResponse) {
-            directionsRendererRef.current.setDirections(directionsResponse);
-        }
-    }, [directionsResponse]);
-
-    if (isLoading) {
+    if (isLoading || isLoadingLivreur) {
         return <LoadingSpinner />;
     }
 
@@ -183,8 +135,7 @@ const CommandeSuivi = () => {
         const durationMatch = duration.match(/(\d+)\s*mins?/);
         if (durationMatch && durationMatch[1]) {
             estimatedArrival.setMinutes(
-                estimatedArrival.getMinutes() +
-                    Number.parseInt(durationMatch[1])
+                estimatedArrival.getMinutes() + Number.parseInt(durationMatch[1])
             );
         } else {
             // Fallback to 15 minutes if parsing fails
@@ -200,8 +151,29 @@ const CommandeSuivi = () => {
         minute: "2-digit",
     });
 
+    // Calculer le pourcentage de progression basé sur le temps écoulé
+    const calculateProgressPercentage = () => {
+        if (!duration) return 0;
+        
+        // Extraire les minutes à partir de la durée (ex: "15 mins")
+        const durationMatch = duration.match(/(\d+)\s*mins?/);
+        if (!durationMatch || !durationMatch[1]) return 0;
+        
+        const totalMinutes = Number.parseInt(durationMatch[1]);
+        if (totalMinutes <= 0) return 100; // Si la durée est 0, on est arrivé
+        
+        // Estimer le temps déjà écoulé
+        // Si le livreur a déjà parcouru une partie du chemin
+        const minutesRemaining = (estimatedArrival - new Date()) / (1000 * 60);
+        const minutesElapsed = totalMinutes - minutesRemaining;
+        
+        // Calculer le pourcentage (limité entre 0 et 100)
+        const percentage = Math.max(0, Math.min(100, (minutesElapsed / totalMinutes) * 100));
+        return Math.round(percentage);
+    };
+
     return (
-        <div className="w-full min-h-screen bg-gray-50 p-4 md:p-6 flex flex-col">
+        <div className="w-full min-h-full bg-gray-50 p-4 md:p-6 flex flex-col">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
                 Livraison - Suivi en temps réel
             </h1>
@@ -244,7 +216,7 @@ const CommandeSuivi = () => {
                         {livreur.vehicule && (
                             <div className="p-4 bg-gray-50 rounded-lg">
                                 <h3 className="font-medium text-gray-800 mb-2">
-                                    Véhicule
+                                    Détails du Vehicule
                                 </h3>
                                 <ul className="space-y-2 text-gray-700">
                                     <li className="flex justify-between">
@@ -279,6 +251,93 @@ const CommandeSuivi = () => {
                             </div>
                         )}
 
+                        {/* Commande info */}
+                        {commande && (
+                            <div className="p-4 bg-gray-50 rounded-lg">
+                                <h3 className="font-medium text-gray-800 mb-2">
+                                    Détails de la Commande
+                                </h3>
+                                <ul className="space-y-2 text-gray-700">
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-600">
+                                            ID Commande:
+                                        </span>
+                                        <span className="font-medium">
+                                            {commande.data._id || "N/A"}
+                                        </span>
+                                    </li>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-600">
+                                            Nom Client:
+                                        </span>
+                                        <span className="font-medium">
+                                            {commande.data.client_id.nom ||
+                                                "N/A"}
+                                        </span>
+                                    </li>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-600">
+                                            Nom Boutique:
+                                        </span>
+                                        <span className="font-medium">
+                                            {commande.data.commercant_id
+                                                .nom_boutique || "N/A"}
+                                        </span>
+                                    </li>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-600">
+                                            Adresse Boutique:
+                                        </span>
+                                        <span className="font-medium">
+                                            {commande.data.commercant_id
+                                                .adresse_boutique.rue +
+                                                ", " +
+                                                commande.data.commercant_id
+                                                    .adresse_boutique.ville +
+                                                ", " +
+                                                commande.data.commercant_id
+                                                    .adresse_boutique
+                                                    .code_postal || "N/A"}
+                                        </span>
+                                    </li>
+                                    <li className="flex justify-between">
+                                        <span className="text-gray-600">
+                                            Total:
+                                        </span>
+                                        <span className="font-medium">
+                                            {commande.data.total
+                                                ? `${commande.data.total} €`
+                                                : "N/A"}
+                                        </span>
+                                    </li>
+                                    {commande.data.adresse_livraison && (
+                                        <li className="flex justify-between">
+                                            <span className="text-gray-600">
+                                                Adresse Client:
+                                            </span>
+                                            <span className="font-medium">
+                                                {
+                                                    commande.data
+                                                        .adresse_livraison.rue
+                                                }
+                                                ,{" "}
+                                                {
+                                                    commande.data
+                                                        .adresse_livraison.ville
+                                                }
+                                                ,{" "}
+                                                {
+                                                    commande.data
+                                                        .adresse_livraison
+                                                        .code_postal
+                                                }
+                                            </span>
+                                        </li>
+                                    )}
+                                </ul>
+                            </div>
+                        )}
+
                         {/* Delivery status with actual distance and duration */}
                         <div className="p-4 bg-blue-50 rounded-lg">
                             <h3 className="font-medium text-blue-800 mb-2">
@@ -286,7 +345,15 @@ const CommandeSuivi = () => {
                             </h3>
                             <div className="space-y-2">
                                 <p className="text-blue-700 font-medium">
-                                    En route
+                                    {livreurStatus?.status === "en_livraison" 
+                                        ? "En cours de livraison" 
+                                        : livreurStatus?.status === "commande_prise" 
+                                            ? "Commande récupérée" 
+                                            : livreurStatus?.status === "en_route_vers_commercant" 
+                                                ? "En route vers le commerçant" 
+                                                : livreurStatus?.status === "arrive" 
+                                                    ? "Arrivé à destination" 
+                                                    : "En route"}
                                 </p>
                                 <p className="text-sm text-gray-600">
                                     Arrivée estimée:{" "}
@@ -311,7 +378,12 @@ const CommandeSuivi = () => {
                                     </p>
                                 )}
                                 <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                                    <div className="bg-blue-600 h-2.5 rounded-full w-2/3"></div>
+                                    <div 
+                                        className="bg-blue-600 h-2.5 rounded-full" 
+                                        style={{ 
+                                            width: `${calculateProgressPercentage()}%` 
+                                        }}
+                                    ></div>
                                 </div>
                             </div>
                         </div>
@@ -319,57 +391,57 @@ const CommandeSuivi = () => {
                 </div>
 
                 <div className="w-full lg:w-2/3 shadow-xl rounded-lg overflow-hidden mt-4 lg:mt-0">
-                    <LoadScript googleMapsApiKey="AIzaSyD9buKfiAVASpx1zzEWbuSyHI05CaJyQ6c">
-                        <GoogleMap
-                            mapContainerStyle={containerStyle}
-                            center={{
-                                lat: adresseLivraison[0],
-                                lng: adresseLivraison[1],
-                            }}
-                            zoom={13}
-                            options={{
-                                mapTypeControl: false,
-                                streetViewControl: false,
-                                fullscreenControl: true,
-                                zoomControl: true,
-                            }}
-                            onLoad={onMapLoad}
-                        >
-                            {livreurPosition[0] && livreurPosition[1] && (
-                                <Marker
-                                    position={{
-                                        lat: livreurPosition[0],
-                                        lng: livreurPosition[1],
-                                    }}
-                                    icon={{
-                                        url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                                        // scaledSize: new window.google.maps.Size(
-                                        //     40,
-                                        //     40
-                                        // ),
-                                    }}
-                                    title="Livreur en déplacement"
-                                />
-                            )}
+                    {/* <LoadScript googleMapsApiKey="AIzaSyD9buKfiAVASpx1zzEWbuSyHI05CaJyQ6c"> */}
+                    <GoogleMap
+                        mapContainerStyle={containerStyle}
+                        center={{
+                            lat: adresseLivraison[0],
+                            lng: adresseLivraison[1],
+                        }}
+                        zoom={13}
+                        options={{
+                            mapTypeControl: false,
+                            streetViewControl: false,
+                            fullscreenControl: true,
+                            zoomControl: true,
+                        }}
+                        onLoad={onMapLoad}
+                    >
+                        {livreurCoords[0] && livreurCoords[1] && (
+                            <Marker
+                                position={{
+                                    lat: livreurCoords[0],
+                                    lng: livreurCoords[1],
+                                }}
+                                icon={{
+                                    url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                                    // scaledSize: new window.google.maps.Size(
+                                    //     40,
+                                    //     40
+                                    // ),
+                                }}
+                                title="Livreur en déplacement"
+                            />
+                        )}
 
-                            {adresseLivraison[0] && adresseLivraison[1] && (
-                                <Marker
-                                    position={{
-                                        lat: adresseLivraison[0],
-                                        lng: adresseLivraison[1],
-                                    }}
-                                    icon={{
-                                        url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-                                        // scaledSize: new window.google.maps.Size(
-                                        //     40,
-                                        //     40
-                                        // ),
-                                    }}
-                                    title="Destination"
-                                />
-                            )}
-                        </GoogleMap>
-                    </LoadScript>
+                        {adresseLivraison[0] && adresseLivraison[1] && (
+                            <Marker
+                                position={{
+                                    lat: adresseLivraison[0],
+                                    lng: adresseLivraison[1],
+                                }}
+                                icon={{
+                                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                                    // scaledSize: new window.google.maps.Size(
+                                    //     40,
+                                    //     40
+                                    // ),
+                                }}
+                                title="Destination"
+                            />
+                        )}
+                    </GoogleMap>
+                    {/* </LoadScript> */}
                 </div>
             </div>
         </div>

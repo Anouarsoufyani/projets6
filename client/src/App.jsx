@@ -2,14 +2,14 @@ import { Route, Routes, Navigate } from "react-router";
 import SignupPage from "./Pages/Auth/SignUp/SignupPage";
 import LoginPage from "./Pages/Auth/Login/LoginPage";
 import HomePage from "./Pages/Home/HomePage";
-// import NotificationPage from "./Pages/Notification/NotificationPage"
 import ProfilePage from "./Pages/Profile/ProfilePage";
-import DashboardPage from "./Pages/User/DashboardPage";
+import DashboardPageLivreur from "./Pages/User/DashboardPageLivreur";
+import DashboardPageCommercant from "./Pages/User/DashboardPageCommercant";
 import Navbar from "./Components/Navigation/Navbar";
 import Sidebar from "./Components/Navigation/Sidebar";
 import SelectLivreurPage from "./Pages/Livraisons/SelectLivreurPage";
 import CommandesListePage from "./Pages/Commandes/CommandesListePage";
-// import RightPanel from "./Components/common/RightPanel"
+import JustificativePage from "./Pages/Livraisons/JustificativePage";
 import { Toaster } from "react-hot-toast";
 import { useAuthUserQuery } from "./Hooks/useAuthQueries";
 import CreateCommandePage from "./Pages/Commandes/CreateCommandePage";
@@ -30,7 +30,7 @@ function App() {
     }
 
     return (
-        <div className={`flex flex-col w-full m-0 min-h-screen`}>
+        <div className={`flex flex-col w-full m-0 h-screen`}>
             {authUser && (
                 <Sidebar
                     authUser={authUser}
@@ -48,7 +48,7 @@ function App() {
                               width: `calc(100% - ${sidebarSize})`,
                               height: `calc(100vh - ${navbarSize})`,
                           }
-                        : {}
+                        : { height: `calc(100vh - ${navbarSize})` }
                 }
             >
                 <Routes>
@@ -58,7 +58,11 @@ function App() {
                             !authUser ? (
                                 <HomePage navbarHeight={navbarSize} />
                             ) : (
-                                <Navigate to="/dashboard" />
+                                authUser.role === "client" ? (
+                                    <Navigate to="/commandes" />
+                                ) : (
+                                    <Navigate to="/dashboard" />
+                                )
                             )
                         }
                     />
@@ -78,7 +82,15 @@ function App() {
                         path="/dashboard"
                         element={
                             authUser ? (
-                                <DashboardPage />
+                                authUser.role === "livreur" ? (
+                                    <DashboardPageLivreur />
+                                ) : authUser.role === "commercant" ? (
+                                    <DashboardPageCommercant />
+                                ) : authUser.role === "client" ? (
+                                    <Navigate to="/commandes" />
+                                ) : (
+                                    <Navigate to="/login" />
+                                )
                             ) : (
                                 <Navigate to="/login" />
                             )
@@ -148,8 +160,6 @@ function App() {
                     />
                 </Routes>
             </div>
-
-            {/* {authUser && <RightPanel />} */}
             <Toaster />
         </div>
     );

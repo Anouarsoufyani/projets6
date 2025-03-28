@@ -12,6 +12,10 @@ import userRoutes from "./Routes/UserRoutes.js";
 
 import connectDB from "./DB/Connect.js";
 
+// Configure Socket.IO avec le serveur HTTP
+
+// Middleware pour accéder à io depuis les routes
+
 // Create HTTP server
 // const server = createServer(app);
 
@@ -19,7 +23,7 @@ import connectDB from "./DB/Connect.js";
 // initializeSocket(server);
 
 app.get("/", (req, res) => {
-    res.send("Hello World!");
+  res.send("Hello World!");
 });
 
 app.use(express.json({ limit: "50mb" }));
@@ -29,9 +33,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/commandes", commandeRoutes);
 app.use("/api/user", userRoutes);
 
-app.listen(process.env.PORT, () => {
-    connectDB();
-    console.log(
-        `Example app listening on http://localhost:${process.env.PORT}`
-    );
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  connectDB();
+  console.log(`Serveur démarré sur le port ${PORT}`);
 });

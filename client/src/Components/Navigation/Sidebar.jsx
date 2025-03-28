@@ -1,9 +1,9 @@
 import { Link, useLocation } from "react-router";
-import { FaSignInAlt } from "react-icons/fa";
-import { FaRegListAlt } from "react-icons/fa";
+import { FaSignInAlt, FaRegListAlt } from "react-icons/fa";
 import { LuUserRound } from "react-icons/lu";
 import { TbTruckDelivery } from "react-icons/tb";
 import { MdOutlineSpaceDashboard } from "react-icons/md";
+import { HiOutlineDocumentText } from "react-icons/hi";
 import PropTypes from "prop-types";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -15,9 +15,7 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
     // Mutation for logout
     const { mutate: logout } = useMutation({
         mutationFn: async () => {
-            const res = await fetch("/api/auth/logout", {
-                method: "POST",
-            });
+            const res = await fetch("/api/auth/logout", { method: "POST" });
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.error || "Something went wrong");
@@ -34,7 +32,6 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
     });
 
     // Define navigation items based on user type
-
     const navItems = authUser?.role
         ? {
               livreur: [
@@ -52,6 +49,11 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
                       to: "/commandes",
                       icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Commandes",
+                  },
+                  {
+                      to: "/justificative",
+                      icon: <HiOutlineDocumentText className="w-5 h-5" />,
+                      label: "Pièce Justificative",
                   },
               ],
               client: [
@@ -96,22 +98,13 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
           }[authUser.role] || []
         : [];
 
-    console.log(sidebarSize, navbarHeight);
-
     return (
         <aside
             className={`fixed left-0 bg-white text-gray-700 border-r border-gray-100 shadow-sm flex flex-col transition-all duration-300 z-10`}
-            style={{
-                top: navbarHeight,
-                height: `calc(100vh - ${navbarHeight})`,
-                width: sidebarSize,
-            }}
+            style={{ top: navbarHeight, height: `calc(100vh - ${navbarHeight})`, width: sidebarSize }}
         >
-            {/* Navigation Section */}
             <nav className="flex-1 flex flex-col pt-6">
-                <div className="px-6 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                    Menu
-                </div>
+                <div className="px-6 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide">Menu</div>
                 {navItems.map((item) => (
                     <Link
                         key={item.to}
@@ -122,17 +115,12 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
                                 : "text-gray-600 hover:bg-gray-50 hover:text-emerald-700 hover:pl-7"
                         }`}
                     >
-                        <div className="flex items-center justify-center w-5 h-5">
-                            {item.icon}
-                        </div>
-                        <span className="text-sm font-medium">
-                            {item.label}
-                        </span>
+                        <div className="flex items-center justify-center w-5 h-5">{item.icon}</div>
+                        <span className="text-sm font-medium">{item.label}</span>
                     </Link>
                 ))}
             </nav>
 
-            {/* Logout Button */}
             <div className="p-6 border-t border-gray-100">
                 <button
                     onClick={() => logout()}
@@ -148,14 +136,12 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
     );
 };
 
-// Prop validation
 Sidebar.propTypes = {
     navbarHeight: PropTypes.string,
     sidebarSize: PropTypes.string,
     authUser: PropTypes.object,
 };
 
-// Default props
 Sidebar.defaultProps = {
     navbarHeight: "4rem",
     sidebarSize: "16rem",

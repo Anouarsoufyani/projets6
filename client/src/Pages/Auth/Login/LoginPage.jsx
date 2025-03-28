@@ -65,7 +65,7 @@ const LoginPage = () => {
     };
 
     return (
-        <main className="flex justify-center items-center w-full h-[95vh] bg-gray-100">
+        <main className="flex justify-center items-center w-full h-full bg-gray-100">
             <div className="flex flex-col gap-6 justify-center items-center w-1/3 bg-white p-8 rounded-xl shadow-2xl">
                 <h1 className="text-3xl font-bold text-emerald-600 mb-4">
                     Connexion
@@ -127,7 +127,7 @@ const LoginPage = () => {
                             to="/signup"
                             className="text-emerald-600 font-semibold hover:underline"
                         >
-                            S'inscrire
+                            S&apos;inscrire
                         </Link>
                     </p>
                 </div>

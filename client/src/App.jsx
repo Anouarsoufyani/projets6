@@ -44,10 +44,10 @@ function App() {
                 style={
                     authUser
                         ? {
-                              marginLeft: sidebarSize,
-                              width: `calc(100% - ${sidebarSize})`,
-                              height: `calc(100vh - ${navbarSize})`,
-                          }
+                                marginLeft: sidebarSize,
+                                width: `calc(100% - ${sidebarSize})`,
+                                height: `calc(100vh - ${navbarSize})`,
+                            }
                         : { height: `calc(100vh - ${navbarSize})` }
                 }
             >
@@ -58,7 +58,7 @@ function App() {
                             !authUser ? (
                                 <HomePage navbarHeight={navbarSize} />
                             ) : (
-                                authUser.role === "client" ? (
+                                authUser.role === "client" || authUser.role === "admin" ? (
                                     <Navigate to="/commandes" />
                                 ) : (
                                     <Navigate to="/dashboard" />
@@ -120,7 +120,7 @@ function App() {
                     <Route
                         path="/livreurs"
                         element={
-                            authUser && authUser.role == "commercant" ? (
+                            authUser && (authUser.role === "commercant" || authUser.role === "admin") ? (
                                 <SelectLivreurPage />
                             ) : (
                                 <Navigate to="/login" />
@@ -149,12 +149,12 @@ function App() {
                         }
                     />
                     <Route
-                        path="/livraison/:id"
+                        path="/justificative"
                         element={
-                            authUser ? (
-                                <CommandeSuivi />
+                            authUser && (authUser.role === "livreur" || authUser.role === "admin") ? (
+                                <JustificativePage />
                             ) : (
-                                <Navigate to="/login" />
+                                <Navigate to="/dashboard" />
                             )
                         }
                     />

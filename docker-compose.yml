@@ -1,0 +1,39 @@
+services:
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000" # Vite écoute sur 3000
+    environment:
+      - VITE_GOOGLE_MAPS_API_KEY=AIzaSyD9buKfiAVASpx1zzEWbuSyHI05CaJyQ6c
+    volumes:
+      - ./client:/app # Pour le hot-reload
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb+srv://anouarsoufyanietu:oSLdVOCRMUfOgGYM@cluster0.nglfl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      - PORT=5000
+      - JWT_SECRET=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.KMUFsIDTnFmyG3nMiGM6H9FNFUROf3wh7SmqJp-QV30
+    depends_on:
+      - mongo
+    volumes:
+      - ./babckend:/app # Pour le hot-reload
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:

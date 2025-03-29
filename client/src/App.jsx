@@ -13,7 +13,7 @@ import JustificativePage from "./Pages/Livraisons/JustificativePage";
 import { Toaster } from "react-hot-toast";
 import { useAuthUserQuery } from "./Hooks/useAuthQueries";
 import CreateCommandePage from "./Pages/Commandes/CreateCommandePage";
-import CommandeSuivi from "./Pages/Commandes/CommandeSuivi";
+// import CommandeSuivi from "./Pages/Commandes/CommandeSuivi";
 
 function App() {
     const navbarSize = "4rem";

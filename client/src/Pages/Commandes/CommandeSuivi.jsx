@@ -1,6 +1,6 @@
 "use client";
 import { useGetCoords } from "../../Hooks/useGetCoords";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -21,29 +21,6 @@ const LoadingSpinner = () => (
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600"></div>
     </div>
 );
-
-// const useUserPosition = () => {
-//     const [position, setPosition] = useState([null, null]);
-
-//     useEffect(() => {
-//         if (!navigator.geolocation) {
-//             toast.error(
-//                 "La géolocalisation n'est pas supportée par votre navigateur"
-//             );
-//             return;
-//         }
-
-//         const watchId = navigator.geolocation.watchPosition(
-//             (pos) => setPosition([pos.coords.latitude, pos.coords.longitude]),
-//             (err) => toast.error(`Erreur : ${err.message}`),
-//             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-//         );
-
-//         return () => navigator.geolocation.clearWatch(watchId);
-//     }, []);
-
-//     return position;
-// };
 
 const CommandeSuivi = () => {
     const { data: authUser } = useAuthUserQuery();
@@ -104,7 +81,7 @@ const CommandeSuivi = () => {
         [livreurPosition.lat, livreurPosition.lng] : 
         [48.8466, 2.3622]; // position par défaut si non disponible
 
-    // Avoir la geolocalisation exacte grace a l'adresse
+    // Avoir la geolocalisation exacte grâce à l'adresse
     const adresseClient = commande?.data?.adresse_livraison?.rue +
         ", " +
         commande?.data?.adresse_livraison?.ville +
@@ -113,22 +90,47 @@ const CommandeSuivi = () => {
     
     const coords = useGetCoords(adresseClient);
     const adresseLivraison = [coords?.data?.lat, coords?.data?.lng];
+    
+    const fetchLivreurPosition = async () => {
+        // Simuler une position aléatoire proche de Paris
+        const newPosition = {
+            lat: livreurPosition.lat + (Math.random() * 0.02 - 0.01),
+            lng: livreurPosition.lng + (Math.random() * 0.02 - 0.01)
+        };
+        // Mettre à jour l'état avec la nouvelle position
+        setLivreurPosition(newPosition);
+    };
+
+    // Déclare l'état pour la position du livreur
+    const [livreurCoordsState, setLivreurPosition] = useState({
+        lat: livreurCoords[0],
+        lng: livreurCoords[1],
+    });
+
+    // Mise à jour automatique de la position du livreur toutes les 5 secondes
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchLivreurPosition();
+        }, 3000); // Rafraîchir toutes les 5 secondes
+
+        return () => clearInterval(interval);
+    }, [livreurPosition]); // Assurez-vous de mettre à jour correctement lors du changement
 
     // Update route when positions change
     useEffect(() => {
-        if (livreurCoords[0] && adresseLivraison[0]) {
+        if (livreurCoordsState.lat && adresseLivraison[0]) {
             calculateRoute(
-                { lat: livreurCoords[0], lng: livreurCoords[1] },
+                { lat: livreurCoordsState.lat, lng: livreurCoordsState.lng },
                 { lat: adresseLivraison[0], lng: adresseLivraison[1] }
             );
         }
-    }, [livreurPosition, adresseLivraison[0], adresseLivraison[1]]);
+    }, [livreurCoordsState, adresseLivraison]);
 
     if (isLoading || isLoadingLivreur) {
         return <LoadingSpinner />;
     }
 
-    // Calculate estimated time of arrival based on the actual duration
+    // Calculer l'heure d'arrivée estimée en fonction de la durée réelle
     const estimatedArrival = new Date();
     if (duration) {
         // Parse duration like "15 mins" to minutes
@@ -180,10 +182,10 @@ const CommandeSuivi = () => {
 
             <div className="flex flex-col lg:flex-row flex-1 gap-6">
                 <div className="w-full lg:w-1/3 bg-white p-4 md:p-6 rounded-lg shadow-md">
+                    
                     <h2 className="text-lg font-semibold text-emerald-800 mb-4">
                         Détails de la Livraison
                     </h2>
-
                     <div className="overflow-auto h-full space-y-6">
                         {/* Livreur info */}
                         <div className="p-4 bg-emerald-50 rounded-lg">
@@ -337,9 +339,8 @@ const CommandeSuivi = () => {
                                 </ul>
                             </div>
                         )}
-
-                        {/* Delivery status with actual distance and duration */}
-                        <div className="p-4 bg-blue-50 rounded-lg">
+                         {/* Delivery status with actual distance and duration */}
+                         <div className="p-4 bg-blue-50 rounded-lg">
                             <h3 className="font-medium text-blue-800 mb-2">
                                 Statut
                             </h3>
@@ -391,7 +392,6 @@ const CommandeSuivi = () => {
                 </div>
 
                 <div className="w-full lg:w-2/3 shadow-xl rounded-lg overflow-hidden mt-4 lg:mt-0">
-                    {/* <LoadScript googleMapsApiKey="AIzaSyD9buKfiAVASpx1zzEWbuSyHI05CaJyQ6c"> */}
                     <GoogleMap
                         mapContainerStyle={containerStyle}
                         center={{
@@ -407,41 +407,30 @@ const CommandeSuivi = () => {
                         }}
                         onLoad={onMapLoad}
                     >
-                        {livreurCoords[0] && livreurCoords[1] && (
-                            <Marker
-                                position={{
-                                    lat: livreurCoords[0],
-                                    lng: livreurCoords[1],
-                                }}
-                                icon={{
-                                    url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-                                    // scaledSize: new window.google.maps.Size(
-                                    //     40,
-                                    //     40
-                                    // ),
-                                }}
-                                title="Livreur en déplacement"
-                            />
-                        )}
+                        {/* Marqueur pour le livreur */}
+                        <Marker
+                            position={{
+                                lat: livreurCoordsState.lat,
+                                lng: livreurCoordsState.lng,
+                            }}
+                            icon={{
+                                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                            }}
+                            title="Livreur en déplacement"
+                        />
 
-                        {adresseLivraison[0] && adresseLivraison[1] && (
-                            <Marker
-                                position={{
-                                    lat: adresseLivraison[0],
-                                    lng: adresseLivraison[1],
-                                }}
-                                icon={{
-                                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-                                    // scaledSize: new window.google.maps.Size(
-                                    //     40,
-                                    //     40
-                                    // ),
-                                }}
-                                title="Destination"
-                            />
-                        )}
+                        {/* Marqueur pour la destination */}
+                        <Marker
+                            position={{
+                                lat: adresseLivraison[0],
+                                lng: adresseLivraison[1],
+                            }}
+                            icon={{
+                                url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                            }}
+                            title="Destination"
+                        />
                     </GoogleMap>
-                    {/* </LoadScript> */}
                 </div>
             </div>
         </div>

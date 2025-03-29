@@ -3,7 +3,8 @@ import SignupPage from "./Pages/Auth/SignUp/SignupPage";
 import LoginPage from "./Pages/Auth/Login/LoginPage";
 import HomePage from "./Pages/Home/HomePage";
 import ProfilePage from "./Pages/Profile/ProfilePage";
-import DashboardPage from "./Pages/User/DashboardPage";
+import DashboardPageLivreur from "./Pages/User/DashboardPageLivreur";
+import DashboardPageCommercant from "./Pages/User/DashboardPageCommercant";
 import Navbar from "./Components/Navigation/Navbar";
 import Sidebar from "./Components/Navigation/Sidebar";
 import SelectLivreurPage from "./Pages/Livraisons/SelectLivreurPage";
@@ -43,28 +44,120 @@ function App() {
                 style={
                     authUser
                         ? {
-                              marginLeft: sidebarSize,
-                              width: `calc(100% - ${sidebarSize})`,
-                              height: `calc(100vh - ${navbarSize})`,
-                          }
+                                marginLeft: sidebarSize,
+                                width: `calc(100% - ${sidebarSize})`,
+                                height: `calc(100vh - ${navbarSize})`,
+                            }
                         : { height: `calc(100vh - ${navbarSize})` }
                 }
             >
                 <Routes>
                     <Route
                         path="/"
-                        element={!authUser ? <HomePage navbarHeight={navbarSize} /> : <Navigate to="/dashboard" />}
+                        element={
+                            !authUser ? (
+                                <HomePage navbarHeight={navbarSize} />
+                            ) : (
+                                authUser.role === "client" || authUser.role === "admin" ? (
+                                    <Navigate to="/commandes" />
+                                ) : (
+                                    <Navigate to="/dashboard" />
+                                )
+                            )
+                        }
                     />
-                    <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
-                    <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
-                    <Route path="/dashboard" element={authUser ? <DashboardPage /> : <Navigate to="/login" />} />
-                    <Route path="/profil" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
-                    <Route path="/profile/:username" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
-                    <Route path="/livreurs" element={authUser && authUser.role === "commercant" ? <SelectLivreurPage /> : <Navigate to="/login" />} />
-                    <Route path="/commandes" element={authUser ? <CommandesListePage /> : <Navigate to="/login" />} />
-                    <Route path="/commandes/create" element={authUser ? <CreateCommandePage /> : <Navigate to="/login" />} />
-                    <Route path="/livraison/:id" element={authUser ? <CommandeSuivi /> : <Navigate to="/login" />} />
-                    <Route path="/justificative" element={authUser && authUser.role === "livreur" ? <JustificativePage /> : <Navigate to="/login" />} />
+                    <Route
+                        path="/signup"
+                        element={
+                            !authUser ? <SignupPage /> : <Navigate to="/" />
+                        }
+                    />
+                    <Route
+                        path="/login"
+                        element={
+                            !authUser ? <LoginPage /> : <Navigate to="/" />
+                        }
+                    />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            authUser ? (
+                                authUser.role === "livreur" ? (
+                                    <DashboardPageLivreur />
+                                ) : authUser.role === "commercant" ? (
+                                    <DashboardPageCommercant />
+                                ) : authUser.role === "client" ? (
+                                    <Navigate to="/commandes" />
+                                ) : (
+                                    <Navigate to="/login" />
+                                )
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/profil"
+                        element={
+                            authUser ? (
+                                <ProfilePage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/profile/:username"
+                        element={
+                            authUser ? (
+                                <ProfilePage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+
+                    <Route
+                        path="/livreurs"
+                        element={
+                            authUser && (authUser.role === "commercant" || authUser.role === "admin") ? (
+                                <SelectLivreurPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+
+                    <Route
+                        path="/commandes"
+                        element={
+                            authUser ? (
+                                <CommandesListePage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/commandes/create"
+                        element={
+                            authUser ? (
+                                <CreateCommandePage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/justificative"
+                        element={
+                            authUser && (authUser.role === "livreur" || authUser.role === "admin") ? (
+                                <JustificativePage />
+                            ) : (
+                                <Navigate to="/dashboard" />
+                            )
+                        }
+                    />
                 </Routes>
             </div>
             <Toaster />

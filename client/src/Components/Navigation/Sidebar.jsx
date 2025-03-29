@@ -34,68 +34,100 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
     // Define navigation items based on user type
     const navItems = authUser?.role
         ? {
-              livreur: [
-                  {
-                      to: "/dashboard",
-                      icon: <MdOutlineSpaceDashboard className="w-5 h-5" />,
-                      label: "Dashboard",
-                  },
-                  {
-                      to: "/profil",
-                      icon: <LuUserRound className="w-5 h-5" />,
-                      label: "Profil",
-                  },
-                  {
-                      to: "/commandes",
-                      icon: <FaRegListAlt className="w-5 h-5" />,
-                      label: "Commandes",
-                  },
-                  {
-                      to: "/justificative",
-                      icon: <HiOutlineDocumentText className="w-5 h-5" />,
-                      label: "Pièce Justificative",
-                  },
-              ],
-              client: [
-                  {
-                      to: "/profil",
-                      icon: <LuUserRound className="w-5 h-5" />,
-                      label: "Profil",
-                  },
-                  {
-                      to: "/commandes",
-                      icon: <FaRegListAlt className="w-5 h-5" />,
-                      label: "Commandes",
-                  },
-                  {
-                      to: "/commandes/create",
-                      icon: <FaRegListAlt className="w-5 h-5" />,
-                      label: "Passer une Commande",
-                  },
-              ],
-              commercant: [
-                  {
-                      to: "/dashboard",
-                      icon: <MdOutlineSpaceDashboard className="w-5 h-5" />,
-                      label: "Dashboard",
-                  },
-                  {
-                      to: "/profil",
-                      icon: <LuUserRound className="w-5 h-5" />,
-                      label: "Profil",
-                  },
-                  {
-                      to: "/livreurs",
-                      icon: <TbTruckDelivery className="w-5 h-5" />,
-                      label: "Trouver un livreur",
-                  },
-                  {
-                      to: "/commandes",
-                      icon: <FaRegListAlt className="w-5 h-5" />,
-                      label: "Commandes",
-                  },
-              ],
-          }[authUser.role] || []
+            livreur: [
+                {
+                    to: "/dashboard",
+                    icon: <MdOutlineSpaceDashboard className="w-5 h-5" />,
+                    label: "Dashboard",
+                },
+                {
+                    to: "/profil",
+                    icon: <LuUserRound className="w-5 h-5" />,
+                    label: "Profil",
+                },
+                {
+                    to: "/commandes",
+                    icon: <FaRegListAlt className="w-5 h-5" />,
+                    label: "Commandes",
+                },
+                {
+                    to: "/justificative",
+                    icon: <HiOutlineDocumentText className="w-5 h-5" />,
+                    label: "Pièce Justificative",
+                },
+            ],
+            client: [
+                {
+                    to: "/profil",
+                    icon: <LuUserRound className="w-5 h-5" />,
+                    label: "Profil",
+                },
+                {
+                    to: "/commandes",
+                    icon: <FaRegListAlt className="w-5 h-5" />,
+                    label: "Commandes",
+                },
+                {
+                    to: "/commandes/create",
+                    icon: <FaRegListAlt className="w-5 h-5" />,
+                    label: "Passer une Commande",
+                },
+            ],
+            commercant: [
+                {
+                    to: "/dashboard",
+                    icon: <MdOutlineSpaceDashboard className="w-5 h-5" />,
+                    label: "Dashboard",
+                },
+                {
+                    to: "/profil",
+                    icon: <LuUserRound className="w-5 h-5" />,
+                    label: "Profil",
+                },
+                {
+                    to: "/livreurs",
+                    icon: <TbTruckDelivery className="w-5 h-5" />,
+                    label: "Trouver un livreur",
+                },
+                {
+                    to: "/commandes",
+                    icon: <FaRegListAlt className="w-5 h-5" />,
+                    label: "Commandes",
+                },
+            ],
+            admin: [
+                {
+                    to: "/dashboard",
+                    icon: <MdOutlineSpaceDashboard className="w-5 h-5" />,
+                    label: "Dashboard",
+                },
+                {
+                    to: "/profil",
+                    icon: <LuUserRound className="w-5 h-5" />,
+                    label: "Profil",
+                },
+                {
+                    to: "/livreurs",
+                    icon: <TbTruckDelivery className="w-5 h-5" />,
+                    label: "Gestion Livreurs",
+                },
+                {
+                    to: "/commandes",
+                    icon: <FaRegListAlt className="w-5 h-5" />,
+                    label: "Gestions Clients",
+                },
+                {
+                    to: "/commandes",
+                    icon: <FaRegListAlt className="w-5 h-5" />,
+                    label: "Gestions Commercants",
+                },
+                {
+                    to: "/commandes",
+                    icon: <FaRegListAlt className="w-5 h-5" />,
+                    label: "Gestions Commandes",
+                },
+            ],
+        }[authUser.role] || []
         : [];
 
     return (

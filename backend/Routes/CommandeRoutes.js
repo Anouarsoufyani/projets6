@@ -1,10 +1,10 @@
 import express from "express";
 import {
-  createCommande,
-  getCommandes,
-  getCommandeById,
-  cancelCommande,
-  getLivreurInfo
+    createCommande,
+    getCommandes,
+    getCommandeById,
+    cancelCommande,
+    getLivreurInfo,
 } from "../Controllers/CommandeController.js";
 import { protectRoute } from "../Middleware/protectRoute.js";
 import { protectSuivi } from "../Middleware/protectSuivi.js";

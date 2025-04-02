@@ -10,6 +10,7 @@ dotenv.config();
 import authRoutes from "./Routes/AuthRoutes.js";
 import commandeRoutes from "./Routes/CommandeRoutes.js";
 import userRoutes from "./Routes/UserRoutes.js";
+import docRoutes from "./Routes/DocRoutes.js";
 
 import connectDB from "./DB/Connect.js";
 
@@ -30,7 +31,11 @@ io.on("connection", (socket) => {
 
     // Handle position update from the frontend
     socket.on("updatePosition", (data) => {
-        console.log("📍 Position updated for livreur:", data.livreurId, data.position);
+        console.log(
+            "📍 Position updated for livreur:",
+            data.livreurId,
+            data.position
+        );
 
         // Process the position (e.g., update database, broadcast to other clients, etc.)
         // For example, you could emit it to other clients or store it in your DB
@@ -49,6 +54,7 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/commandes", commandeRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/documents", docRoutes);
 
 const PORT = process.env.PORT || 5000;
 

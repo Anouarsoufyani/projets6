@@ -1,6 +1,6 @@
 "use client";
 import { useGetCoords } from "../../Hooks/useGetCoords";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -29,20 +29,20 @@ const CommandeSuivi = () => {
     const { id } = useParams();
 
     // Utiliser le hook useLivreurTracking pour suivre la position du livreur
-    const { livreurPosition, livreurStatus, isLoading: isLoadingLivreur } = useLivreurTracking(id);
+    const {
+        livreurPosition,
+        livreurStatus,
+        isLoading: isLoadingLivreur,
+    } = useLivreurTracking(id);
 
     // Utiliser notre hook personnalisé pour les directions
-    const { 
-        distance, 
-        duration, 
-        calculateRoute, 
-        onMapLoad 
-    } = useGoogleMapDirections({
-        strokeColor: "#10b981", // emerald-500
-        strokeWeight: 5,
-        strokeOpacity: 0.8,
-        suppressMarkers: true
-    });
+    const { distance, duration, calculateRoute, onMapLoad } =
+        useGoogleMapDirections({
+            strokeColor: "#10b981", // emerald-500
+            strokeWeight: 5,
+            strokeOpacity: 0.8,
+            suppressMarkers: true,
+        });
 
     const { data: commande, isLoading } = useQuery({
         queryKey: ["getCommande", id],
@@ -75,27 +75,28 @@ const CommandeSuivi = () => {
     });
 
     const livreur = commande?.data?.livreur_id || {};
-    
+
     // Utiliser la position du livreur depuis le tracking
-    const livreurCoords = livreurPosition ? 
-        [livreurPosition.lat, livreurPosition.lng] : 
-        [48.8466, 2.3622]; // position par défaut si non disponible
+    const livreurCoords = livreurPosition
+        ? [livreurPosition.lat, livreurPosition.lng]
+        : [48.8466, 2.3622]; // position par défaut si non disponible
 
     // Avoir la geolocalisation exacte grâce à l'adresse
-    const adresseClient = commande?.data?.adresse_livraison?.rue +
+    const adresseClient =
+        commande?.data?.adresse_livraison?.rue +
         ", " +
         commande?.data?.adresse_livraison?.ville +
         ", " +
         commande?.data?.adresse_livraison?.code_postal;
-    
+
     const coords = useGetCoords(adresseClient);
     const adresseLivraison = [coords?.data?.lat, coords?.data?.lng];
-    
+
     const fetchLivreurPosition = async () => {
         // Simuler une position aléatoire proche de Paris
         const newPosition = {
             lat: livreurPosition.lat + (Math.random() * 0.02 - 0.01),
-            lng: livreurPosition.lng + (Math.random() * 0.02 - 0.01)
+            lng: livreurPosition.lng + (Math.random() * 0.02 - 0.01),
         };
         // Mettre à jour l'état avec la nouvelle position
         setLivreurPosition(newPosition);
@@ -137,7 +138,8 @@ const CommandeSuivi = () => {
         const durationMatch = duration.match(/(\d+)\s*mins?/);
         if (durationMatch && durationMatch[1]) {
             estimatedArrival.setMinutes(
-                estimatedArrival.getMinutes() + Number.parseInt(durationMatch[1])
+                estimatedArrival.getMinutes() +
+                    Number.parseInt(durationMatch[1])
             );
         } else {
             // Fallback to 15 minutes if parsing fails
@@ -156,21 +158,24 @@ const CommandeSuivi = () => {
     // Calculer le pourcentage de progression basé sur le temps écoulé
     const calculateProgressPercentage = () => {
         if (!duration) return 0;
-        
+
         // Extraire les minutes à partir de la durée (ex: "15 mins")
         const durationMatch = duration.match(/(\d+)\s*mins?/);
         if (!durationMatch || !durationMatch[1]) return 0;
-        
+
         const totalMinutes = Number.parseInt(durationMatch[1]);
         if (totalMinutes <= 0) return 100; // Si la durée est 0, on est arrivé
-        
+
         // Estimer le temps déjà écoulé
         // Si le livreur a déjà parcouru une partie du chemin
         const minutesRemaining = (estimatedArrival - new Date()) / (1000 * 60);
         const minutesElapsed = totalMinutes - minutesRemaining;
-        
+
         // Calculer le pourcentage (limité entre 0 et 100)
-        const percentage = Math.max(0, Math.min(100, (minutesElapsed / totalMinutes) * 100));
+        const percentage = Math.max(
+            0,
+            Math.min(100, (minutesElapsed / totalMinutes) * 100)
+        );
         return Math.round(percentage);
     };
 
@@ -182,7 +187,6 @@ const CommandeSuivi = () => {
 
             <div className="flex flex-col lg:flex-row flex-1 gap-6">
                 <div className="w-full lg:w-1/3 bg-white p-4 md:p-6 rounded-lg shadow-md">
-                    
                     <h2 className="text-lg font-semibold text-emerald-800 mb-4">
                         Détails de la Livraison
                     </h2>
@@ -339,22 +343,24 @@ const CommandeSuivi = () => {
                                 </ul>
                             </div>
                         )}
-                         {/* Delivery status with actual distance and duration */}
-                         <div className="p-4 bg-blue-50 rounded-lg">
+                        {/* Delivery status with actual distance and duration */}
+                        <div className="p-4 bg-blue-50 rounded-lg">
                             <h3 className="font-medium text-blue-800 mb-2">
                                 Statut
                             </h3>
                             <div className="space-y-2">
                                 <p className="text-blue-700 font-medium">
-                                    {livreurStatus?.status === "en_livraison" 
-                                        ? "En cours de livraison" 
-                                        : livreurStatus?.status === "commande_prise" 
-                                            ? "Commande récupérée" 
-                                            : livreurStatus?.status === "en_route_vers_commercant" 
-                                                ? "En route vers le commerçant" 
-                                                : livreurStatus?.status === "arrive" 
-                                                    ? "Arrivé à destination" 
-                                                    : "En route"}
+                                    {livreurStatus?.status === "en_livraison"
+                                        ? "En cours de livraison"
+                                        : livreurStatus?.status ===
+                                          "commande_prise"
+                                        ? "Commande récupérée"
+                                        : livreurStatus?.status ===
+                                          "en_route_vers_commercant"
+                                        ? "En route vers le commerçant"
+                                        : livreurStatus?.status === "arrive"
+                                        ? "Arrivé à destination"
+                                        : "En route"}
                                 </p>
                                 <p className="text-sm text-gray-600">
                                     Arrivée estimée:{" "}
@@ -379,10 +385,10 @@ const CommandeSuivi = () => {
                                     </p>
                                 )}
                                 <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                                    <div 
-                                        className="bg-blue-600 h-2.5 rounded-full" 
-                                        style={{ 
-                                            width: `${calculateProgressPercentage()}%` 
+                                    <div
+                                        className="bg-blue-600 h-2.5 rounded-full"
+                                        style={{
+                                            width: `${calculateProgressPercentage()}%`,
                                         }}
                                     ></div>
                                 </div>

@@ -128,24 +128,24 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
                       label: "Profil",
                   },
                   {
-                      to: "/livreurs",
+                      to: "/gestion-commande",
                       icon: <TbTruckDelivery className="w-5 h-5" />,
+                      label: "Gestion Commandes",
+                  },
+                  {
+                      to: "/gestion-client",
+                      icon: <FaRegListAlt className="w-5 h-5" />,
+                      label: "Gestion Clients",
+                  },
+                  {
+                      to: "/gestion-commercant",
+                      icon: <FaRegListAlt className="w-5 h-5" />,
+                      label: "Gestion Commercants",
+                  },
+                  {
+                      to: "/gestion-livreur",
+                      icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Gestion Livreurs",
-                  },
-                  {
-                      to: "/commandes",
-                      icon: <FaRegListAlt className="w-5 h-5" />,
-                      label: "Gestions Clients",
-                  },
-                  {
-                      to: "/commandes",
-                      icon: <FaRegListAlt className="w-5 h-5" />,
-                      label: "Gestions Commercants",
-                  },
-                  {
-                      to: "/commandes",
-                      icon: <FaRegListAlt className="w-5 h-5" />,
-                      label: "Gestions Commandes",
                   },
               ],
           }[authUser.role] || []

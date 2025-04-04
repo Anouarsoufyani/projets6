@@ -52,3 +52,65 @@ export const updateDocumentStatus = async (req, res) => {
     await user.save();
     res.send("Statut mis à jour");
 };
+
+// Mettre à jour un document existant
+export const updateDocument = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).send("Utilisateur non trouvé");
+
+        const { documentId } = req.params;
+        const file = req.file;
+
+        const doc = user.documents.id(documentId);
+        if (!doc) return res.status(404).send("Document introuvable");
+
+        // Supprimer l'ancien fichier physiquement
+        if (fs.existsSync(doc.url)) {
+            fs.unlinkSync(doc.url);
+        }
+
+        // Met à jour les infos
+        doc.nom = file.originalname;
+        doc.url = file.path;
+        doc.statut = "en attente"; // Repart en validation
+
+        user.statusVerification = "en vérification";
+        await user.save();
+
+        res.status(200).json({ message: "Document mis à jour" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Erreur lors de la mise à jour" });
+    }
+};
+
+// Supprimer un document
+// Supprimer un document (sans retirer l'entrée du tableau)
+export const deleteDocument = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).send("Utilisateur non trouvé");
+
+        const { documentId } = req.params;
+        const doc = user.documents.id(documentId);
+        if (!doc) return res.status(404).send("Document introuvable");
+
+        // Supprimer physiquement le fichier
+        if (doc.url && fs.existsSync(doc.url)) {
+            fs.unlinkSync(doc.url);
+        }
+
+        // On ne supprime pas l'objet, on le vide
+        doc.url = null;
+        doc.statut = "en attente";
+
+        user.statut = "en vérification";
+        await user.save();
+
+        res.status(200).json({ message: "Document marqué comme supprimé" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Erreur lors de la suppression" });
+    }
+};

@@ -8,6 +8,8 @@ import {
     uploadDocuments,
     getDocumentsAdmin,
     updateDocumentStatus,
+    updateDocument,
+    deleteDocument,
 } from "../Controllers/DocController.js";
 
 const router = express.Router();
@@ -42,5 +44,13 @@ router.patch(
     protectRoute,
     updateDocumentStatus
 );
+router.put(
+    "/update/:documentId",
+    protectRoute,
+    upload.single("document"),
+    updateDocument
+);
+
+router.delete("/delete/:documentId", protectRoute, deleteDocument);
 
 export default router;

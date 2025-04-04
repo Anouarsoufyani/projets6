@@ -15,6 +15,12 @@ import { useAuthUserQuery } from "./Hooks/useAuthQueries";
 import CreateCommandePage from "./Pages/Commandes/CreateCommandePage";
 import CommandeSuivi from "./Pages/Commandes/CommandeSuivi";
 
+import GestionClientPage from "./Pages/Admin/GestionClientPage";
+import GestionLivreurPage from "./Pages/Admin/GestionLivreurPage";
+import GestionCommercantPage from "./Pages/Admin/GestionCommercantPage";
+import GestionCommandePage from "./Pages/Admin/GestionCommandePage";
+import DashboardPageAdmin from "./Pages/Admin/DashboardPageAdmin";
+
 function App() {
     const navbarSize = "4rem";
     const sidebarSize = "18rem";
@@ -44,10 +50,10 @@ function App() {
                 style={
                     authUser
                         ? {
-                                marginLeft: sidebarSize,
-                                width: `calc(100% - ${sidebarSize})`,
-                                height: `calc(100vh - ${navbarSize})`,
-                            }
+                              marginLeft: sidebarSize,
+                              width: `calc(100% - ${sidebarSize})`,
+                              height: `calc(100vh - ${navbarSize})`,
+                          }
                         : { height: `calc(100vh - ${navbarSize})` }
                 }
             >
@@ -57,12 +63,11 @@ function App() {
                         element={
                             !authUser ? (
                                 <HomePage navbarHeight={navbarSize} />
+                            ) : authUser.role === "client" ||
+                              authUser.role === "admin" ? (
+                                <Navigate to="/commandes" />
                             ) : (
-                                authUser.role === "client" || authUser.role === "admin" ? (
-                                    <Navigate to="/commandes" />
-                                ) : (
-                                    <Navigate to="/dashboard" />
-                                )
+                                <Navigate to="/dashboard" />
                             )
                         }
                     />
@@ -86,6 +91,8 @@ function App() {
                                     <DashboardPageLivreur />
                                 ) : authUser.role === "commercant" ? (
                                     <DashboardPageCommercant />
+                                ) : authUser.role === "admin" ? (
+                                    <DashboardPageAdmin />
                                 ) : authUser.role === "client" ? (
                                     <Navigate to="/commandes" />
                                 ) : (
@@ -120,7 +127,9 @@ function App() {
                     <Route
                         path="/livreurs"
                         element={
-                            authUser && (authUser.role === "commercant" || authUser.role === "admin") ? (
+                            authUser &&
+                            (authUser.role === "commercant" ||
+                                authUser.role === "admin") ? (
                                 <SelectLivreurPage />
                             ) : (
                                 <Navigate to="/login" />
@@ -151,7 +160,9 @@ function App() {
                     <Route
                         path="/justificative"
                         element={
-                            authUser && (authUser.role === "livreur" || authUser.role === "admin") ? (
+                            authUser &&
+                            (authUser.role === "livreur" ||
+                                authUser.role === "admin") ? (
                                 <JustificativePage />
                             ) : (
                                 <Navigate to="/dashboard" />
@@ -163,6 +174,46 @@ function App() {
                         element={
                             authUser ? (
                                 <CommandeSuivi />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/gestion-client"
+                        element={
+                            authUser && authUser.role === "admin" ? (
+                                <GestionClientPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/gestion-commercant"
+                        element={
+                            authUser && authUser.role === "admin" ? (
+                                <GestionCommercantPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/gestion-livreur"
+                        element={
+                            authUser && authUser.role === "admin" ? (
+                                <GestionLivreurPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+                    <Route
+                        path="/gestion-commande"
+                        element={
+                            authUser && authUser.role === "admin" ? (
+                                <GestionCommandePage />
                             ) : (
                                 <Navigate to="/login" />
                             )

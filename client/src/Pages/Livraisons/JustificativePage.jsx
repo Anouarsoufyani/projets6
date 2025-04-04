@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useMutation } from "@tanstack/react-query";
@@ -21,6 +19,7 @@ import {
     FaFilePdf,
     FaFileImage,
     FaFile,
+    FaTrash,
 } from "react-icons/fa";
 
 const JustificativePage = () => {
@@ -125,6 +124,50 @@ const JustificativePage = () => {
         },
     });
 
+    const updateDocumentMutation = useMutation({
+        mutationFn: async ({ documentId, file }) => {
+            const formData = new FormData();
+            formData.append("document", file);
+
+            const res = await fetch(`/api/documents/update/${documentId}`, {
+                method: "PUT",
+                body: formData,
+            });
+
+            if (!res.ok) throw new Error("Échec de la mise à jour du document");
+            return res.json();
+        },
+        onSuccess: () => {
+            toast.success("Document mis à jour avec succès !");
+            setTimeout(() => {
+                refetchAuthUser();
+            }, 1000);
+        },
+        onError: (error) => {
+            toast.error(error.message || "Erreur lors de la mise à jour");
+        },
+    });
+
+    const deleteDocumentMutation = useMutation({
+        mutationFn: async (documentId) => {
+            const res = await fetch(`/api/documents/delete/${documentId}`, {
+                method: "DELETE",
+            });
+
+            if (!res.ok) throw new Error("Échec de la suppression du document");
+            return res.json();
+        },
+        onSuccess: () => {
+            toast.success("Document supprimé avec succès !");
+            setTimeout(() => {
+                refetchAuthUser();
+            }, 1000);
+        },
+        onError: (error) => {
+            toast.error(error.message || "Erreur lors de la suppression");
+        },
+    });
+
     const handleSubmit = (e) => {
         e.preventDefault();
         const formData = new FormData();
@@ -224,6 +267,46 @@ const JustificativePage = () => {
         return `/${url.replace(/\\/g, "/")}`;
     };
 
+    const handleUpdateDocument = (documentId) => {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = "image/*,application/pdf";
+        fileInput.onchange = (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error("Le fichier est trop volumineux (max 5MB)");
+                return;
+            }
+
+            if (
+                !["image/jpeg", "image/png", "application/pdf"].includes(
+                    file.type
+                )
+            ) {
+                toast.error("Format de fichier non valide (JPEG, PNG, PDF)");
+                return;
+            }
+
+            updateDocumentMutation.mutate({ documentId, file });
+        };
+        fileInput.click();
+    };
+
+    const handleDeleteDocument = (documentId, statut) => {
+        if (statut === "approuvé") {
+            toast.error("Impossible de supprimer un document approuvé");
+            return;
+        }
+
+        if (
+            window.confirm("Êtes-vous sûr de vouloir supprimer ce document ?")
+        ) {
+            deleteDocumentMutation.mutate(documentId);
+        }
+    };
+
     // Si l'utilisateur est en cours de vérification, afficher le tableau des documents
     if (authUser?.statut === "en vérification") {
         return (
@@ -294,54 +377,117 @@ const JustificativePage = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
-                                    {UserDocuments.map((doc) => (
-                                        <tr
-                                            key={doc._id}
-                                            className="hover:bg-gray-50"
-                                        >
-                                            <td className="py-4 px-4 text-sm font-medium text-gray-900">
-                                                {doc.nom}
-                                            </td>
-                                            <td className="py-4 px-4 text-sm text-gray-500">
-                                                <div className="flex items-center">
-                                                    {getFileIcon(doc.nom)}
-                                                    <span className="ml-2 text-xs">
-                                                        {getFileType(doc.nom)}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-4 text-sm">
-                                                <div
-                                                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(
-                                                        doc.statut
-                                                    )}`}
-                                                >
-                                                    {getStatusIcon(doc.statut)}
-                                                    <span className="ml-1.5">
-                                                        {getStatusText(
+                                    {UserDocuments.map((doc) => {
+                                        const isDeleted = !doc.url;
+
+                                        return (
+                                            <tr
+                                                key={doc._id}
+                                                className="hover:bg-gray-50"
+                                            >
+                                                <td className="py-4 px-4 text-sm font-medium text-gray-900">
+                                                    {doc.nom}
+                                                </td>
+
+                                                <td className="py-4 px-4 text-sm text-gray-500">
+                                                    <div className="flex items-center">
+                                                        {getFileIcon(doc.nom)}
+                                                        <span className="ml-2 text-xs">
+                                                            {getFileType(
+                                                                doc.nom
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </td>
+
+                                                <td className="py-4 px-4 text-sm">
+                                                    <div
+                                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(
+                                                            doc.statut
+                                                        )}`}
+                                                    >
+                                                        {getStatusIcon(
                                                             doc.statut
                                                         )}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="py-4 px-4 text-sm">
-                                                <button
-                                                    onClick={() =>
-                                                        window.open(
-                                                            getDocumentUrl(
-                                                                doc.url
-                                                            ),
-                                                            "_blank"
-                                                        )
-                                                    }
-                                                    className="text-blue-600 hover:text-blue-800 flex items-center"
-                                                >
-                                                    <FaEye className="mr-1" />
-                                                    <span>Voir</span>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                                        <span className="ml-1.5">
+                                                            {getStatusText(
+                                                                doc.statut
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                </td>
+
+                                                <td className="py-4 px-4 text-sm">
+                                                    {isDeleted ? (
+                                                        <button
+                                                            onClick={() =>
+                                                                handleUpdateDocument(
+                                                                    doc._id
+                                                                )
+                                                            }
+                                                            className="text-green-600 hover:text-green-800 flex items-center"
+                                                        >
+                                                            <FaUpload className="mr-1" />
+                                                            <span>
+                                                                Re-soumettre
+                                                            </span>
+                                                        </button>
+                                                    ) : (
+                                                        <div className="flex space-x-3">
+                                                            <button
+                                                                onClick={() =>
+                                                                    window.open(
+                                                                        getDocumentUrl(
+                                                                            doc.url
+                                                                        ),
+                                                                        "_blank"
+                                                                    )
+                                                                }
+                                                                className="text-blue-600 hover:text-blue-800 flex items-center"
+                                                            >
+                                                                <FaEye className="mr-1" />
+                                                                <span>
+                                                                    Voir
+                                                                </span>
+                                                            </button>
+
+                                                            <button
+                                                                onClick={() =>
+                                                                    handleUpdateDocument(
+                                                                        doc._id
+                                                                    )
+                                                                }
+                                                                className="text-amber-600 hover:text-amber-800 flex items-center"
+                                                            >
+                                                                <FaSync className="mr-1" />
+                                                                <span>
+                                                                    Modifier
+                                                                </span>
+                                                            </button>
+
+                                                            {doc.statut !==
+                                                                "approuvé" && (
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleDeleteDocument(
+                                                                            doc._id,
+                                                                            doc.statut
+                                                                        )
+                                                                    }
+                                                                    className="text-red-600 hover:text-red-800 flex items-center"
+                                                                >
+                                                                    <FaTrash className="mr-1" />
+                                                                    <span>
+                                                                        Supprimer
+                                                                    </span>
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

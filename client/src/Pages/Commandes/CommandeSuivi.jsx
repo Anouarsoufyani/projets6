@@ -92,40 +92,40 @@ const CommandeSuivi = () => {
     const coords = useGetCoords(adresseClient);
     const adresseLivraison = [coords?.data?.lat, coords?.data?.lng];
 
-    const fetchLivreurPosition = async () => {
-        // Simuler une position aléatoire proche de Paris
-        const newPosition = {
-            lat: livreurPosition.lat + (Math.random() * 0.02 - 0.01),
-            lng: livreurPosition.lng + (Math.random() * 0.02 - 0.01),
-        };
-        // Mettre à jour l'état avec la nouvelle position
-        setLivreurPosition(newPosition);
-    };
+    // const fetchLivreurPosition = async () => {
+    //     // Simuler une position aléatoire proche de Paris
+    //     const newPosition = {
+    //         lat: livreurPosition.lat + (Math.random() * 0.02 - 0.01),
+    //         lng: livreurPosition.lng + (Math.random() * 0.02 - 0.01),
+    //     };
+    //     // Mettre à jour l'état avec la nouvelle position
+    //     setLivreurPosition(newPosition);
+    // };
 
     // Déclare l'état pour la position du livreur
-    const [livreurCoordsState, setLivreurPosition] = useState({
-        lat: livreurCoords[0],
-        lng: livreurCoords[1],
-    });
+    // const [livreurCoordsState, setLivreurPosition] = useState({
+    //     lat: livreurCoords[0],
+    //     lng: livreurCoords[1],
+    // });
 
     // Mise à jour automatique de la position du livreur toutes les 5 secondes
-    useEffect(() => {
-        const interval = setInterval(() => {
-            fetchLivreurPosition();
-        }, 3000); // Rafraîchir toutes les 5 secondes
+    // useEffect(() => {
+    //     const interval = setInterval(() => {
+    //         fetchLivreurPosition();
+    //     }, 3000); // Rafraîchir toutes les 5 secondes
 
-        return () => clearInterval(interval);
-    }, [livreurPosition]); // Assurez-vous de mettre à jour correctement lors du changement
+    //     return () => clearInterval(interval);
+    // }, [livreurPosition]); // Assurez-vous de mettre à jour correctement lors du changement
 
     // Update route when positions change
-    useEffect(() => {
-        if (livreurCoordsState.lat && adresseLivraison[0]) {
-            calculateRoute(
-                { lat: livreurCoordsState.lat, lng: livreurCoordsState.lng },
-                { lat: adresseLivraison[0], lng: adresseLivraison[1] }
-            );
-        }
-    }, [livreurCoordsState, adresseLivraison]);
+    // useEffect(() => {
+    //     if (livreurCoordsState.lat && adresseLivraison[0]) {
+    //         calculateRoute(
+    //             { lat: livreurCoordsState.lat, lng: livreurCoordsState.lng },
+    //             { lat: adresseLivraison[0], lng: adresseLivraison[1] }
+    //         );
+    //     }
+    // }, [livreurCoordsState, adresseLivraison]);
 
     if (isLoading || isLoadingLivreur) {
         return <LoadingSpinner />;
@@ -415,10 +415,7 @@ const CommandeSuivi = () => {
                     >
                         {/* Marqueur pour le livreur */}
                         <Marker
-                            position={{
-                                lat: livreurCoordsState.lat,
-                                lng: livreurCoordsState.lng,
-                            }}
+                            position={livreurPosition}
                             icon={{
                                 url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
                             }}

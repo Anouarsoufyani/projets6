@@ -16,7 +16,7 @@ const Navbar = ({ isLoggedIn, navbarHeight }) => {
                 to="/"
                 className="text-2xl font-extrabold text-white tracking-wide"
             >
-                SmartCity
+                Proximity
             </Link>
             {isLoggedIn ? (
                 <></>

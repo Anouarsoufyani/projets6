@@ -225,7 +225,7 @@ const JustificativePage = () => {
         switch (statut) {
             case "en attente":
                 return <FaHourglassHalf className="text-yellow-500" />;
-            case "approuvé":
+            case "validé":
                 return <FaCheckCircle className="text-green-500" />;
             case "refusé":
                 return <FaTimesCircle className="text-red-500" />;
@@ -238,8 +238,8 @@ const JustificativePage = () => {
         switch (statut) {
             case "en attente":
                 return "En attente de vérification";
-            case "approuvé":
-                return "Approuvé";
+            case "validé":
+                return "Validé";
             case "refusé":
                 return "Refusé";
             default:
@@ -251,7 +251,7 @@ const JustificativePage = () => {
         switch (statut) {
             case "en attente":
                 return "bg-yellow-100 text-yellow-800 border-yellow-200";
-            case "approuvé":
+            case "validé":
                 return "bg-green-100 text-green-800 border-green-200";
             case "refusé":
                 return "bg-red-100 text-red-800 border-red-200";
@@ -308,7 +308,7 @@ const JustificativePage = () => {
     };
 
     // Si l'utilisateur est en cours de vérification, afficher le tableau des documents
-    if (authUser?.statut === "en vérification") {
+    if (authUser?.statut !== "non vérifié") {
         return (
             <div className="max-w-4xl mx-auto p-6">
                 <div className="mb-8">
@@ -338,24 +338,44 @@ const JustificativePage = () => {
                         </button>
                     </div>
 
-                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-                        <div className="flex">
-                            <div className="flex-shrink-0">
-                                <FaHourglassHalf className="h-5 w-5 text-yellow-400" />
-                            </div>
-                            <div className="ml-3">
-                                <p className="text-sm text-yellow-700">
-                                    Votre compte est actuellement{" "}
-                                    <span className="font-semibold">
-                                        en vérification
-                                    </span>
-                                    . Nos équipes examinent vos documents. Vous
-                                    recevrez une notification lorsque la
-                                    vérification sera terminée.
-                                </p>
+                    {authUser?.statut === "vérifié" ? (
+                        <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <FaCheckCircle className="h-5 w-5 text-green-400" />
+                                </div>
+                                <div className="ml-3">
+                                    <p className="text-sm text-green-700">
+                                        Félicitations! Votre compte est{" "}
+                                        <span className="font-semibold">
+                                            vérifié
+                                        </span>
+                                        . Vous pouvez maintenant accéder à
+                                        toutes les fonctionnalités.
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <FaHourglassHalf className="h-5 w-5 text-yellow-400" />
+                                </div>
+                                <div className="ml-3">
+                                    <p className="text-sm text-yellow-700">
+                                        Votre compte est actuellement{" "}
+                                        <span className="font-semibold">
+                                            en vérification
+                                        </span>
+                                        . Nos équipes examinent vos documents.
+                                        Vous recevrez une notification lorsque
+                                        la vérification sera terminée.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {authUser?.documents && authUser.documents.length > 0 ? (
                         <div className="overflow-x-auto">
@@ -466,7 +486,7 @@ const JustificativePage = () => {
                                                             </button>
 
                                                             {doc.statut !==
-                                                                "approuvé" && (
+                                                                "validé" && (
                                                                 <button
                                                                     onClick={() =>
                                                                         handleDeleteDocument(

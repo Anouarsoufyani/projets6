@@ -15,11 +15,9 @@ import { useAuthUserQuery } from "./Hooks/useAuthQueries";
 import CreateCommandePage from "./Pages/Commandes/CreateCommandePage";
 import CommandeSuivi from "./Pages/Commandes/CommandeSuivi";
 
-import GestionClientPage from "./Pages/Admin/GestionClientPage";
-import GestionLivreurPage from "./Pages/Admin/GestionLivreurPage";
-import GestionCommercantPage from "./Pages/Admin/GestionCommercantPage";
-import GestionCommandePage from "./Pages/Admin/GestionCommandePage";
+import GestionPiecesPage from "./Pages/Admin/GestionPiecesPage";
 import DashboardPageAdmin from "./Pages/Admin/DashboardPageAdmin";
+import GestionUsersPage from "./Pages/Admin/GestionUsersPage";
 
 function App() {
     const navbarSize = "4rem";
@@ -179,8 +177,8 @@ function App() {
                             )
                         }
                     />
-                    <Route
-                        path="/gestion-client"
+                    {/* <Route
+                        path="/client/gestion"
                         element={
                             authUser && authUser.role === "admin" ? (
                                 <GestionClientPage />
@@ -190,17 +188,7 @@ function App() {
                         }
                     />
                     <Route
-                        path="/gestion-commercant"
-                        element={
-                            authUser && authUser.role === "admin" ? (
-                                <GestionCommercantPage />
-                            ) : (
-                                <Navigate to="/login" />
-                            )
-                        }
-                    />
-                    <Route
-                        path="/gestion-livreur"
+                        path="/livreur/gestion"
                         element={
                             authUser && authUser.role === "admin" ? (
                                 <GestionLivreurPage />
@@ -210,10 +198,31 @@ function App() {
                         }
                     />
                     <Route
-                        path="/gestion-commande"
+                        path="/commercant/gestion"
                         element={
                             authUser && authUser.role === "admin" ? (
-                                <GestionCommandePage />
+                                <GestionCommercantPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    /> */}
+                    <Route
+                        path="/gestion/:role"
+                        element={
+                            authUser && authUser.role === "admin" ? (
+                                <GestionUsersPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+
+                    <Route
+                        path="/livreur/:id/pieces"
+                        element={
+                            authUser && authUser.role === "admin" ? (
+                                <GestionPiecesPage />
                             ) : (
                                 <Navigate to="/login" />
                             )

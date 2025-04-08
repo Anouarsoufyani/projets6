@@ -61,6 +61,32 @@ const CommandeSchema = new mongoose.Schema({
     date_livraison: {
         type: Date,
     }, // Rempli quand livrée
+    code_Client: {
+        type: String,
+        default: () => Math.floor(1000 + Math.random() * 9000).toString(),
+    },
+    code_Commercant: {
+        type: String,
+        default: () => Math.floor(1000 + Math.random() * 9000).toString(),
+    },
+    is_commercant_verifie: {
+        type: Boolean,
+        default: false,
+    },
+    is_client_verifie: {
+        type: Boolean,
+        default: false,
+    },
+    itineraire: [
+        {
+            lat: Number,
+            lng: Number,
+            timestamp: {
+                type: Date,
+                default: Date.now,
+            },
+        },
+    ],
 });
 
 // Index pour accélérer les filtres

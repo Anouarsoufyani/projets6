@@ -15,14 +15,14 @@ const HomePage = ({ navbarHeight }) => {
                     <div className="flex justify-center items-center w-1/2 h-full">
                         <img
                             src="deliver_truck_banner.svg"
-                            alt="SmartCity Delivery"
+                            alt="Proximity Delivery"
                             className="w-3/4"
                         />
                     </div>
                     <div className="w-1/2 h-full flex flex-col justify-center items-center gap-8 px-16 text-white">
                         <div className="flex flex-col gap-4 text-center">
                             <h1 className="text-5xl font-bold">
-                                Révolutionnez vos livraisons avec SmartCity
+                                Révolutionnez vos livraisons avec Proximity
                             </h1>
                             <p className="text-2xl">
                                 Rapidité, fiabilité et durabilité au service de

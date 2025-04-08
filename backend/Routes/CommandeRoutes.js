@@ -5,6 +5,10 @@ import {
     getCommandeById,
     cancelCommande,
     getLivreurInfo,
+    getCodeClient,
+    getCodeCommercant,
+    validation_codeCL,
+    validation_codeCom,
 } from "../Controllers/CommandeController.js";
 import { protectRoute } from "../Middleware/protectRoute.js";
 import { protectSuivi } from "../Middleware/protectSuivi.js";
@@ -17,4 +21,9 @@ router.get("/", protectRoute, getCommandes);
 router.get("/:id", protectRoute, protectSuivi, getCommandeById);
 router.post("/cancel/:id", protectRoute, cancelCommande);
 router.get("/:id/livreur-info", protectRoute, getLivreurInfo);
+router.get("/code/client", protectRoute, getCodeClient);
+router.get("/code/commercant", protectRoute, getCodeCommercant);
+router.post("/validationClient", protectRoute, validation_codeCL);
+router.post("/validationCommercant", protectRoute, validation_codeCom);
+
 export default router;

@@ -46,7 +46,9 @@ export const updateDocumentStatus = async (req, res) => {
 
     // Vérifie si tous les docs sont validés
     if (user.documents.every((doc) => doc.statut === "validé")) {
-        user.statusVerification = "vérifié";
+        user.statut = "vérifié";
+    } else {
+        user.statut = "en vérification";
     }
 
     await user.save();
@@ -64,6 +66,8 @@ export const updateDocument = async (req, res) => {
 
         const doc = user.documents.id(documentId);
         if (!doc) return res.status(404).send("Document introuvable");
+        if (doc.statut === "validé")
+            return res.status(403).send("Ce document a déjà été validé");
 
         // Supprimer l'ancien fichier physiquement
         if (fs.existsSync(doc.url)) {
@@ -73,9 +77,9 @@ export const updateDocument = async (req, res) => {
         // Met à jour les infos
         doc.nom = file.originalname;
         doc.url = file.path;
-        doc.statut = "en attente"; // Repart en validation
+        doc.statut = "en attente";
 
-        user.statusVerification = "en vérification";
+        user.statut = "en vérification";
         await user.save();
 
         res.status(200).json({ message: "Document mis à jour" });
@@ -86,7 +90,6 @@ export const updateDocument = async (req, res) => {
 };
 
 // Supprimer un document
-// Supprimer un document (sans retirer l'entrée du tableau)
 export const deleteDocument = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
@@ -95,6 +98,8 @@ export const deleteDocument = async (req, res) => {
         const { documentId } = req.params;
         const doc = user.documents.id(documentId);
         if (!doc) return res.status(404).send("Document introuvable");
+        if (doc.statut === "validé")
+            return res.status(403).send("Ce document a déjà été validé");
 
         // Supprimer physiquement le fichier
         if (doc.url && fs.existsSync(doc.url)) {

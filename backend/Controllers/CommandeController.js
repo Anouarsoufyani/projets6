@@ -116,157 +116,330 @@ const { Livreur } = userModels;
 // };
 
 export const getCommandeById = async (req, res) => {
-  try {
-    const commande = await Commande.findById(req.params.id)
-      .populate("client_id")
-      .populate("commercant_id")
-      .populate("livreur_id");
-    return res.status(200).json({ success: true, data: commande });
-  } catch (error) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Commande not found" });
-  }
+    try {
+        const commande = await Commande.findById(req.params.id)
+            .populate("client_id")
+            .populate("commercant_id")
+            .populate("livreur_id");
+        return res.status(200).json({ success: true, data: commande });
+    } catch (error) {
+        return res
+            .status(400)
+            .json({ success: false, error: "Commande not found" });
+    }
 };
 
 export const getCommandes = async (req, res) => {
-  try {
-    // Récupérer le rôle de l'utilisateur connecté
-    const userRole = req.user.role; // Assurez-vous que cette information est disponible dans req.user
+    try {
+        // Récupérer le rôle de l'utilisateur connecté
+        const userRole = req.user.role; // Assurez-vous que cette information est disponible dans req.user
 
-    let filter = {};
+        let filter = {};
 
-    // Définir le filtre selon le rôle de l'utilisateur
-    switch (userRole) {
-      case "client":
-        filter = { client_id: req.user.id };
-        break;
-      case "commercant":
-        filter = { commercant_id: req.user.id };
-        break;
-      case "livreur":
-        filter = { livreur_id: req.user.id };
-        break;
-      // case "admin":
-      //     // Pour un administrateur, aucun filtre (toutes les commandes)
-      //     break;
-      default:
-        return res.status(403).json({
-          success: false,
-          message: "Rôle utilisateur non autorisé ou non défini"
-        });
+        // Définir le filtre selon le rôle de l'utilisateur
+        switch (userRole) {
+            case "client":
+                filter = { client_id: req.user.id };
+                break;
+            case "commercant":
+                filter = { commercant_id: req.user.id };
+                break;
+            case "livreur":
+                filter = { livreur_id: req.user.id };
+                break;
+            // case "admin":
+            //     // Pour un administrateur, aucun filtre (toutes les commandes)
+            //     break;
+            default:
+                return res.status(403).json({
+                    success: false,
+                    message: "Rôle utilisateur non autorisé ou non défini",
+                });
+        }
+
+        // Effectuer la requête avec le filtre approprié
+        const commandes = await Commande.find(filter)
+            .populate("client_id")
+            .populate("commercant_id")
+            .populate("livreur_id");
+
+        return res.status(200).json({ success: true, commandes });
+    } catch (error) {
+        return res.status(400).json({ success: false, message: error.message });
     }
-
-    // Effectuer la requête avec le filtre approprié
-    const commandes = await Commande.find(filter)
-      .populate("client_id")
-      .populate("commercant_id")
-      .populate("livreur_id");
-
-    return res.status(200).json({ success: true, commandes });
-  } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
-  }
 };
 
 export const createCommande = async (req, res) => {
-  console.log("test");
-  console.log(req.body);
+    console.log("test");
+    console.log(req.body);
 
-  // const {
-  //     client_id,
-  //     commercant_id,
-  //     livreur_id,
-  //     total,
-  //     statut,
-  //     adresse_livraison,
-  // } = req.body;
-  const commandeFictive = new Commande({
-    client_id: "67d15d4c87a55d5aadf95b03",
-    commercant_id: "67d15e4ccf1feb1de84ad918",
-    livreur_id: "67d15c6987a55d5aadf95aff",
-    total: 3 * 8.99,
-    statut: "en_livraison", // Commande en cours de livraison
-    adresse_livraison: {
-      rue: "Arc de Triomphe",
-      ville: "Montpellier",
-      code_postal: "34000",
-      lat: 43.611152689515265,
-      lng: 3.8724387513146397
-    },
-    date_creation: new Date(), // Date fictive (aujourd'hui)
-    date_livraison: null // Pas encore livrée
-  });
+    // const {
+    //     client_id,
+    //     commercant_id,
+    //     livreur_id,
+    //     total,
+    //     statut,
+    //     adresse_livraison,
+    // } = req.body;
+    const commandeFictive = new Commande({
+        client_id: "67d15d4c87a55d5aadf95b03",
+        commercant_id: "67d15e4ccf1feb1de84ad918",
+        livreur_id: "67d15c6987a55d5aadf95aff",
+        total: 3 * 8.99,
+        statut: "en_livraison", // Commande en cours de livraison
+        adresse_livraison: {
+            rue: "Arc de Triomphe",
+            ville: "Montpellier",
+            code_postal: "34000",
+            lat: 43.611152689515265,
+            lng: 3.8724387513146397,
+        },
+        date_creation: new Date(), // Date fictive (aujourd'hui)
+        date_livraison: null, // Pas encore livrée
+    });
 
-  // Sauvegarde dans la base (à utiliser dans ton code)
-  try {
-    await commandeFictive.save();
-    console.log("Commande fictive sauvegardée :", commandeFictive);
+    // Sauvegarde dans la base (à utiliser dans ton code)
+    try {
+        await commandeFictive.save();
+        console.log("Commande fictive sauvegardée :", commandeFictive);
 
-    return res.status(201).json(commandeFictive);
-  } catch (err) {
-    console.error("Erreur :", err);
-    return res.status(500).json({ error: "Erreur lors de la sauvegarde" });
-  }
+        return res.status(201).json(commandeFictive);
+    } catch (err) {
+        console.error("Erreur :", err);
+        return res.status(500).json({ error: "Erreur lors de la sauvegarde" });
+    }
 };
 
 export const cancelCommande = async (req, res) => {
-  try {
-    const commande = await Commande.findById(req.params.id);
-    if (!commande) {
-      return res
-        .status(404)
-        .json({ success: false, error: "Commande not found" });
+    try {
+        const commande = await Commande.findById(req.params.id);
+        if (!commande) {
+            return res
+                .status(404)
+                .json({ success: false, error: "Commande not found" });
+        }
+
+        commande.statut = "annulee";
+        await commande.save();
+
+        return res
+            .status(200)
+            .json({ success: true, message: "Commande annulée" });
+    } catch (error) {
+        return res
+            .status(400)
+            .json({ success: false, error: "Failed to cancel commande" });
     }
-
-    commande.statut = "annulee";
-    await commande.save();
-
-    return res.status(200).json({ success: true, message: "Commande annulée" });
-  } catch (error) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Failed to cancel commande" });
-  }
 };
 
 export const getLivreurInfo = async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    const commande = await Commande.findById(id).populate("livreur_id");
+        const commande = await Commande.findById(id).populate("livreur_id");
 
-    if (!commande) {
-      return res.status(404).json({
-        success: false,
-        error: "Commande non trouvée"
-      });
+        if (!commande) {
+            return res.status(404).json({
+                success: false,
+                error: "Commande non trouvée",
+            });
+        }
+
+        if (!commande.livreur_id) {
+            return res.status(404).json({
+                success: false,
+                error: "Aucun livreur assigné à cette commande",
+            });
+        }
+
+        // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
+        const livreur = commande.livreur_id;
+
+        return res.status(200).json({
+            success: true,
+            livreurId: livreur._id,
+            position: livreur.position, // Position par défaut si non disponible
+            status: commande.statut,
+        });
+    } catch (error) {
+        console.error(
+            "Erreur lors de la récupération des informations du livreur:",
+            error
+        );
+        return res.status(500).json({
+            success: false,
+            error: "Erreur serveur",
+        });
     }
+};
 
-    if (!commande.livreur_id) {
-      return res.status(404).json({
-        success: false,
-        error: "Aucun livreur assigné à cette commande"
-      });
+export const getCodeClient = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const commande = await Commande.findById(id).populate("livreur_id");
+
+        if (!commande) {
+            return res.status(404).json({
+                success: false,
+                error: "Commande non trouvée",
+            });
+        }
+
+        if (!commande.livreur_id) {
+            return res.status(404).json({
+                success: false,
+                error: "Aucun livreur assigné à cette commande",
+            });
+        }
+
+        // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
+        const livreur = commande.livreur_id;
+
+        return res.status(200).json({
+            success: true,
+            livreurId: livreur._id,
+            code_Client: commande.code_Client,
+        });
+    } catch (error) {
+        console.error(
+            "Erreur lors de la récupération des informations du livreur:",
+            error
+        );
+        return res.status(500).json({
+            success: false,
+            error: "Erreur serveur",
+        });
     }
+};
 
-    // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
-    const livreur = commande.livreur_id;
+export const getCodeCommercant = async (req, res) => {
+    try {
+        const { id } = req.params;
 
-    return res.status(200).json({
-      success: true,
-      livreurId: livreur._id,
-      position: livreur.position, // Position par défaut si non disponible
-      status: commande.statut
-    });
-  } catch (error) {
-    console.error(
-      "Erreur lors de la récupération des informations du livreur:",
-      error
-    );
-    return res.status(500).json({
-      success: false,
-      error: "Erreur serveur"
-    });
-  }
+        const commande = await Commande.findById(id).populate("livreur_id");
+
+        if (!commande) {
+            return res.status(404).json({
+                success: false,
+                error: "Commande non trouvée",
+            });
+        }
+
+        if (!commande.livreur_id) {
+            return res.status(404).json({
+                success: false,
+                error: "Aucun livreur assigné à cette commande",
+            });
+        }
+
+        // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
+        const livreur = commande.livreur_id;
+
+        return res.status(200).json({
+            success: true,
+            livreurId: livreur._id,
+            code_commercant: commande.code_commercant,
+        });
+    } catch (error) {
+        console.error(
+            "Erreur lors de la récupération des informations du livreur:",
+            error
+        );
+        return res.status(500).json({
+            success: false,
+            error: "Erreur serveur",
+        });
+    }
+};
+
+export const validation_codeCL = async (req, res) => {
+    try {
+        const { codeCl, id } = req.body;
+
+        const commande = await Commande.findById(id).populate("livreur_id");
+        console.log("ID", id, codeCl, commande.code_Client);
+
+        if (!commande) {
+            return res.status(404).json({
+                success: false,
+                error: "Commande non trouvée",
+            });
+        }
+
+        if (!commande.livreur_id) {
+            return res.status(404).json({
+                success: false,
+                error: "Aucun livreur assigné à cette commande",
+            });
+        }
+
+        // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
+        if (
+            commande.code_Client == codeCl &&
+            commande.is_commercant_verifie == true
+        ) {
+            commande.is_client_verifie = true;
+            commande.statut = "livree";
+            await commande.save();
+            return res.status(200).json({
+                success: true,
+                code_Client: commande.code_Client,
+            });
+        } else {
+            return res.status(404).json({
+                success: false,
+                error: "Aucun livreur assigné à cette commande",
+            });
+        }
+    } catch (error) {
+        console.error("Mauvais code tapé", error);
+        return res.status(500).json({
+            success: false,
+            error: "Erreur serveur",
+        });
+    }
+};
+
+export const validation_codeCom = async (req, res) => {
+    try {
+        const { codeCom, id } = req.body;
+
+        const commande = await Commande.findById(id).populate("livreur_id");
+
+        if (!commande) {
+            return res.status(404).json({
+                success: false,
+                error: "Commande non trouvée",
+            });
+        }
+
+        if (!commande.livreur_id) {
+            return res.status(404).json({
+                success: false,
+                error: "Aucun livreur assigné à cette commande",
+            });
+        }
+
+        // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
+        if (commande.code_Commercant == codeCom) {
+            commande.is_commercant_verifie = true;
+            await commande.save();
+            return res.status(200).json({
+                success: true,
+                code_Client: commande.code_Commercant,
+            });
+        } else {
+            return res.status(404).json({
+                success: false,
+                error: "Aucun livreur assigné à cette commande",
+            });
+        }
+    } catch (error) {
+        console.error("Mauvais code tapé", error);
+        return res.status(500).json({
+            success: false,
+            error: "Erreur serveur",
+        });
+    }
 };

@@ -133,45 +133,6 @@ const CommercantSchema = new mongoose.Schema({
             type: Number,
         },
     },
-    // horaires: {
-    //     lundi: {
-    //         ouverture: String,
-    //         fermeture: String,
-    //     },
-    //     mardi: {
-    //         ouverture: String,
-    //         fermeture: String,
-    //     },
-    //     mercredi: {
-    //         ouverture: String,
-    //         fermeture: String,
-    //     },
-    //     jeudi: {
-    //         ouverture: String,
-    //         fermeture: String,
-    //     },
-    //     vendredi: {
-    //         ouverture: String,
-    //         fermeture: String,
-    //     },
-    //     samedi: {
-    //         ouverture: String,
-    //         fermeture: String,
-    //     },
-    //     dimanche: {
-    //         ouverture: String,
-    //         fermeture: String,
-    //     },
-    // },
-    // type_commerce: {
-    //     type: String,
-    //     enum: ["restaurant", "épicerie", "autre"],
-    //     required: true,
-    // },
-    // delai_preparation: {
-    //     type: Number,
-    //     default: 30,
-    // },
 });
 
 const Commercant = User.discriminator("commercant", CommercantSchema);
@@ -205,33 +166,6 @@ const ClientSchema = new mongoose.Schema({
             },
         },
     ],
-    // moyens_paiement: [
-    //     {
-    //         type: {
-    //             type: String,
-    //             enum: ["carte", "paypal", "especes"],
-    //             required: true,
-    //         },
-    //         details: {
-    //             type: String,
-    //             required: true,
-    //         },
-    //     },
-    // ],
-    // preferences: {
-    //     notifications: {
-    //         type: Boolean,
-    //         default: true,
-    //     },
-    //     langue: {
-    //         type: String,
-    //         default: "fr",
-    //     },
-    // },
-    // points_fidelite: {
-    //     type: Number,
-    //     default: 0,
-    // },
 });
 
 const Client = User.discriminator("client", ClientSchema);

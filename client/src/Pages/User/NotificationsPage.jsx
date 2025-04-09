@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
+const api = import.meta.env.VITE_API_URL;
+
 const getNotifications = async () => {
     try {
-        const res = await fetch("/api/notifications", {
+        const res = await fetch(`${api}/notifications`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
         });

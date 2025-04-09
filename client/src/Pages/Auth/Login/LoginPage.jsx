@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Link } from "react-router"; // Correction de "react-router" à "react-router-dom"
 import { FaEnvelope, FaLock } from "react-icons/fa";
 
+const api = import.meta.env.VITE_API_URL;
+
 const LoginPage = () => {
     const [formData, setFormData] = useState({
         email: "",
@@ -19,7 +21,7 @@ const LoginPage = () => {
         error,
     } = useMutation({
         mutationFn: async ({ email, password }) => {
-            const res = await fetch("/api/auth/login", {
+            const res = await fetch(`${api}/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

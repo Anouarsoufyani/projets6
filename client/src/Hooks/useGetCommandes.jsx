@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
+const api = import.meta.env.VITE_API_URL;
+
 export const getUserCommandes = async () => {
-    const res = await fetch(`/api/commandes`);
+    const res = await fetch(`${api}/commandes`);
     const data = await res.json();
 
     if (data.error) {

@@ -24,6 +24,8 @@ import {
 
 import { getDocumentUrl } from "../../Hooks/getDocumentsUrl";
 
+const api = import.meta.env.VITE_API_URL;
+
 const JustificativePage = () => {
     const [selectedVehicles, setSelectedVehicles] = useState([]);
     const [step, setStep] = useState("vehicles");
@@ -106,7 +108,7 @@ const JustificativePage = () => {
 
     const uploadMutation = useMutation({
         mutationFn: async (formData) => {
-            const res = await fetch("/api/documents/upload", {
+            const res = await fetch(`${api}/documents/upload`, {
                 method: "POST",
                 body: formData,
             });
@@ -131,7 +133,7 @@ const JustificativePage = () => {
             const formData = new FormData();
             formData.append("document", file);
 
-            const res = await fetch(`/api/documents/update/${documentId}`, {
+            const res = await fetch(`${api}/documents/update/${documentId}`, {
                 method: "PUT",
                 body: formData,
             });
@@ -152,7 +154,7 @@ const JustificativePage = () => {
 
     const deleteDocumentMutation = useMutation({
         mutationFn: async (documentId) => {
-            const res = await fetch(`/api/documents/delete/${documentId}`, {
+            const res = await fetch(`${api}/documents/delete/${documentId}`, {
                 method: "DELETE",
             });
 

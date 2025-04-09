@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router"; // Correction de "react-router" à "react-router-dom"
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaUserTie } from "react-icons/fa";
 
+const api = import.meta.env.VITE_API_URL;
+
 const SignupPage = () => {
     const [role, setRole] = useState(null);
 
@@ -24,7 +26,7 @@ const SignupPage = () => {
 
     const { mutate: signupMutation, isPending } = useMutation({
         mutationFn: async ({ email, nom, password, numero, role }) => {
-            const res = await fetch("/api/auth/signup", {
+            const res = await fetch(`${api}/auth/signup`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

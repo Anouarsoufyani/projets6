@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
+const api = import.meta.env.VITE_API_URL;
+
 const fetchUsersByRole = async (role) => {
-    const res = await fetch(`/api/user/gestion/${role}`);
+    const res = await fetch(`${api}/user/gestion/${role}`);
     const data = await res.json();
 
     if (data.error) {
@@ -15,7 +17,7 @@ const fetchUsersByRole = async (role) => {
 };
 
 const fetchUserById = async (id) => {
-    const res = await fetch(`/api/user/${id}`);
+    const res = await fetch(`${api}/user/${id}`);
     const data = await res.json();
 
     if (data.error) {

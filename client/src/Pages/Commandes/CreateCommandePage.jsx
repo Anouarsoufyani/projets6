@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { FaStore, FaMapMarkerAlt, FaMoneyBillWave } from "react-icons/fa";
 import { useGetCoords } from "../../Hooks/useGetCoords";
 
+const api = import.meta.env.VITE_API_URL;
+
 const CreateCommandePage = () => {
     const { data: authUser } = useAuthUserQuery();
     const [shouldSubmit, setShouldSubmit] = useState(false);
@@ -40,7 +42,7 @@ const CreateCommandePage = () => {
 
     const { mutate: createCommandeMutation, isPending } = useMutation({
         mutationFn: async (commandeData) => {
-            const res = await fetch("/api/commandes/new", {
+            const res = await fetch(`${api}/commandes/new`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

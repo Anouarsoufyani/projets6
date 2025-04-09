@@ -14,6 +14,8 @@ const containerStyle = {
     borderRadius: "8px",
 };
 
+const api = import.meta.env.VITE_API_URL;
+
 // Custom loading spinner component
 const LoadingSpinner = () => (
     <div className="flex justify-center items-center h-screen">
@@ -53,7 +55,7 @@ const CommandeSuivi = () => {
         queryKey: ["getCommande", id],
         queryFn: async () => {
             try {
-                const res = await fetch(`/api/commandes/${id}`, {
+                const res = await fetch(`${api}/commandes/${id}`, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
                 });
@@ -80,7 +82,7 @@ const CommandeSuivi = () => {
     const validateCommercantMutation = useMutation({
         mutationFn: async (code) => {
             const res = await fetch(
-                `/api/commandes/code/validationCommercant`,
+                `${api}/commandes/code/validationCommercant`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -106,7 +108,7 @@ const CommandeSuivi = () => {
     // Mutation pour valider le code client
     const validateClientMutation = useMutation({
         mutationFn: async (code) => {
-            const res = await fetch(`/api/commandes/code/validationClient`, {
+            const res = await fetch(`${api}/commandes/code/validationClient`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id, code }),
@@ -145,7 +147,7 @@ const CommandeSuivi = () => {
         lastRouteCalculationRef.current = now;
 
         try {
-            const response = await fetch(`/api/commandes/${id}/livreur-info`);
+            const response = await fetch(`${api}/commandes/${id}/livreur-info`);
 
             if (!response.ok) {
                 if (response.status !== 404) {

@@ -1,7 +1,9 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 
+const api = import.meta.env.VITE_API_URL;
+
 const getDocuments = async (id) => {
-    const res = await fetch(`/api/user/livreur/${id}/pieces`);
+    const res = await fetch(`${api}/user/livreur/${id}/pieces`);
     const data = await res.json();
 
     if (data.error) {
@@ -16,7 +18,7 @@ const getDocuments = async (id) => {
 
 const updateDocument = async ({ livreurId, documentId, statut }) => {
     const res = await fetch(
-        `/api/user/livreur/${livreurId}/pieces/${documentId}`,
+        `${api}/user/livreur/${livreurId}/pieces/${documentId}`,
         {
             method: "PATCH",
             headers: {

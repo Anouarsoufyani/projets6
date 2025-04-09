@@ -11,6 +11,8 @@ import PropTypes from "prop-types";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
+const api = import.meta.env.VITE_API_URL;
+
 const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
     const location = useLocation();
     const queryClient = useQueryClient();
@@ -18,7 +20,7 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
     // Mutation for logout
     const { mutate: logout } = useMutation({
         mutationFn: async () => {
-            const res = await fetch("/api/auth/logout", { method: "POST" });
+            const res = await fetch(`${api}/auth/logout`, { method: "POST" });
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.error || "Something went wrong");

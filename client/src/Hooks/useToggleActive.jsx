@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
+const api = import.meta.env.VITE_API_URL;
 const useToggleActive = () => {
     const queryClient = useQueryClient();
 
@@ -9,7 +10,7 @@ const useToggleActive = () => {
             mutationFn: async (id) => {
                 console.log("id", JSON.stringify({ id }));
 
-                const res = await fetch(`/api/user/active`, {
+                const res = await fetch(`${api}/user/active`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

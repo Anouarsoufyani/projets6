@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
+const api = import.meta.env.VITE_API_URL;
+
 const useDeliveryPosition = (isDeliveryActive, userId, commandeId = null) => {
     const [position, setPosition] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -9,7 +11,7 @@ const useDeliveryPosition = (isDeliveryActive, userId, commandeId = null) => {
 
     const { mutate: updatePosition } = useMutation({
         mutationFn: async (newPosition) => {
-            const response = await fetch(`/api/user/${userId}/position`, {
+            const response = await fetch(`${api}/user/${userId}/position`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

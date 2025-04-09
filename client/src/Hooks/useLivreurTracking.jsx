@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 
+const api = import.meta.env.VITE_API_URL;
+
 const useLivreurTracking = (commandeId, refreshInterval = 10000) => {
     const [livreurPosition, setLivreurPosition] = useState(null);
     const [livreurStatus, setLivreurStatus] = useState(null);
@@ -23,7 +25,7 @@ const useLivreurTracking = (commandeId, refreshInterval = 10000) => {
 
         try {
             const response = await fetch(
-                `/api/commandes/${commandeId}/livreur-info`
+                `${api}/commandes/${commandeId}/livreur-info`
             );
 
             if (!response.ok) {

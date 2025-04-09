@@ -5,6 +5,8 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import path from "path";
 import { fileURLToPath } from "url";
+import cors from "cors";
+
 import connectDB from "./DB/Connect.js";
 
 import authRoutes from "./Routes/AuthRoutes.js";
@@ -50,12 +52,13 @@ io.on("connection", (socket) => {
     });
 });
 
-app.use(
-    cors({
-        origin: ["http://localhost:3000", "https://projets6.vercel.app"],
-        credentials: true,
-    })
-);
+// app.use(
+//     cors({
+//         origin: ["http://localhost:3000", "https://projets6.vercel.app"],
+//         credentials: true,
+//     })
+// );
+app.use(cors({ origin: "*" }));
 
 // Middlewares globaux
 app.use(express.json({ limit: "50mb" }));

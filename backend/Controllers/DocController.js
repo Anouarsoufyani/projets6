@@ -108,7 +108,7 @@ export const deleteDocument = async (req, res) => {
 
         // On ne supprime pas l'objet, on le vide
         doc.url = null;
-        doc.statut = "en attente";
+        doc.statut = "non soumis";
 
         user.statut = "en vérification";
         await user.save();

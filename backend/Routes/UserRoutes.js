@@ -7,6 +7,7 @@ import {
     getUsersByRole,
     getLivreurDocuments,
     updateLivreurDocuments,
+    getUserById,
 } from "../Controllers/UserController.js";
 import { protectRoute } from "../Middleware/protectRoute.js";
 import { protectLivreur } from "../Middleware/protectLivreur.js";
@@ -37,7 +38,7 @@ router.patch(
     protectAdmin,
     updateLivreurDocuments
 );
-
+router.get("/:id", protectRoute, getUserById);
 // router.get("/:id", protectRoute, getCommandeById);
 
 export default router;

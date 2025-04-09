@@ -280,6 +280,13 @@ export const updateLivreurDocuments = async (req, res) => {
         });
     }
 
+    if (statut === "non soumis") {
+        return res.status(400).json({
+            success: false,
+            error: "Impossible de valider ou refuser un document non soumis",
+        });
+    }
+
     try {
         const livreur = await Livreur.findById(livreurId);
         if (!livreur) {
@@ -301,9 +308,15 @@ export const updateLivreurDocuments = async (req, res) => {
 
         const tousValides =
             livreur.documents.length > 0 &&
-            livreur.documents.every((doc) => doc.statut === "validé");
+            livreur.documents.every(
+                (doc) => doc.statut === "validé" || doc.statut === "refusé"
+            );
 
-        livreur.statut = tousValides ? "vérifié" : "refusé";
+        livreur.statut = tousValides
+            ? livreur.documents.every((doc) => doc.statut === "validé")
+                ? "vérifié"
+                : "refusé"
+            : "en vérification";
 
         await livreur.save();
 
@@ -321,6 +334,28 @@ export const updateLivreurDocuments = async (req, res) => {
         return res.status(500).json({
             success: false,
             error: "Erreur lors de la mise à jour des documents du livreur",
+        });
+    }
+};
+
+export const getUserById = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const user = await User.findById(id).select("-password");
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: "Utilisateur non trouvé",
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            data: user,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: "Erreur lors de la récupération de l'utilisateur",
         });
     }
 };

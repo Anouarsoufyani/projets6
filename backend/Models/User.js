@@ -81,8 +81,8 @@ const LivreurSchema = new mongoose.Schema({
             url: String,
             statut: {
                 type: String,
-                enum: ["en attente", "validé", "refusé"],
-                default: "en attente",
+                enum: ["non soumis", "en attente", "validé", "refusé"],
+                default: "non soumis",
             },
         },
     ],

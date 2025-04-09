@@ -19,6 +19,8 @@ import GestionPiecesPage from "./Pages/Admin/GestionPiecesPage";
 import DashboardPageAdmin from "./Pages/Admin/DashboardPageAdmin";
 import GestionUsersPage from "./Pages/Admin/GestionUsersPage";
 
+import ViewDocs from "./Pages/Documents/ViewDocs";
+
 function App() {
     const navbarSize = "4rem";
     const sidebarSize = "18rem";
@@ -226,6 +228,13 @@ function App() {
                             ) : (
                                 <Navigate to="/login" />
                             )
+                        }
+                    />
+
+                    <Route
+                        path="/uploads/:id/:filename"
+                        element={
+                            authUser ? <ViewDocs /> : <Navigate to="/login" />
                         }
                     />
                 </Routes>

@@ -1,13 +1,12 @@
 "use client";
 import { useGetCoords } from "../../Hooks/useGetCoords";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useParams } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import toast from "react-hot-toast";
 import useLivreurTracking from "../../Hooks/useLivreurTracking";
-import useGoogleMapDirections from "../../Hooks/useGoogleMapDirections";
 
 const containerStyle = {
     width: "100%",
@@ -24,26 +23,32 @@ const LoadingSpinner = () => (
 
 const CommandeSuivi = () => {
     const { data: authUser } = useAuthUserQuery();
-    console.log("authUser", authUser.role);
-
     const { id } = useParams();
+    const [mapInitialized, setMapInitialized] = useState(false);
+    const [mapCenter, setMapCenter] = useState(null);
+    const [commercantCode, setCommercantCode] = useState("");
+    const [clientCode, setClientCode] = useState("");
+    const [distance, setDistance] = useState(null);
+    const [duration, setDuration] = useState(null);
+    const mapRef = useRef(null);
+    const directionsRendererRef = useRef(null);
+    const intervalRef = useRef(null);
+    const lastRouteCalculationRef = useRef(0);
 
-    // Utiliser le hook useLivreurTracking pour suivre la position du livreur
+    // Utiliser un intervalle personnalisé au lieu du refresh automatique du hook
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    // Utiliser le hook useLivreurTracking pour la position initiale (avec un intervalle de 15 secondes)
     const {
         livreurPosition,
         livreurStatus,
         isLoading: isLoadingLivreur,
-    } = useLivreurTracking(id);
+    } = useLivreurTracking(id, 15000);
 
-    // Utiliser notre hook personnalisé pour les directions
-    const { distance, duration, calculateRoute, onMapLoad } =
-        useGoogleMapDirections({
-            strokeColor: "#10b981", // emerald-500
-            strokeWeight: 5,
-            strokeOpacity: 0.8,
-            suppressMarkers: true,
-        });
+    // État local pour stocker la dernière position connue du livreur
+    const [currentLivreurPosition, setCurrentLivreurPosition] = useState(null);
 
+    // Récupérer les données de la commande
     const { data: commande, isLoading } = useQuery({
         queryKey: ["getCommande", id],
         queryFn: async () => {
@@ -59,9 +64,6 @@ const CommandeSuivi = () => {
                     throw new Error(data.error || "Erreur lors du chargement");
                 }
 
-                if (data.error === "Forbidden : Access denied") {
-                    // Redirection dans le frontend
-                }
                 return data;
             } catch (error) {
                 toast.error(error.message);
@@ -74,60 +76,245 @@ const CommandeSuivi = () => {
         retry: false,
     });
 
-    const livreur = commande?.data?.livreur_id || {};
+    // Mutation pour valider le code commerçant
+    const validateCommercantMutation = useMutation({
+        mutationFn: async (code) => {
+            const res = await fetch(
+                `/api/commandes/code/validationCommercant`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id, code }),
+                }
+            );
 
-    // Utiliser la position du livreur depuis le tracking
-    const livreurCoords = livreurPosition
-        ? [livreurPosition.lat, livreurPosition.lng]
-        : [48.8466, 2.3622]; // position par défaut si non disponible
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Erreur de validation");
+            return data;
+        },
+        onSuccess: () => {
+            toast.success("Commande récupérée avec succès!");
+            setCommercantCode("");
+            // Forcer un rafraîchissement des données
+            setRefreshKey((prev) => prev + 1);
+        },
+        onError: (error) => {
+            toast.error(error.message || "Code invalide");
+        },
+    });
+
+    // Mutation pour valider le code client
+    const validateClientMutation = useMutation({
+        mutationFn: async (code) => {
+            const res = await fetch(`/api/commandes/code/validationClient`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, code }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Erreur de validation");
+            return data;
+        },
+        onSuccess: () => {
+            toast.success("Livraison confirmée avec succès!");
+            setClientCode("");
+            // Forcer un rafraîchissement des données
+            setRefreshKey((prev) => prev + 1);
+        },
+        onError: (error) => {
+            toast.error(error.message || "Code invalide");
+        },
+    });
 
     // Avoir la geolocalisation exacte grâce à l'adresse
-    const adresseClient =
-        commande?.data?.adresse_livraison?.rue +
-        ", " +
-        commande?.data?.adresse_livraison?.ville +
-        ", " +
-        commande?.data?.adresse_livraison?.code_postal;
+    const adresseClient = commande?.data?.adresse_livraison
+        ? `${commande.data.adresse_livraison.rue}, ${commande.data.adresse_livraison.ville}, ${commande.data.adresse_livraison.code_postal}`
+        : "";
 
-    const coords = useGetCoords(adresseClient);
-    const adresseLivraison = [coords?.data?.lat, coords?.data?.lng];
+    const { data: coords, isLoading: isLoadingCoords } =
+        useGetCoords(adresseClient);
 
-    // const fetchLivreurPosition = async () => {
-    //     // Simuler une position aléatoire proche de Paris
-    //     const newPosition = {
-    //         lat: livreurPosition.lat + (Math.random() * 0.02 - 0.01),
-    //         lng: livreurPosition.lng + (Math.random() * 0.02 - 0.01),
-    //     };
-    //     // Mettre à jour l'état avec la nouvelle position
-    //     setLivreurPosition(newPosition);
-    // };
+    // Fonction pour récupérer la position du livreur manuellement
+    const fetchLivreurPosition = useCallback(async () => {
+        // Limiter la fréquence des appels
+        const now = Date.now();
+        if (now - lastRouteCalculationRef.current < 10000) {
+            return;
+        }
+        lastRouteCalculationRef.current = now;
 
-    // Déclare l'état pour la position du livreur
-    // const [livreurCoordsState, setLivreurPosition] = useState({
-    //     lat: livreurCoords[0],
-    //     lng: livreurCoords[1],
-    // });
+        try {
+            const response = await fetch(`/api/commandes/${id}/livreur-info`);
 
-    // Mise à jour automatique de la position du livreur toutes les 5 secondes
-    // useEffect(() => {
-    //     const interval = setInterval(() => {
-    //         fetchLivreurPosition();
-    //     }, 3000); // Rafraîchir toutes les 5 secondes
+            if (!response.ok) {
+                if (response.status !== 404) {
+                    // Ignorer les 404 (livreur non assigné)
+                    console.error(
+                        "Erreur lors de la récupération de la position"
+                    );
+                }
+                return;
+            }
 
-    //     return () => clearInterval(interval);
-    // }, [livreurPosition]); // Assurez-vous de mettre à jour correctement lors du changement
+            const data = await response.json();
 
-    // Update route when positions change
-    // useEffect(() => {
-    //     if (livreurCoordsState.lat && adresseLivraison[0]) {
-    //         calculateRoute(
-    //             { lat: livreurCoordsState.lat, lng: livreurCoordsState.lng },
-    //             { lat: adresseLivraison[0], lng: adresseLivraison[1] }
-    //         );
-    //     }
-    // }, [livreurCoordsState, adresseLivraison]);
+            if (data.position) {
+                setCurrentLivreurPosition({
+                    lat: data.position.lat,
+                    lng: data.position.lng,
+                    livreurId: data.livreurId,
+                    timestamp: new Date(),
+                });
+            }
+        } catch (err) {
+            console.error("Erreur:", err);
+        }
+    }, [id]);
 
-    if (isLoading || isLoadingLivreur) {
+    // Initialiser la carte et le centre une seule fois
+    useEffect(() => {
+        if (!mapInitialized && coords && coords.lat && coords.lng) {
+            setMapCenter({ lat: coords.lat, lng: coords.lng });
+            setMapInitialized(true);
+        }
+    }, [coords, mapInitialized]);
+
+    // Mettre à jour la position du livreur depuis le hook
+    useEffect(() => {
+        if (livreurPosition) {
+            setCurrentLivreurPosition(livreurPosition);
+        }
+    }, [livreurPosition]);
+
+    // Configurer l'intervalle pour récupérer la position du livreur toutes les 10 secondes
+    useEffect(() => {
+        // Première récupération immédiate
+        fetchLivreurPosition();
+
+        // Configurer l'intervalle
+        intervalRef.current = setInterval(() => {
+            console.log(
+                "Rafraîchissement de la position du livreur...",
+                currentLivreurPosition
+            );
+
+            fetchLivreurPosition();
+        }, 10000);
+
+        // Nettoyer l'intervalle lors du démontage
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
+    }, [fetchLivreurPosition, refreshKey]);
+
+    // Fonction pour calculer l'itinéraire
+    const calculateRoute = useCallback(async () => {
+        if (
+            !currentLivreurPosition ||
+            !coords ||
+            !coords.lat ||
+            !coords.lng ||
+            !window.google ||
+            !mapRef.current
+        ) {
+            return;
+        }
+
+        // Vérifier si les coordonnées sont valides
+        if (
+            isNaN(currentLivreurPosition.lat) ||
+            isNaN(currentLivreurPosition.lng) ||
+            isNaN(coords.lat) ||
+            isNaN(coords.lng)
+        ) {
+            console.warn("Coordonnées invalides détectées");
+            return;
+        }
+
+        try {
+            // Créer un objet DirectionsService
+            const directionsService =
+                new window.google.maps.DirectionsService();
+
+            // Exécuter le calcul d'itinéraire
+            const results = await directionsService.route({
+                origin: {
+                    lat: currentLivreurPosition.lat,
+                    lng: currentLivreurPosition.lng,
+                },
+                destination: { lat: coords.lat, lng: coords.lng },
+                travelMode: window.google.maps.TravelMode.DRIVING,
+            });
+
+            // Extraire les informations
+            setDistance(results.routes[0].legs[0].distance.text);
+            setDuration(results.routes[0].legs[0].duration.text);
+
+            // Créer DirectionsRenderer s'il n'existe pas
+            if (!directionsRendererRef.current) {
+                directionsRendererRef.current =
+                    new window.google.maps.DirectionsRenderer({
+                        map: mapRef.current,
+                        suppressMarkers: true,
+                        polylineOptions: {
+                            strokeColor: "#10b981", // emerald-500
+                            strokeWeight: 5,
+                            strokeOpacity: 0.8,
+                        },
+                    });
+            }
+
+            // Afficher l'itinéraire sur la carte
+            directionsRendererRef.current.setDirections(results);
+        } catch (error) {
+            console.error("Erreur lors du calcul de l'itinéraire:", error);
+        }
+    }, [currentLivreurPosition, coords]);
+
+    // Mettre à jour l'itinéraire lorsque la position du livreur change
+    useEffect(() => {
+        if (currentLivreurPosition && coords && mapRef.current) {
+            calculateRoute();
+        }
+    }, [currentLivreurPosition, coords, calculateRoute]);
+
+    // Gérer le chargement de la carte
+    const handleMapLoad = useCallback(
+        (map) => {
+            mapRef.current = map;
+
+            // Si nous avons déjà les positions, calculer l'itinéraire
+            if (currentLivreurPosition && coords) {
+                calculateRoute();
+            }
+        },
+        [calculateRoute, currentLivreurPosition, coords]
+    );
+
+    // Gérer la soumission du code commerçant
+    const handleCommercantCodeSubmit = (e) => {
+        e.preventDefault();
+        if (commercantCode.trim()) {
+            validateCommercantMutation.mutate(commercantCode);
+        } else {
+            toast.error("Veuillez entrer un code");
+        }
+    };
+
+    // Gérer la soumission du code client
+    const handleClientCodeSubmit = (e) => {
+        e.preventDefault();
+        if (clientCode.trim()) {
+            validateClientMutation.mutate(clientCode);
+        } else {
+            toast.error("Veuillez entrer un code");
+        }
+    };
+
+    if (isLoading || isLoadingLivreur || isLoadingCoords) {
         return <LoadingSpinner />;
     }
 
@@ -167,7 +354,6 @@ const CommandeSuivi = () => {
         if (totalMinutes <= 0) return 100; // Si la durée est 0, on est arrivé
 
         // Estimer le temps déjà écoulé
-        // Si le livreur a déjà parcouru une partie du chemin
         const minutesRemaining = (estimatedArrival - new Date()) / (1000 * 60);
         const minutesElapsed = totalMinutes - minutesRemaining;
 
@@ -178,6 +364,33 @@ const CommandeSuivi = () => {
         );
         return Math.round(percentage);
     };
+
+    // Vérifier si nous avons les coordonnées nécessaires
+    const hasValidCoordinates =
+        currentLivreurPosition && coords && coords.lat && coords.lng;
+
+    // Vérifier si l'utilisateur est le livreur assigné à cette commande
+    const isAssignedClient =
+        authUser &&
+        commande?.data?.client_id &&
+        authUser._id === commande.data.client_id._id;
+
+    const isAssignedCommercant =
+        authUser &&
+        commande?.data?.commercant_id &&
+        authUser._id === commande.data.commercant_id._id;
+
+    const isAssignedLivreur =
+        authUser &&
+        commande?.data?.livreur_id &&
+        authUser._id === commande.data.livreur_id._id;
+
+    // Déterminer l'étape actuelle de la livraison
+    const deliveryStatus = livreurStatus?.status || "en_attente";
+    const canConfirmPickup =
+        isAssignedLivreur && deliveryStatus === "prete_a_etre_recuperee";
+    const canConfirmDelivery =
+        isAssignedLivreur && deliveryStatus === "recuperee_par_livreur";
 
     return (
         <div className="w-full min-h-full bg-gray-50 p-4 md:p-6 flex flex-col">
@@ -200,7 +413,8 @@ const CommandeSuivi = () => {
                                 <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                                     <img
                                         src={
-                                            livreur.profilePic ||
+                                            commande?.data?.livreur_id
+                                                ?.profilePic ||
                                             "https://cdn-icons-png.flaticon.com/512/149/149071.png"
                                         }
                                         alt="Livreur"
@@ -209,17 +423,21 @@ const CommandeSuivi = () => {
                                 </div>
                                 <div>
                                     <p className="text-emerald-700 text-lg font-semibold">
-                                        {livreur.nom || "Livreur non assigné"}
+                                        {commande?.data?.livreur_id?.nom ||
+                                            "Livreur non assigné"}
                                     </p>
                                     <p className="text-sm text-gray-600">
-                                        ID : {livreur._id?.slice(-6) || "N/A"}
+                                        ID :{" "}
+                                        {commande?.data?.livreur_id?._id?.slice(
+                                            -6
+                                        ) || "N/A"}
                                     </p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Vehicle info */}
-                        {livreur.vehicule && (
+                        {commande?.data?.livreur_id?.vehicule && (
                             <div className="p-4 bg-gray-50 rounded-lg">
                                 <h3 className="font-medium text-gray-800 mb-2">
                                     Détails du Vehicule
@@ -230,26 +448,35 @@ const CommandeSuivi = () => {
                                             Type:
                                         </span>
                                         <span className="font-medium">
-                                            {livreur.vehicule.type || "N/A"}
+                                            {commande.data.livreur_id.vehicule
+                                                .type || "N/A"}
                                         </span>
                                     </li>
-                                    {livreur.vehicule.plaque && (
+                                    {commande.data.livreur_id.vehicule
+                                        .plaque && (
                                         <li className="flex justify-between">
                                             <span className="text-gray-600">
                                                 Plaque:
                                             </span>
                                             <span className="font-medium">
-                                                {livreur.vehicule.plaque}
+                                                {
+                                                    commande.data.livreur_id
+                                                        .vehicule.plaque
+                                                }
                                             </span>
                                         </li>
                                     )}
-                                    {livreur.vehicule.couleur && (
+                                    {commande.data.livreur_id.vehicule
+                                        .couleur && (
                                         <li className="flex justify-between">
                                             <span className="text-gray-600">
                                                 Couleur:
                                             </span>
                                             <span className="font-medium">
-                                                {livreur.vehicule.couleur}
+                                                {
+                                                    commande.data.livreur_id
+                                                        .vehicule.couleur
+                                                }
                                             </span>
                                         </li>
                                     )}
@@ -269,7 +496,8 @@ const CommandeSuivi = () => {
                                             ID Commande:
                                         </span>
                                         <span className="font-medium">
-                                            {commande.data._id || "N/A"}
+                                            {commande.data._id?.slice(-6) ||
+                                                "N/A"}
                                         </span>
                                     </li>
                                     <li className="flex justify-between">
@@ -277,7 +505,7 @@ const CommandeSuivi = () => {
                                             Nom Client:
                                         </span>
                                         <span className="font-medium">
-                                            {commande.data.client_id.nom ||
+                                            {commande.data.client_id?.nom ||
                                                 "N/A"}
                                         </span>
                                     </li>
@@ -287,7 +515,7 @@ const CommandeSuivi = () => {
                                         </span>
                                         <span className="font-medium">
                                             {commande.data.commercant_id
-                                                .nom_boutique || "N/A"}
+                                                ?.nom_boutique || "N/A"}
                                         </span>
                                     </li>
                                     <li className="flex justify-between">
@@ -296,14 +524,11 @@ const CommandeSuivi = () => {
                                         </span>
                                         <span className="font-medium">
                                             {commande.data.commercant_id
-                                                .adresse_boutique.rue +
-                                                ", " +
-                                                commande.data.commercant_id
-                                                    .adresse_boutique.ville +
-                                                ", " +
-                                                commande.data.commercant_id
-                                                    .adresse_boutique
-                                                    .code_postal || "N/A"}
+                                                ?.adresse_boutique
+                                                ? `${commande.data.commercant_id.adresse_boutique.rue}, 
+                        ${commande.data.commercant_id.adresse_boutique.ville}, 
+                        ${commande.data.commercant_id.adresse_boutique.code_postal}`
+                                                : "N/A"}
                                         </span>
                                     </li>
                                     <li className="flex justify-between">
@@ -343,6 +568,7 @@ const CommandeSuivi = () => {
                                 </ul>
                             </div>
                         )}
+
                         {/* Delivery status with actual distance and duration */}
                         <div className="p-4 bg-blue-50 rounded-lg">
                             <h3 className="font-medium text-blue-800 mb-2">
@@ -350,15 +576,14 @@ const CommandeSuivi = () => {
                             </h3>
                             <div className="space-y-2">
                                 <p className="text-blue-700 font-medium">
-                                    {livreurStatus?.status === "en_livraison"
+                                    {deliveryStatus === "en_livraison"
                                         ? "En cours de livraison"
-                                        : livreurStatus?.status ===
-                                          "commande_prise"
+                                        : deliveryStatus === "commande_prise"
                                         ? "Commande récupérée"
-                                        : livreurStatus?.status ===
+                                        : deliveryStatus ===
                                           "en_route_vers_commercant"
                                         ? "En route vers le commerçant"
-                                        : livreurStatus?.status === "arrive"
+                                        : deliveryStatus === "arrive"
                                         ? "Arrivé à destination"
                                         : "En route"}
                                 </p>
@@ -394,46 +619,179 @@ const CommandeSuivi = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {commande.data.statut === "livree" ? (
+                            <div className="p-4 bg-green-50 rounded-lg text-center">
+                                <h3 className="font-medium text-green-800 mb-2">
+                                    La commande a été livrée avec succès.
+                                </h3>
+                                <p className="text-green-700">
+                                    Merci d'avoir utilisé notre service. Nous
+                                    espérons vous revoir bientôt !
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                {isAssignedLivreur && (
+                                    <div className="space-y-4">
+                                        {canConfirmPickup && (
+                                            <div className="p-4 bg-amber-50 rounded-lg">
+                                                <h3 className="font-medium text-amber-800 mb-2">
+                                                    Confirmer la prise de
+                                                    commande
+                                                </h3>
+                                                <form
+                                                    onSubmit={
+                                                        handleCommercantCodeSubmit
+                                                    }
+                                                    className="flex gap-2"
+                                                >
+                                                    <input
+                                                        type="text"
+                                                        value={commercantCode}
+                                                        onChange={(e) =>
+                                                            setCommercantCode(
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        placeholder="Code commerçant"
+                                                        className="flex-1 p-2 border border-amber-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                                    />
+                                                    <button
+                                                        type="submit"
+                                                        disabled={
+                                                            validateCommercantMutation.isPending
+                                                        }
+                                                        className="bg-amber-500 text-white px-4 py-2 rounded-md hover:bg-amber-600 transition-colors disabled:bg-amber-300"
+                                                    >
+                                                        {validateCommercantMutation.isPending
+                                                            ? "..."
+                                                            : "Valider"}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        )}
+
+                                        {canConfirmDelivery && (
+                                            <div className="p-4 bg-green-50 rounded-lg">
+                                                <h3 className="font-medium text-green-800 mb-2">
+                                                    Confirmer la livraison
+                                                </h3>
+                                                <form
+                                                    onSubmit={
+                                                        handleClientCodeSubmit
+                                                    }
+                                                    className="flex gap-2"
+                                                >
+                                                    <input
+                                                        type="text"
+                                                        value={clientCode}
+                                                        onChange={(e) =>
+                                                            setClientCode(
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        placeholder="Code client"
+                                                        className="flex-1 p-2 border border-green-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                                                    />
+                                                    <button
+                                                        type="submit"
+                                                        disabled={
+                                                            validateClientMutation.isPending
+                                                        }
+                                                        className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors disabled:bg-green-300"
+                                                    >
+                                                        {validateClientMutation.isPending
+                                                            ? "..."
+                                                            : "Valider"}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {isAssignedCommercant && (
+                                    <div className="space-y-4 p-4 border border-yellow-300 rounded-md bg-yellow-50">
+                                        <h3 className="font-semibold text-yellow-800">
+                                            Code commerçant:{" "}
+                                            {commande.data.code_Commercant}
+                                        </h3>
+                                        <span className="text-yellow-600 text-sm">
+                                            ⚠️ Veuillez remettre ce code au
+                                            livreur lorsque la commande est
+                                            prise en main.
+                                        </span>
+                                    </div>
+                                )}
+
+                                {isAssignedClient && (
+                                    <div className="space-y-4 p-4 border border-yellow-300 rounded-md bg-yellow-50">
+                                        <h3 className="font-semibold text-yellow-800">
+                                            Code client:{" "}
+                                            {commande.data.code_Client}
+                                        </h3>
+                                        <span className="text-yellow-600 text-sm">
+                                            ⚠️ Veuillez remettre ce code au
+                                            livreur lorsque la commande est
+                                            prise en main.
+                                        </span>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
 
                 <div className="w-full lg:w-2/3 shadow-xl rounded-lg overflow-hidden mt-4 lg:mt-0">
-                    <GoogleMap
-                        mapContainerStyle={containerStyle}
-                        center={{
-                            lat: adresseLivraison[0],
-                            lng: adresseLivraison[1],
-                        }}
-                        zoom={13}
-                        options={{
-                            mapTypeControl: false,
-                            streetViewControl: false,
-                            fullscreenControl: true,
-                            zoomControl: true,
-                        }}
-                        onLoad={onMapLoad}
-                    >
-                        {/* Marqueur pour le livreur */}
-                        <Marker
-                            position={livreurPosition}
-                            icon={{
-                                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                    {!hasValidCoordinates ? (
+                        <div className="flex items-center justify-center h-full bg-gray-100">
+                            <p className="text-gray-500">
+                                En attente des coordonnées de livraison...
+                            </p>
+                        </div>
+                    ) : (
+                        <GoogleMap
+                            mapContainerStyle={containerStyle}
+                            center={mapCenter}
+                            zoom={13}
+                            options={{
+                                mapTypeControl: false,
+                                streetViewControl: false,
+                                fullscreenControl: true,
+                                zoomControl: true,
                             }}
-                            title="Livreur en déplacement"
-                        />
+                            onLoad={handleMapLoad}
+                        >
+                            {/* Marqueur pour le livreur */}
+                            {currentLivreurPosition && (
+                                <Marker
+                                    position={{
+                                        lat: currentLivreurPosition.lat,
+                                        lng: currentLivreurPosition.lng,
+                                    }}
+                                    icon={{
+                                        url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                                    }}
+                                    title="Livreur en déplacement"
+                                />
+                            )}
 
-                        {/* Marqueur pour la destination */}
-                        <Marker
-                            position={{
-                                lat: adresseLivraison[0],
-                                lng: adresseLivraison[1],
-                            }}
-                            icon={{
-                                url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-                            }}
-                            title="Destination"
-                        />
-                    </GoogleMap>
+                            {/* Marqueur pour la destination */}
+                            {coords && (
+                                <Marker
+                                    position={{
+                                        lat: coords.lat,
+                                        lng: coords.lng,
+                                    }}
+                                    icon={{
+                                        url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                                    }}
+                                    title="Destination"
+                                />
+                            )}
+                        </GoogleMap>
+                    )}
                 </div>
             </div>
         </div>

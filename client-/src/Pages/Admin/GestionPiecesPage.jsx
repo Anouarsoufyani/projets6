@@ -16,7 +16,7 @@ const GestionPiecesPage = () => {
     const { data: authUser, isLoading: authLoading } = useAuthUserQuery();
     const { data: livreur, isLoading: livreurLoading } = useGetUserById(id);
     console.log("livreur", livreur);
-
+    const navigate = useNavigate();
     const { data: docs, isLoading: usersLoading, error } = useGetDocuments(id);
     const { mutate: updateDocument } = useUpdateDocument();
 
@@ -80,6 +80,32 @@ const GestionPiecesPage = () => {
                 Gestion des documents du livreur {livreur.data?.nom} ({id})
             </h1>
 
+            <div className="mb-4">
+                {" "}
+                <button
+                    onClick={() => navigate("/gestion/livreur")}
+                    className="flex items-center px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors"
+                >
+                    {" "}
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-2"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        {" "}
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                        />{" "}
+                    </svg>{" "}
+                    Retour à la liste des livreurs{" "}
+                </button>{" "}
+            </div>
+
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
                 <div className="p-4 bg-gradient-to-r from-emerald-100 to-emerald-200">
                     <h2 className="text-lg font-semibold text-emerald-800">
@@ -125,50 +151,39 @@ const GestionPiecesPage = () => {
                                             {data.statut}
                                         </span>
                                     </td>
-                                    <td className="py-3 px-4 flex gap-2">
-                                        {data.statut !== "non soumis" && (
-                                            <>
-                                                <button
-                                                    onClick={() =>
-                                                        window.open(
-                                                            getDocumentUrl(
-                                                                data.url
-                                                            ),
-                                                            "_blank"
-                                                        )
-                                                    }
-                                                    className="text-blue-600 hover:text-blue-800 flex items-center"
-                                                >
-                                                    <FaEye className="mr-1" />
-                                                    <span>Voir</span>
-                                                </button>
-                                                {data.statut ===
-                                                    "en attente" && (
-                                                    <>
-                                                        <button
-                                                            className="text-amber-600 hover:text-amber-800"
-                                                            onClick={() =>
-                                                                handleValider(
-                                                                    data._id
-                                                                )
-                                                            }
-                                                        >
-                                                            Valider
-                                                        </button>
-                                                        <button
-                                                            className="text-red-600 hover:text-red-800"
-                                                            onClick={() =>
-                                                                handleRefuser(
-                                                                    data._id
-                                                                )
-                                                            }
-                                                        >
-                                                            Refuser
-                                                        </button>
-                                                    </>
-                                                )}
-                                            </>
-                                        )}
+                                    <td className="py-3 px-4 flex gap-3">
+                                        {" "}
+                                        <button
+                                            onClick={() =>
+                                                window.open(
+                                                    getDocumentUrl(data.url),
+                                                    "_blank"
+                                                )
+                                            }
+                                            className="flex items-center px-3 py-1 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                                        >
+                                            {" "}
+                                            <FaEye className="mr-1" />{" "}
+                                            <span>Voir</span>{" "}
+                                        </button>{" "}
+                                        <button
+                                            className="flex items-center px-3 py-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                                            onClick={() =>
+                                                handleValider(data._id)
+                                            }
+                                        >
+                                            {" "}
+                                            <span>Valider</span>{" "}
+                                        </button>{" "}
+                                        <button
+                                            className="flex items-center px-3 py-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                            onClick={() =>
+                                                handleRefuser(data._id)
+                                            }
+                                        >
+                                            {" "}
+                                            <span>Refuser</span>{" "}
+                                        </button>{" "}
                                     </td>
                                 </tr>
                             ))}

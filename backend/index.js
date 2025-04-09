@@ -11,6 +11,7 @@ import authRoutes from "./Routes/AuthRoutes.js";
 import commandeRoutes from "./Routes/CommandeRoutes.js";
 import userRoutes from "./Routes/UserRoutes.js";
 import docRoutes from "./Routes/DocRoutes.js";
+import notificationRoutes from "./Routes/NotificationRoutes.js";
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/commandes", commandeRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/documents", docRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // ✅ Sert les fichiers statiques (PDF, images, etc.)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

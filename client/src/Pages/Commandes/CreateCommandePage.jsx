@@ -1,16 +1,15 @@
+import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { useState } from "react";
-import {
-    FaUser,
-    FaStore,
-    FaMapMarkerAlt,
-    FaMoneyBillWave,
-} from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { FaStore, FaMapMarkerAlt, FaMoneyBillWave } from "react-icons/fa";
+import { useGetCoords } from "../../Hooks/useGetCoords";
 
 const CreateCommandePage = () => {
+    const { data: authUser } = useAuthUserQuery();
+    const [shouldSubmit, setShouldSubmit] = useState(false);
+
     const [formData, setFormData] = useState({
-        client_id: "",
         commercant_id: "",
         adresse_livraison: {
             rue: "",
@@ -22,9 +21,26 @@ const CreateCommandePage = () => {
         total: 0,
     });
 
+    const fullAdresse =
+        formData.adresse_livraison.rue &&
+        formData.adresse_livraison.ville &&
+        formData.adresse_livraison.code_postal
+            ? `${formData.adresse_livraison.rue}, ${formData.adresse_livraison.ville}, ${formData.adresse_livraison.code_postal}`
+            : null;
+
+    const {
+        data: coords,
+        isSuccess,
+        isFetching,
+        refetch,
+    } = useGetCoords(fullAdresse, {
+        enabled: false, // on déclenche manuellement
+        retry: false,
+    });
+
     const { mutate: createCommandeMutation, isPending } = useMutation({
         mutationFn: async (commandeData) => {
-            const res = await fetch("/api/commandes/create", {
+            const res = await fetch("/api/commandes/new", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -44,7 +60,6 @@ const CreateCommandePage = () => {
         onSuccess: () => {
             toast.success("Commande créée avec succès");
             setFormData({
-                client_id: "",
                 commercant_id: "",
                 adresse_livraison: {
                     rue: "",
@@ -63,28 +78,40 @@ const CreateCommandePage = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        const { client_id, commercant_id, produits, adresse_livraison } =
-            formData;
 
-        // Validation de base
+        const { commercant_id, adresse_livraison, total } = formData;
+
         if (
-            !client_id ||
+            !authUser?._id ||
             !commercant_id ||
-            produits.length === 0 ||
-            !adresse_livraison.rue
+            !adresse_livraison.rue ||
+            !adresse_livraison.ville ||
+            !adresse_livraison.code_postal ||
+            !total
         ) {
             toast.error("Veuillez remplir tous les champs obligatoires");
             return;
         }
 
-        // Calcul du total
-        const total = produits.reduce(
-            (acc, produit) => acc + produit.quantite * produit.prix_unitaire,
-            0
-        );
-
-        createCommandeMutation({ ...formData, total });
+        // Déclencher la récupération des coordonnées
+        setShouldSubmit(true);
+        refetch();
     };
+
+    useEffect(() => {
+        if (shouldSubmit && isSuccess && coords) {
+            setShouldSubmit(false);
+            createCommandeMutation({
+                ...formData,
+                client_id: authUser._id,
+                adresse_livraison: {
+                    ...formData.adresse_livraison,
+                    lat: coords.lat,
+                    lng: coords.lng,
+                },
+            });
+        }
+    }, [shouldSubmit, isSuccess, coords]);
 
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -110,25 +137,6 @@ const CreateCommandePage = () => {
                     onSubmit={handleSubmit}
                     className="w-full flex flex-col gap-4"
                 >
-                    {/* Client */}
-                    <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-gray-700">
-                            Client
-                        </label>
-                        <div className="relative">
-                            <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
-                            <input
-                                type="text"
-                                placeholder="ID du client"
-                                name="client_id"
-                                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                onChange={handleInputChange}
-                                value={formData.client_id}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Commerçant */}
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-medium text-gray-700">
                             Commerçant
@@ -180,27 +188,9 @@ const CreateCommandePage = () => {
                                 value={formData.adresse_livraison.code_postal}
                             />
                         </div>
-                        <div className="flex gap-2">
-                            <input
-                                type="number"
-                                placeholder="Latitude"
-                                name="lat"
-                                className="w-1/2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                onChange={handleAdresseChange}
-                                value={formData.adresse_livraison.lat}
-                            />
-                            <input
-                                type="number"
-                                placeholder="Longitude"
-                                name="lng"
-                                className="w-1/2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                onChange={handleAdresseChange}
-                                value={formData.adresse_livraison.lng}
-                            />
-                        </div>
                     </div>
 
-                    {/* Total (affiché mais calculé automatiquement) */}
+                    {/* Total */}
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-medium text-gray-700">
                             Total
@@ -210,17 +200,20 @@ const CreateCommandePage = () => {
                             <input
                                 type="number"
                                 name="total"
-                                className="pl-10 w-full p-3 border border-gray-300 rounded-md bg-gray-100"
+                                className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                onChange={handleInputChange}
+                                value={formData.total || ""}
                             />
                         </div>
                     </div>
 
-                    {/* Bouton de soumission */}
+                    {/* Bouton */}
                     <button
                         type="submit"
                         className="w-full bg-emerald-600 text-white py-3 rounded-md hover:bg-emerald-700 transition duration-300 mt-4"
+                        disabled={isFetching || isPending}
                     >
-                        {isPending ? (
+                        {isFetching || isPending ? (
                             <span className="loading loading-spinner loading-md"></span>
                         ) : (
                             "Créer la commande"

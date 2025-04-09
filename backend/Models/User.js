@@ -75,6 +75,11 @@ const LivreurSchema = new mongoose.Schema({
         default: "non vérifié",
         required: true,
     },
+    statut_livraison: {
+        type: String,
+        emum: ["en cours", "terminé", "en attente de livraison"],
+        default: "en attente de livraison",
+    },
     documents: [
         {
             nom: String,

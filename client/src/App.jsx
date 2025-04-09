@@ -14,6 +14,7 @@ import { Toaster } from "react-hot-toast";
 import { useAuthUserQuery } from "./Hooks/useAuthQueries";
 import CreateCommandePage from "./Pages/Commandes/CreateCommandePage";
 import CommandeSuivi from "./Pages/Commandes/CommandeSuivi";
+import NotificationsPage from "./Pages/User/NotificationsPage";
 
 import GestionPiecesPage from "./Pages/Admin/GestionPiecesPage";
 import DashboardPageAdmin from "./Pages/Admin/DashboardPageAdmin";
@@ -235,6 +236,17 @@ function App() {
                         path="/uploads/:id/:filename"
                         element={
                             authUser ? <ViewDocs /> : <Navigate to="/login" />
+                        }
+                    />
+
+                    <Route
+                        path="/notifications"
+                        element={
+                            authUser ? (
+                                <NotificationsPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
                         }
                     />
                 </Routes>

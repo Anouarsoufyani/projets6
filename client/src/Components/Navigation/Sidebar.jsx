@@ -2,7 +2,10 @@ import { Link, useLocation } from "react-router";
 import { FaSignInAlt, FaRegListAlt } from "react-icons/fa";
 import { LuUserRound } from "react-icons/lu";
 import { TbTruckDelivery } from "react-icons/tb";
-import { MdOutlineSpaceDashboard } from "react-icons/md";
+import {
+    MdOutlineSpaceDashboard,
+    MdOutlineNotificationsNone,
+} from "react-icons/md";
 import { HiOutlineDocumentText } from "react-icons/hi";
 import PropTypes from "prop-types";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
@@ -76,6 +79,11 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
                       icon: <HiOutlineDocumentText className="w-5 h-5" />,
                       label: "Pièce Justificative",
                   },
+                  {
+                      to: "/notifications",
+                      icon: <MdOutlineNotificationsNone className="w-5 h-5" />,
+                      label: "Notifications",
+                  },
               ],
               client: [
                   {
@@ -92,6 +100,11 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
                       to: "/commandes/create",
                       icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Passer une Commande",
+                  },
+                  {
+                      to: "/notifications",
+                      icon: <MdOutlineNotificationsNone className="w-5 h-5" />,
+                      label: "Notifications",
                   },
               ],
               commercant: [
@@ -114,6 +127,11 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight }) => {
                       to: "/commandes",
                       icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Commandes",
+                  },
+                  {
+                      to: "/notifications",
+                      icon: <MdOutlineNotificationsNone className="w-5 h-5" />,
+                      label: "Notifications",
                   },
               ],
               admin: [

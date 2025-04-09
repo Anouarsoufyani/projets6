@@ -22,6 +22,8 @@ import {
     FaTrash,
 } from "react-icons/fa";
 
+import { getDocumentUrl } from "../../Hooks/getDocumentsUrl";
+
 const JustificativePage = () => {
     const [selectedVehicles, setSelectedVehicles] = useState([]);
     const [step, setStep] = useState("vehicles");
@@ -261,11 +263,6 @@ const JustificativePage = () => {
     };
 
     // Convertir l'URL du document pour l'affichage
-    const getDocumentUrl = (url) => {
-        if (!url) return "#";
-        // Remplacer les backslashes par des slashes pour l'URL
-        return `/${url.replace(/\\/g, "/")}`;
-    };
 
     const handleUpdateDocument = (documentId) => {
         const fileInput = document.createElement("input");
@@ -537,7 +534,7 @@ const JustificativePage = () => {
 
     // Sinon, afficher le formulaire normal avec les étapes
     return (
-        <div className="max-w-4xl mx-auto p-6">
+        <div className="max-w-4xl mx-auto p-6 ">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">
                     Soumettre vos pièces justificatives

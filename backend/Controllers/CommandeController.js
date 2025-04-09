@@ -1,7 +1,8 @@
 // import { generateTokenAndSetCookie } from "../Lib/utils/generateToken.js";
 import userModels from "../Models/User.js";
 import Commande from "../Models/Commandes.js";
-const { Livreur } = userModels;
+import Notification from "../Models/Notification.js";
+const { User } = userModels;
 // const { User, Client, Commercant, Livreur } = userModels;
 // import bcrypt from "bcryptjs";
 
@@ -173,37 +174,65 @@ export const createCommande = async (req, res) => {
     console.log("test");
     console.log(req.body);
 
-    // const {
-    //     client_id,
-    //     commercant_id,
-    //     livreur_id,
-    //     total,
-    //     statut,
-    //     adresse_livraison,
-    // } = req.body;
-    const commandeFictive = new Commande({
-        client_id: "67d15d4c87a55d5aadf95b03",
-        commercant_id: "67d15e4ccf1feb1de84ad918",
-        livreur_id: "67d15c6987a55d5aadf95aff",
-        total: 3 * 8.99,
-        statut: "en_livraison", // Commande en cours de livraison
+    const { client_id, commercant_id, total, adresse_livraison } = req.body;
+    const commande = new Commande({
+        client_id,
+        commercant_id,
+        total,
         adresse_livraison: {
-            rue: "Arc de Triomphe",
-            ville: "Montpellier",
-            code_postal: "34000",
-            lat: 43.611152689515265,
-            lng: 3.8724387513146397,
+            rue: adresse_livraison.rue,
+            ville: adresse_livraison.ville,
+            code_postal: adresse_livraison.code_postal,
+            lat: adresse_livraison.lat,
+            lng: adresse_livraison.lng,
         },
-        date_creation: new Date(), // Date fictive (aujourd'hui)
-        date_livraison: null, // Pas encore livrée
+        date_creation: new Date(),
+        date_livraison: null,
     });
+
+    // const commande = new Commande({
+    //     client_id: "67d15d4c87a55d5aadf95b03",
+    //     commercant_id: "67d15e4ccf1feb1de84ad918",
+    //     livreur_id: "67d15c6987a55d5aadf95aff",
+    //     total: 100,
+    //     adresse_livraison: {
+    //         rue: "20 avenue de la paix",
+    //         ville: "Paris",
+    //         code_postal: "75002",
+    //         lat: 48.856614,
+    //         lng: 2.352222,
+    //     },
+    //     date_creation: new Date(),
+    //     date_livraison: null,
+    // });
+
+    // checking if user exists
+    const userToNotify = await User.findOne({ _id: commercant_id }).select(
+        "-password"
+    );
+    const currentUser = await User.findById(req.user._id).select("-password");
+
+    if (!userToNotify || !currentUser) {
+        return res
+            .status(404)
+            .json({ success: false, error: "User not found" });
+    }
 
     // Sauvegarde dans la base (à utiliser dans ton code)
     try {
-        await commandeFictive.save();
-        console.log("Commande fictive sauvegardée :", commandeFictive);
+        const newNotification = new Notification({
+            sender: req.user._id,
+            receiver: userToNotify._id,
+            type: "nouvelle commande",
+        });
 
-        return res.status(201).json(commandeFictive);
+        if (newNotification) {
+            await newNotification.save();
+        }
+        await commande.save();
+        console.log("Commande fictive sauvegardée :", commande);
+
+        return res.status(201).json(commande);
     } catch (err) {
         console.error("Erreur :", err);
         return res.status(500).json({ error: "Erreur lors de la sauvegarde" });
@@ -278,6 +307,7 @@ export const getCodeClient = async (req, res) => {
         const { id } = req.params;
 
         const commande = await Commande.findById(id).populate("livreur_id");
+        console.log("commande", commande);
 
         if (!commande) {
             return res.status(404).json({
@@ -318,7 +348,7 @@ export const getCodeCommercant = async (req, res) => {
         const { id } = req.params;
 
         const commande = await Commande.findById(id).populate("livreur_id");
-
+        console.log("commande", commande);
         if (!commande) {
             return res.status(404).json({
                 success: false,
@@ -355,10 +385,10 @@ export const getCodeCommercant = async (req, res) => {
 
 export const validation_codeCL = async (req, res) => {
     try {
-        const { codeCl, id } = req.body;
+        const { code, id } = req.body;
 
         const commande = await Commande.findById(id).populate("livreur_id");
-        console.log("ID", id, codeCl, commande.code_Client);
+        console.log("ID", id, code, commande.code_Client);
 
         if (!commande) {
             return res.status(404).json({
@@ -376,7 +406,7 @@ export const validation_codeCL = async (req, res) => {
 
         // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
         if (
-            commande.code_Client == codeCl &&
+            commande.code_Client == code &&
             commande.is_commercant_verifie == true
         ) {
             commande.is_client_verifie = true;
@@ -403,7 +433,8 @@ export const validation_codeCL = async (req, res) => {
 
 export const validation_codeCom = async (req, res) => {
     try {
-        const { codeCom, id } = req.body;
+        const { code, id } = req.body;
+        console.log("ID", id, code);
 
         const commande = await Commande.findById(id).populate("livreur_id");
 
@@ -421,18 +452,19 @@ export const validation_codeCom = async (req, res) => {
             });
         }
 
-        // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
-        if (commande.code_Commercant == codeCom) {
+        if (commande.code_Commercant == code) {
             commande.is_commercant_verifie = true;
+            commande.statut = "recuperee_par_livreur";
             await commande.save();
+
             return res.status(200).json({
                 success: true,
-                code_Client: commande.code_Commercant,
+                code_Commercant: commande.code_Commercant,
             });
         } else {
             return res.status(404).json({
                 success: false,
-                error: "Aucun livreur assigné à cette commande",
+                error: "Code incorrect",
             });
         }
     } catch (error) {

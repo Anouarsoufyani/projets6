@@ -40,13 +40,16 @@ const CommandeSchema = new mongoose.Schema({
         type: String,
         enum: [
             "en_attente",
+            "refusee",
             "en_preparation",
-            "en_livraison",
+            "prete_a_etre_recuperee",
+            "recuperee_par_livreur",
             "livree",
             "annulee",
         ],
         default: "en_attente",
     },
+
     adresse_livraison: {
         rue: String,
         ville: String,

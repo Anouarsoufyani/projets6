@@ -19,6 +19,7 @@ const ROLE_COLUMNS = {
         "Produits",
         "Total",
         "Statut",
+        "Date",
         "Actions",
     ],
     commercant: [
@@ -28,6 +29,7 @@ const ROLE_COLUMNS = {
         "Produits",
         "Total",
         "Statut",
+        "Date",
         "Actions",
     ],
     livreur: [
@@ -37,6 +39,7 @@ const ROLE_COLUMNS = {
         "Adresse",
         "Distance",
         "Statut",
+        "Date",
         "Actions",
     ],
 };
@@ -49,7 +52,9 @@ const CommandesListePage = () => {
     if (isError || !commandesData || !authUser)
         return <ErrorMessage message="Erreur lors du chargement" />;
 
-    const commandes = commandesData.commandes || [];
+    const commandes = (commandesData.commandes || []).sort(
+        (a, b) => new Date(b.date_creation) - new Date(a.date_creation)
+    );
     const columns = ROLE_COLUMNS[authUser.role] || ROLE_COLUMNS.client;
 
     const cancelCommande = async (id) => {
@@ -60,7 +65,7 @@ const CommandesListePage = () => {
                 body: JSON.stringify({ statut: "annulee" }),
             });
             if (!response.ok) throw new Error("Échec de l'annulation");
-            window.location.reload(); // Recharge pour refléter les changements (ou mets à jour l'état local si possible)
+            window.location.reload();
         } catch (error) {
             console.error("Erreur annulation:", error);
             toast.error("Impossible d'annuler la commande");
@@ -141,9 +146,19 @@ const CommandesListePage = () => {
                                                 )}
                                             </span>
                                         </td>
+                                        <td className="py-3 px-4">
+                                            {new Date(
+                                                commande.date_creation
+                                            ).toLocaleDateString("fr-FR")}
+                                        </td>
                                         <td className="py-3 px-4 flex gap-2">
-                                            {commande.statut ===
-                                                "en_livraison" && (
+                                            {(commande.statut ===
+                                                "prete_a_etre_recuperee" ||
+                                                commande.statut ===
+                                                    "recuperee_par_livreur" ||
+                                                commande.statut === "livree" ||
+                                                commande.statut ===
+                                                    "en_livraison") && (
                                                 <a
                                                     href={`/livraison/${commande._id}`}
                                                     className="text-emerald-500 hover:text-emerald-800 transition-colors"

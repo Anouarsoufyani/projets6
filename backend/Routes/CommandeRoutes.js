@@ -21,9 +21,9 @@ router.get("/", protectRoute, getCommandes);
 router.get("/:id", protectRoute, protectSuivi, getCommandeById);
 router.post("/cancel/:id", protectRoute, cancelCommande);
 router.get("/:id/livreur-info", protectRoute, getLivreurInfo);
-router.get("/code/client", protectRoute, getCodeClient);
-router.get("/code/commercant", protectRoute, getCodeCommercant);
-router.post("/validationClient", protectRoute, validation_codeCL);
-router.post("/validationCommercant", protectRoute, validation_codeCom);
+router.get("/code/:id/client", protectRoute, getCodeClient);
+router.get("/code/:id/commercant", protectRoute, getCodeCommercant);
+router.post("/code/validationClient", protectRoute, validation_codeCL);
+router.post("/code/validationCommercant", protectRoute, validation_codeCom);
 
 export default router;

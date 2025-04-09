@@ -50,6 +50,13 @@ io.on("connection", (socket) => {
     });
 });
 
+app.use(
+    cors({
+        origin: ["http://localhost:3000", "https://projets6.vercel.app"],
+        credentials: true,
+    })
+);
+
 // Middlewares globaux
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());

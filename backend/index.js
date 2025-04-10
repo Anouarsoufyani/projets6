@@ -93,8 +93,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
 
-import cors from "cors";
-
 import connectDB from "./DB/Connect.js";
 
 import authRoutes from "./Routes/AuthRoutes.js";

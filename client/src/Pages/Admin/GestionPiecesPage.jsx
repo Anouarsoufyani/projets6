@@ -166,24 +166,26 @@ const GestionPiecesPage = () => {
                                             <FaEye className="mr-1" />{" "}
                                             <span>Voir</span>{" "}
                                         </button>{" "}
-                                        <button
-                                            className="flex items-center px-3 py-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
-                                            onClick={() =>
-                                                handleValider(data._id)
-                                            }
-                                        >
-                                            {" "}
-                                            <span>Valider</span>{" "}
-                                        </button>{" "}
-                                        <button
-                                            className="flex items-center px-3 py-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                                            onClick={() =>
-                                                handleRefuser(data._id)
-                                            }
-                                        >
-                                            {" "}
-                                            <span>Refuser</span>{" "}
-                                        </button>{" "}
+                                        {data.statut === "en attente" && (
+                                            <>
+                                                <button
+                                                    className="flex items-center px-3 py-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                                                    onClick={() =>
+                                                        handleValider(data._id)
+                                                    }
+                                                >
+                                                    <span>Valider</span>
+                                                </button>
+                                                <button
+                                                    className="flex items-center px-3 py-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                                    onClick={() =>
+                                                        handleRefuser(data._id)
+                                                    }
+                                                >
+                                                    <span>Refuser</span>
+                                                </button>
+                                            </>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

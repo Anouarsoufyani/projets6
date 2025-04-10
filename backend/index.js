@@ -93,6 +93,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import cors from "cors";
 
+import cors from "cors";
+
 import connectDB from "./DB/Connect.js";
 
 import authRoutes from "./Routes/AuthRoutes.js";
@@ -115,6 +117,7 @@ const __dirname = path.dirname(__filename);
 // Initialise Socket.IO
 const io = new Server(server, {
     cors: {
+        origin: "*", // ✅ OK pour dev, sécurise en prod
         origin: "*", // ✅ OK pour dev, sécurise en prod
         methods: ["GET", "POST"],
     },
@@ -150,6 +153,18 @@ app.use(
     })
 );
 
+// CORS
+app.use(
+    cors({
+        origin: [
+            "http://localhost:3000",
+            "https://projets6.vercel.app",
+            "https://projets6-front.onrender.com",
+        ], // ✅ adapte si tu sers le front ici
+        credentials: true,
+    })
+);
+
 // Middlewares globaux
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
@@ -163,7 +178,15 @@ app.use("/api/documents", docRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 // Sert les fichiers statiques (PDF, images, etc.)
+// Sert les fichiers statiques (PDF, images, etc.)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// ✅ Sert le frontend s’il est buildé dans client/dist
+app.use(express.static(path.join(__dirname, "../client/dist")));
+
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+});
 
 // ✅ Sert le frontend s’il est buildé dans client/dist
 app.use(express.static(path.join(__dirname, "../client/dist")));

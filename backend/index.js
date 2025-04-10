@@ -105,10 +105,8 @@ dotenv.config();
 
 const app = express();
 
-// Crée le serveur HTTP
 const server = createServer(app);
 
-// Convertit import.meta.url pour avoir __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

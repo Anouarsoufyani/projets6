@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import PropTypes from "prop-types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+const api = import.meta.env.VITE_API_URL;
+
 const STATUS_STYLES = {
     en_attente: "bg-gray-100 text-gray-800",
     en_preparation: "bg-yellow-100 text-yellow-800",
@@ -114,7 +116,7 @@ const CommandesListePage = () => {
     // Fonction pour annuler une commande (client)
     const cancelCommande = async (id) => {
         try {
-            const response = await fetch(`api/commandes/cancel/${id}`, {
+            const response = await fetch(`${api}/commandes/cancel/${id}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ statut: "annulee" }),

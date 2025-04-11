@@ -41,7 +41,6 @@ const NotificationsPage = () => {
         queryKey: ["notifications"],
         queryFn: getNotifications,
         retry: false,
-        refetchInterval: 5000,
     });
 
     // Mutation pour marquer comme lu

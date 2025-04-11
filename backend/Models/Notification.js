@@ -31,6 +31,7 @@ const notificationSchema = new mongoose.Schema(
                 "livraison",
                 "refus de livraison",
                 "acceptation de livraison",
+                "acceptation de commande",
                 "annulation de commande",
                 "modification de commande",
                 "nouvelle commande",

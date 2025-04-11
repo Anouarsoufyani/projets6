@@ -1,9 +1,12 @@
+"use client";
+
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { FaStore, FaMapMarkerAlt, FaMoneyBillWave } from "react-icons/fa";
 import { useGetCoords } from "../../Hooks/useGetCoords";
+import { useGetUsersByRole } from "../../Hooks/useGetUsers";
 
 const CreateCommandePage = () => {
     const { data: authUser } = useAuthUserQuery();
@@ -38,9 +41,12 @@ const CreateCommandePage = () => {
         retry: false,
     });
 
+    const { data: commercantsData, isLoading: isLoadingCommercants } =
+        useGetUsersByRole("commercant");
+
     const { mutate: createCommandeMutation, isPending } = useMutation({
         mutationFn: async (commandeData) => {
-            const res = await fetch("/api/commandes/new", {
+            const res = await fetch(`/api/commandes/new`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -143,14 +149,29 @@ const CreateCommandePage = () => {
                         </label>
                         <div className="relative">
                             <FaStore className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
-                            <input
-                                type="text"
-                                placeholder="ID du commerçant"
+                            <select
                                 name="commercant_id"
                                 className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 onChange={handleInputChange}
                                 value={formData.commercant_id}
-                            />
+                                disabled={isLoadingCommercants}
+                            >
+                                <option value="">
+                                    Sélectionner un commerçant
+                                </option>
+                                {commercantsData?.data?.map((commercant) => (
+                                    <option
+                                        key={commercant._id}
+                                        value={commercant._id}
+                                    >
+                                        {commercant.nom_boutique ||
+                                            commercant.nom}{" "}
+                                        -{" "}
+                                        {commercant.adresse_boutique?.ville ||
+                                            "Adresse non spécifiée"}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 

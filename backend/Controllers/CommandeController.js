@@ -475,3 +475,99 @@ export const validation_codeCom = async (req, res) => {
         });
     }
 };
+
+export const assignLivreur = async (req, res) => {
+    try {
+        const { commandeId, livreurId } = req.body;
+
+        const commande = await Commande.findById(commandeId);
+
+        if (!commande) {
+            return res.status(404).json({
+                success: false,
+                error: "Commande non trouvée",
+            });
+        }
+
+        commande.livreur_id = livreurId;
+        commande.statut = "prete_a_etre_recuperee";
+        await commande.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Livreur assigné à la commande",
+        });
+    } catch (error) {
+        console.error(
+            "Erreur lors de l'assignation du livreur à la commande:",
+            error
+        );
+        return res.status(500).json({
+            success: false,
+            error: "Erreur serveur",
+        });
+    }
+};
+
+export const updateCommandeStatus = async (req, res) => {
+    try {
+        const { commandeId, statut } = req.body;
+        console.log(commandeId, statut);
+
+        const commande = await Commande.findById(commandeId);
+
+        if (!commande) {
+            return res.status(404).json({
+                success: false,
+                error: "Commande non trouvée",
+            });
+        }
+
+        const userToNotify = await User.findOne({
+            _id: commande.client_id,
+        }).select("-password");
+        const currentUser = await User.findById(req.user._id).select(
+            "-password"
+        );
+
+        commande.statut = statut;
+        console.log(commande);
+
+        if (!userToNotify || !currentUser) {
+            return res
+                .status(404)
+                .json({ success: false, error: "User not found" });
+        }
+
+        const newNotification = new Notification({
+            sender: req.user._id,
+            receiver: userToNotify._id,
+            type:
+                statut === "en_preparation"
+                    ? "acceptation de commande"
+                    : statut === "refusee"
+                    ? "refus de commande"
+                    : "nouvelle commande",
+        });
+
+        await commande.save();
+
+        if (newNotification) {
+            await newNotification.save();
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Statut de la commande mis à jour",
+        });
+    } catch (error) {
+        console.error(
+            "Erreur lors de la mise à jour du statut de la commande:",
+            error
+        );
+        return res.status(500).json({
+            success: false,
+            error: "Erreur serveur",
+        });
+    }
+};

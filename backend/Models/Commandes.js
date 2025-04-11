@@ -14,7 +14,7 @@ const CommandeSchema = new mongoose.Schema({
     livreur_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-    }, // Référence au livreur (optionnel au début)
+    },
     // produits: [
     //     {
     //         produit_id: {

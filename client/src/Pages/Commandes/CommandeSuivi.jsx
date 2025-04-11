@@ -131,6 +131,9 @@ const CommandeSuivi = () => {
     const adresseClient = commande?.data?.adresse_livraison
         ? `${commande.data.adresse_livraison.rue}, ${commande.data.adresse_livraison.ville}, ${commande.data.adresse_livraison.code_postal}`
         : "";
+    const adresseCommercant = commande?.data?.commercant_id?.adresse_boutique
+        ? `${commande.data.commercant_id.adresse_boutique.rue}, ${commande.data.commercant_id.adresse_boutique.ville}, ${commande.data.commercant_id.adresse_boutique.code_postal}`
+        : "";
 
     const { data: coords, isLoading: isLoadingCoords } =
         useGetCoords(adresseClient);

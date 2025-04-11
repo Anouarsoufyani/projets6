@@ -137,6 +137,18 @@ function App() {
                             )
                         }
                     />
+                    <Route
+                        path="/livreurs/:commandeId"
+                        element={
+                            authUser &&
+                            (authUser.role === "commercant" ||
+                                authUser.role === "admin") ? (
+                                <SelectLivreurPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
 
                     <Route
                         path="/commandes"

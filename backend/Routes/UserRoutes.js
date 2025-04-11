@@ -15,7 +15,6 @@ import { protectAdmin } from "../Middleware/protectAdmin.js";
 
 const router = express.Router();
 
-// router.post("/new", protectRoute, createCommande);
 router.put("/update", protectRoute, updateProfile);
 router.post("/active", protectRoute, toggleActive);
 router.put(
@@ -25,7 +24,7 @@ router.put(
     updateUserPosition
 );
 router.get("/livreurs/available", protectRoute, getAvailableLivreurs);
-router.get("/gestion/:role", protectRoute, protectAdmin, getUsersByRole);
+router.get("/gestion/:role", protectRoute, getUsersByRole);
 router.get(
     "/livreur/:id/pieces",
     protectRoute,

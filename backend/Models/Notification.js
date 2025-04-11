@@ -35,6 +35,8 @@ const notificationSchema = new mongoose.Schema(
                 "annulation de commande",
                 "modification de commande",
                 "nouvelle commande",
+                "nouvelle commande assignée",
+                "nouveau livreur assigné",
                 "commande recuperee",
                 "commande livree",
                 "nouvelle livraison",

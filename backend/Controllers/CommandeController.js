@@ -3,118 +3,6 @@ import userModels from "../Models/User.js";
 import Commande from "../Models/Commandes.js";
 import Notification from "../Models/Notification.js";
 const { User } = userModels;
-// const { User, Client, Commercant, Livreur } = userModels;
-// import bcrypt from "bcryptjs";
-
-// export const signup = async (req, res) => {
-//     // validation for req.body
-//     const { email, nom, password, numero, role } = req.body;
-
-//     // Regular expression for email validation (i dont understand but ok)
-//     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-//     try {
-//         // validation for email
-//         if (!emailRegex.test(email)) {
-//             return res
-//                 .status(400)
-//                 .json({ success: false, error: "Invalid email address" });
-//         }
-
-//         // checking if email already exists
-//         const existingEmail = await User.findOne({ email });
-//         if (existingEmail) {
-//             return res
-//                 .status(400)
-//                 .json({ success: false, error: "Email already taken" });
-//         }
-
-//         const existingNumber = await User.findOne({ numero });
-//         if (existingNumber) {
-//             return res
-//                 .status(400)
-//                 .json({ success: false, error: "Email already taken" });
-//         }
-//         // checking if password is at least 6 characters
-//         if (password.length < 6) {
-//             return res.status(400).json({
-//                 success: false,
-//                 error: "Password must be at least 6 characters",
-//             });
-//         }
-
-//         //hash password
-//         // example : pass os 123456 -> it will be something like wuijfowebf327423gr784vbf47
-//         const salt = await bcrypt.genSalt(10);
-//         const hashedPassword = await bcrypt.hash(password, salt);
-
-//         if (!nom || !email || !password || !numero || !role) {
-//             return res
-//                 .status(400)
-//                 .json({ success: false, error: "All fields are required" });
-//         }
-
-//         if (role !== "livreur" && role !== "client" && role !== "commercant") {
-//             return res
-//                 .status(400)
-//                 .json({ success: false, error: "Invalid user type" });
-//         }
-
-//         let newUser;
-
-//         if (role === "livreur") {
-//             newUser = new Livreur({
-//                 nom,
-//                 numero,
-//                 email,
-//                 role,
-//                 password: hashedPassword,
-//             });
-//         } else if (role === "commercant") {
-//             newUser = new Commercant({
-//                 nom,
-//                 numero,
-//                 email,
-//                 role,
-//                 password: hashedPassword,
-//             });
-//         } else if (role === "client") {
-//             newUser = new Client({
-//                 nom,
-//                 numero,
-//                 email,
-//                 role,
-//                 password: hashedPassword,
-//             });
-//         }
-
-//         console.log(newUser);
-
-//         if (newUser) {
-//             await newUser.save();
-
-//             generateTokenAndSetCookie(newUser._id, res);
-
-//             return res.status(201).json({
-//                 success: true,
-//                 message: "User created successfully",
-//                 _id: newUser._id,
-//                 name: newUser.nom,
-//                 numero: newUser.numero,
-//                 email: newUser.email,
-//                 profilePic: newUser.profilePic,
-//                 role: newUser.role,
-//             });
-//         } else {
-//             console.log("error", error.message);
-//             return res
-//                 .status(400)
-//                 .json({ success: false, error: "Invalid user data" });
-//         }
-//     } catch (error) {
-//         return res.status(400).json({ success: false, message: error.message });
-//     }
-// };
 
 export const getCommandeById = async (req, res) => {
     try {
@@ -248,8 +136,23 @@ export const cancelCommande = async (req, res) => {
                 .json({ success: false, error: "Commande not found" });
         }
 
+        const usersToNotify = [
+            commande.client_id,
+            commande.commercant_id,
+            commande.livreur_id,
+        ].filter(Boolean);
+
         commande.statut = "annulee";
         await commande.save();
+
+        for (const userId of usersToNotify) {
+            const notification = new Notification({
+                sender: req.user._id,
+                receiver: userId,
+                type: "annulation de commande",
+            });
+            await notification.save();
+        }
 
         return res
             .status(200)
@@ -404,6 +307,12 @@ export const validation_codeCL = async (req, res) => {
             });
         }
 
+        const notification = new Notification({
+            sender: req.user._id,
+            receiver: commande.commercant_id,
+            type: "commande livree",
+        });
+
         // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
         if (
             commande.code_Client == code &&
@@ -412,6 +321,8 @@ export const validation_codeCL = async (req, res) => {
             commande.is_client_verifie = true;
             commande.statut = "livree";
             await commande.save();
+            await notification.save();
+
             return res.status(200).json({
                 success: true,
                 code_Client: commande.code_Client,
@@ -452,10 +363,17 @@ export const validation_codeCom = async (req, res) => {
             });
         }
 
+        const notification = new Notification({
+            sender: req.user._id,
+            receiver: commande.client_id,
+            type: "commande recuperee",
+        });
+
         if (commande.code_Commercant == code) {
             commande.is_commercant_verifie = true;
             commande.statut = "recuperee_par_livreur";
             await commande.save();
+            await notification.save();
 
             return res.status(200).json({
                 success: true,
@@ -488,10 +406,34 @@ export const assignLivreur = async (req, res) => {
                 error: "Commande non trouvée",
             });
         }
+        const livreurToNotify = await User.findById(livreurId).select(
+            "-password"
+        );
+
+        const clientToNotify = await User.findById(commande.client_id).select(
+            "-password"
+        );
 
         commande.livreur_id = livreurId;
         commande.statut = "prete_a_etre_recuperee";
         await commande.save();
+        if (livreurToNotify) {
+            const notification = new Notification({
+                sender: req.user._id,
+                receiver: livreurId,
+                type: "nouvelle commande assignée",
+            });
+            await notification.save();
+        }
+
+        if (clientToNotify) {
+            const notification = new Notification({
+                sender: req.user._id,
+                receiver: commande.client_id,
+                type: "nouveau livreur assigné",
+            });
+            await notification.save();
+        }
 
         return res.status(200).json({
             success: true,

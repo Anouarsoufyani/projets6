@@ -3,7 +3,7 @@ import { useGetCoords } from "../../Hooks/useGetCoords";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import { useParams } from "react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import toast from "react-hot-toast";
 import useLivreurTracking from "../../Hooks/useLivreurTracking";
@@ -34,6 +34,7 @@ const CommandeSuivi = () => {
     const directionsRendererRef = useRef(null);
     const intervalRef = useRef(null);
     const lastRouteCalculationRef = useRef(0);
+    const [deliveryStatus, setDeliveryStatus] = useState("en_attente");
 
     // Utiliser un intervalle personnalisé au lieu du refresh automatique du hook
     const [refreshKey, setRefreshKey] = useState(0);
@@ -48,7 +49,9 @@ const CommandeSuivi = () => {
     console.log("livreurPosition", livreurPosition);
 
     // État local pour stocker la dernière position connue du livreur
-    const [currentLivreurPosition, setCurrentLivreurPosition] = useState(null);
+    // const [currentLivreurPosition, setCurrentLivreurPosition] = useState(null)
+
+    const queryClient = useQueryClient();
 
     // Récupérer les données de la commande
     const { data: commande, isLoading } = useQuery({
@@ -76,6 +79,7 @@ const CommandeSuivi = () => {
             }
         },
         retry: false,
+        refetchInterval: 5000, // Rafraîchir toutes les 5 secondes
     });
 
     // Mutation pour valider le code commerçant
@@ -97,8 +101,9 @@ const CommandeSuivi = () => {
         onSuccess: () => {
             toast.success("Commande récupérée avec succès!");
             setCommercantCode("");
-            // Forcer un rafraîchissement des données
-            setRefreshKey((prev) => prev + 1);
+            // Invalider les requêtes pour forcer un rafraîchissement
+            queryClient.invalidateQueries({ queryKey: ["getCommande", id] });
+            queryClient.invalidateQueries({ queryKey: ["getUserCommandes"] });
         },
         onError: (error) => {
             toast.error(error.message || "Code invalide");
@@ -121,8 +126,9 @@ const CommandeSuivi = () => {
         onSuccess: () => {
             toast.success("Livraison confirmée avec succès!");
             setClientCode("");
-            // Forcer un rafraîchissement des données
-            setRefreshKey((prev) => prev + 1);
+            // Invalider les requêtes pour forcer un rafraîchissement
+            queryClient.invalidateQueries({ queryKey: ["getCommande", id] });
+            queryClient.invalidateQueries({ queryKey: ["getUserCommandes"] });
         },
         onError: (error) => {
             toast.error(error.message || "Code invalide");
@@ -144,43 +150,41 @@ const CommandeSuivi = () => {
         useGetCoords(adresseClient);
 
     // Fonction pour récupérer la position du livreur manuellement
-    const fetchLivreurPosition = useCallback(async () => {
-        // Limiter la fréquence des appels
-        const now = Date.now();
-        if (now - lastRouteCalculationRef.current < 10000) {
-            return;
-        }
-        lastRouteCalculationRef.current = now;
+    // const fetchLivreurPosition = useCallback(async () => {
+    //   // Limiter la fréquence des appels
+    //   const now = Date.now()
+    //   if (now - lastRouteCalculationRef.current < 10000) {
+    //     return
+    //   }
+    //   lastRouteCalculationRef.current = now
 
-        try {
-            const response = await fetch(`/api/commandes/${id}/livreur-info`);
+    //   try {
+    //     const response = await fetch(`/api/commandes/${id}/livreur-info`)
 
-            if (!response.ok) {
-                if (response.status !== 404) {
-                    // Ignorer les 404 (livreur non assigné)
-                    console.error(
-                        "Erreur lors de la récupération de la position"
-                    );
-                }
-                return;
-            }
+    //     if (!response.ok) {
+    //       if (response.status !== 404) {
+    //         // Ignorer les 404 (livreur non assigné)
+    //         console.error("Erreur lors de la récupération de la position")
+    //       }
+    //       return
+    //     }
 
-            const data = await response.json();
-            console.log(data);
+    //     const data = await response.json()
+    //     console.log(data)
 
-            if (data.position) {
-                setCurrentLivreurPosition({
-                    lat: data.position.lat,
-                    lng: data.position.lng,
-                    livreurId: data.livreurId,
-                    timestamp: new Date(),
-                });
-                console.log(currentLivreurPosition);
-            }
-        } catch (err) {
-            console.error("Erreur:", err);
-        }
-    }, [id]);
+    //     if (data.position) {
+    //       setCurrentLivreurPosition({
+    //         lat: data.position.lat,
+    //         lng: data.position.lng,
+    //         livreurId: data.livreurId,
+    //         timestamp: new Date(),
+    //       })
+    //       console.log(currentLivreurPosition)
+    //     }
+    //   } catch (err) {
+    //     console.error("Erreur:", err)
+    //   }
+    // }, [id])
 
     // Initialiser la carte et le centre une seule fois
     useEffect(() => {
@@ -191,54 +195,59 @@ const CommandeSuivi = () => {
     }, [coords, mapInitialized]);
 
     // Mettre à jour la position du livreur depuis le hook
-    useEffect(() => {
-        if (livreurPosition) {
-            setCurrentLivreurPosition(livreurPosition);
-        }
-    }, [livreurPosition]);
+    // useEffect(() => {
+    //   if (livreurPosition) {
+    //     setCurrentLivreurPosition(livreurPosition)
+    //   }
+    // }, [livreurPosition])
 
     // Configurer l'intervalle pour récupérer la position du livreur toutes les 10 secondes
-    useEffect(() => {
-        // Première récupération immédiate
-        fetchLivreurPosition();
+    // useEffect(() => {
+    //   // Première récupération immédiate
+    //   fetchLivreurPosition()
 
-        // Configurer l'intervalle
-        intervalRef.current = setInterval(() => {
-            console.log(
-                "Rafraîchissement de la position du livreur...",
-                currentLivreurPosition
-            );
+    //   // Configurer l'intervalle
+    //   intervalRef.current = setInterval(() => {
+    //     console.log("Rafraîchissement de la position du livreur...", currentLivreurPosition)
 
-            fetchLivreurPosition();
-        }, 10000);
+    //     fetchLivreurPosition()
+    //   }, 10000)
 
-        // Nettoyer l'intervalle lors du démontage
-        return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
-        };
-    }, [fetchLivreurPosition, refreshKey]);
+    //   // Nettoyer l'intervalle lors du démontage
+    //   return () => {
+    //     if (intervalRef.current) {
+    //       clearInterval(intervalRef.current)
+    //     }
+    //   }
+    // }, [fetchLivreurPosition, refreshKey])
 
     // Fonction pour calculer l'itinéraire
     const calculateRoute = useCallback(async () => {
-        if (
-            !currentLivreurPosition ||
-            !coords ||
-            !coords.lat ||
-            !coords.lng ||
-            !window.google ||
-            !mapRef.current
-        ) {
+        if (!livreurPosition || !window.google || !mapRef.current) {
             return;
+        }
+
+        // Déterminer la destination en fonction du statut
+        let destination;
+        if (deliveryStatus === "prete_a_etre_recuperee" && coordsCommercant) {
+            // Si le livreur doit récupérer la commande, la destination est le commerçant
+            destination = {
+                lat: coordsCommercant.lat,
+                lng: coordsCommercant.lng,
+            };
+        } else if (coords) {
+            // Sinon, la destination est le client
+            destination = { lat: coords.lat, lng: coords.lng };
+        } else {
+            return; // Pas de destination valide
         }
 
         // Vérifier si les coordonnées sont valides
         if (
-            isNaN(currentLivreurPosition.lat) ||
-            isNaN(currentLivreurPosition.lng) ||
-            isNaN(coords.lat) ||
-            isNaN(coords.lng)
+            isNaN(livreurPosition.lat) ||
+            isNaN(livreurPosition.lng) ||
+            isNaN(destination.lat) ||
+            isNaN(destination.lng)
         ) {
             console.warn("Coordonnées invalides détectées");
             return;
@@ -252,10 +261,10 @@ const CommandeSuivi = () => {
             // Exécuter le calcul d'itinéraire
             const results = await directionsService.route({
                 origin: {
-                    lat: currentLivreurPosition.lat,
-                    lng: currentLivreurPosition.lng,
+                    lat: livreurPosition.lat,
+                    lng: livreurPosition.lng,
                 },
-                destination: { lat: coords.lat, lng: coords.lng },
+                destination: destination,
                 travelMode: window.google.maps.TravelMode.DRIVING,
             });
 
@@ -282,14 +291,14 @@ const CommandeSuivi = () => {
         } catch (error) {
             console.error("Erreur lors du calcul de l'itinéraire:", error);
         }
-    }, [currentLivreurPosition, coords]);
+    }, [livreurPosition, coords, coordsCommercant, deliveryStatus]);
 
     // Mettre à jour l'itinéraire lorsque la position du livreur change
     useEffect(() => {
-        if (currentLivreurPosition && coords && mapRef.current) {
+        if (livreurPosition && mapRef.current) {
             calculateRoute();
         }
-    }, [currentLivreurPosition, coords, calculateRoute]);
+    }, [livreurPosition, calculateRoute]);
 
     // Gérer le chargement de la carte
     const handleMapLoad = useCallback(
@@ -297,11 +306,11 @@ const CommandeSuivi = () => {
             mapRef.current = map;
 
             // Si nous avons déjà les positions, calculer l'itinéraire
-            if (currentLivreurPosition && coords) {
+            if (livreurPosition && coords) {
                 calculateRoute();
             }
         },
-        [calculateRoute, currentLivreurPosition, coords]
+        [calculateRoute, livreurPosition, coords]
     );
 
     // Gérer la soumission du code commerçant
@@ -323,6 +332,19 @@ const CommandeSuivi = () => {
             toast.error("Veuillez entrer un code");
         }
     };
+
+    useEffect(() => {
+        if (livreurStatus && livreurStatus.status) {
+            setDeliveryStatus(livreurStatus.status);
+        }
+    }, [livreurStatus]);
+
+    // Mettre à jour le statut de livraison quand la commande change
+    useEffect(() => {
+        if (commande?.data?.statut) {
+            setDeliveryStatus(commande.data.statut);
+        }
+    }, [commande]);
 
     if (
         isLoading ||
@@ -382,7 +404,7 @@ const CommandeSuivi = () => {
 
     // Vérifier si nous avons les coordonnées nécessaires
     const hasValidCoordinates =
-        currentLivreurPosition && coords && coords.lat && coords.lng;
+        livreurPosition && coords && coords.lat && coords.lng;
 
     // Vérifier si l'utilisateur est le livreur assigné à cette commande
     const isAssignedClient =
@@ -401,7 +423,6 @@ const CommandeSuivi = () => {
         authUser._id === commande.data.livreur_id._id;
 
     // Déterminer l'étape actuelle de la livraison
-    const deliveryStatus = livreurStatus?.status || "en_attente";
     const canConfirmPickup =
         isAssignedLivreur && deliveryStatus === "prete_a_etre_recuperee";
     const canConfirmDelivery =
@@ -726,19 +747,35 @@ const CommandeSuivi = () => {
                                     </div>
                                 )}
 
-                                {isAssignedCommercant && (
-                                    <div className="space-y-4 p-4 border border-yellow-300 rounded-md bg-yellow-50">
-                                        <h3 className="font-semibold text-yellow-800">
-                                            Code commerçant:{" "}
-                                            {commande.data.code_Commercant}
-                                        </h3>
-                                        <span className="text-yellow-600 text-sm">
-                                            ⚠️ Veuillez remettre ce code au
-                                            livreur lorsque la commande est
-                                            prise en main.
-                                        </span>
-                                    </div>
-                                )}
+                                {isAssignedCommercant &&
+                                    deliveryStatus ===
+                                        "prete_a_etre_recuperee" && (
+                                        <div className="space-y-4 p-4 border border-yellow-300 rounded-md bg-yellow-50">
+                                            <h3 className="font-semibold text-yellow-800">
+                                                Code commerçant:{" "}
+                                                {commande.data.code_Commercant}
+                                            </h3>
+                                            <span className="text-yellow-600 text-sm">
+                                                ⚠️ Veuillez remettre ce code au
+                                                livreur lorsque la commande est
+                                                prise en main.
+                                            </span>
+                                        </div>
+                                    )}
+
+                                {isAssignedCommercant &&
+                                    deliveryStatus ===
+                                        "recuperee_par_livreur" && (
+                                        <div className="bg-green-50 p-4 border border-green-300 rounded-md">
+                                            <h3 className="text-green-800 font-semibold">
+                                                Code commerçant remis.
+                                            </h3>
+                                            <p className="text-green-600 text-sm">
+                                                ✅ Le code a bien été donné au
+                                                livreur.
+                                            </p>
+                                        </div>
+                                    )}
 
                                 {isAssignedClient && (
                                     <div className="space-y-4 p-4 border border-yellow-300 rounded-md bg-yellow-50">
@@ -779,11 +816,11 @@ const CommandeSuivi = () => {
                             onLoad={handleMapLoad}
                         >
                             {/* Marqueur pour le livreur */}
-                            {currentLivreurPosition && (
+                            {livreurPosition && (
                                 <Marker
                                     position={{
-                                        lat: currentLivreurPosition.lat,
-                                        lng: currentLivreurPosition.lng,
+                                        lat: livreurPosition.lat,
+                                        lng: livreurPosition.lng,
                                     }}
                                     icon={{
                                         url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",

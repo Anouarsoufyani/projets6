@@ -17,7 +17,7 @@ const Navbar = ({ isLoggedIn, navbarHeight, toggleSidebar, isMobile }) => {
                 Proximity
             </Link>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
                 {isLoggedIn && isMobile && (
                     <button
                         onClick={toggleSidebar}
@@ -29,20 +29,28 @@ const Navbar = ({ isLoggedIn, navbarHeight, toggleSidebar, isMobile }) => {
                 )}
 
                 {!isLoggedIn && (
-                    <>
+                    <div className="flex items-center gap-2">
                         <Link
                             to="/login"
-                            className="flex items-center gap-2 bg-white text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-100 transition duration-300 shadow-md"
+                            className="flex items-center justify-center bg-white text-emerald-700 p-2 rounded-full hover:bg-emerald-100 transition duration-300 shadow-md"
+                            aria-label="Connexion"
                         >
-                            <FaSignInAlt /> Connexion
+                            <FaSignInAlt size={18} />
+                            <span className="hidden md:inline ml-2">
+                                Connexion
+                            </span>
                         </Link>
                         <Link
                             to="/signup"
-                            className="flex items-center gap-2 bg-white text-emerald-700 px-4 py-2 rounded-full hover:bg-emerald-100 transition duration-300 shadow-md"
+                            className="flex items-center justify-center bg-white text-emerald-700 p-2 rounded-full hover:bg-emerald-100 transition duration-300 shadow-md"
+                            aria-label="S'inscrire"
                         >
-                            <FaUserPlus /> S'inscrire
+                            <FaUserPlus size={18} />
+                            <span className="hidden md:inline ml-2">
+                                S'inscrire
+                            </span>
                         </Link>
-                    </>
+                    </div>
                 )}
             </div>
         </nav>

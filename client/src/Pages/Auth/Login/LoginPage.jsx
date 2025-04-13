@@ -43,8 +43,8 @@ const LoginPage = () => {
     };
 
     return (
-        <main className="flex justify-center items-center w-full h-screen bg-gray-100">
-            <div className="flex flex-col gap-6 justify-center items-center w-1/3 bg-white p-8 rounded-xl shadow-2xl">
+        <main className="flex justify-center items-center w-full min-h-screen px-4 py-8 bg-gray-100">
+            <div className="flex flex-col gap-6 justify-center items-center w-full max-w-md mx-auto bg-white p-4 sm:p-8 rounded-xl shadow-2xl">
                 <h1 className="text-3xl font-bold text-emerald-600 mb-4">
                     Connexion
                 </h1>

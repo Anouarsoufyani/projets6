@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router"; // Correction de l'import
+import { Link, useNavigate } from "react-router"; // Ajout de useNavigate
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaUserTie } from "react-icons/fa";
 import { useSignup } from "../../../Hooks"; // Import du hook modularisé
 import toast from "react-hot-toast";
 
 const SignupPage = () => {
+    const navigate = useNavigate(); // Hook pour la navigation
     const [role, setRole] = useState(null);
 
     useEffect(() => {
@@ -56,6 +57,11 @@ const SignupPage = () => {
                             numero: "",
                             role: "client",
                         });
+                        // Redirection vers la page de connexion après inscription réussie
+                        toast.success(
+                            "Inscription réussie! Veuillez vous connecter."
+                        );
+                        navigate("/login");
                     },
                 }
             );
@@ -67,8 +73,8 @@ const SignupPage = () => {
     };
 
     return (
-        <main className="flex justify-center items-center w-full h-screen  bg-gray-100">
-            <div className="flex flex-col gap-6 justify-center items-center w-1/2 bg-white p-8 rounded-xl shadow-2xl">
+        <main className="flex justify-center items-center w-full min-h-screen px-4 py-8 bg-gray-100">
+            <div className="flex flex-col gap-6 justify-center items-center w-full max-w-lg mx-auto bg-white p-4 sm:p-8 rounded-xl shadow-2xl">
                 <h1 className="text-3xl font-bold text-emerald-600 mb-4">
                     Inscription
                 </h1>

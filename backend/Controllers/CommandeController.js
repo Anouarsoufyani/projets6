@@ -36,9 +36,9 @@ export const getCommandes = async (req, res) => {
             case "livreur":
                 filter = { livreur_id: req.user.id };
                 break;
-            // case "admin":
-            //     // Pour un administrateur, aucun filtre (toutes les commandes)
-            //     break;
+            case "admin":
+                // Pour un administrateur, toutes les commandes
+                break;
             default:
                 return res.status(403).json({
                     success: false,

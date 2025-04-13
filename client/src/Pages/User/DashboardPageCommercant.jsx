@@ -3,7 +3,6 @@
 import { useState, useMemo } from "react"
 import {
   FaStar,
-  FaRegStar,
   FaShoppingBag,
   FaUsers,
   FaMoneyBillWave,
@@ -15,8 +14,7 @@ import {
   FaChartBar,
   FaUserFriends,
 } from "react-icons/fa"
-import { useAuthUserQuery, useGetUserCommandes  } from "../../Hooks"
-import PropTypes from "prop-types"
+import { useAuthUserQuery, useGetUserCommandes, useGetReviewsForUser } from "../../Hooks"
 import {
   Bar,
   BarChart,
@@ -32,81 +30,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"
-
-// Composants réutilisables
-const StarRating = ({ rating }) => (
-  <div className="flex items-center">
-    {[...Array(5)].map((_, i) => (
-      <span key={i} className="mr-0.5">
-        {i < rating ? <FaStar className="text-yellow-500 h-5 w-5" /> : <FaRegStar className="text-gray-300 h-5 w-5" />}
-      </span>
-    ))}
-  </div>
-)
-
-StarRating.propTypes = {
-  rating: PropTypes.number.isRequired,
-}
-
-const ReviewCard = ({ review }) => (
-  <div className="bg-white p-5 rounded-xl shadow-md mb-5 border-l-4 border-emerald-500 hover:shadow-lg transition-shadow duration-300">
-    <div className="flex items-center justify-between mb-2">
-      <h3 className="font-semibold text-emerald-700 text-lg">{review.name}</h3>
-      <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{review.date}</span>
-    </div>
-    <div className="mb-2">
-      <StarRating rating={review.rating} />
-    </div>
-    <p className="text-gray-700 mt-2 italic">{review.comment}</p>
-  </div>
-)
-
-ReviewCard.propTypes = {
-  review: PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    date: PropTypes.string.isRequired,
-    rating: PropTypes.number.isRequired,
-    comment: PropTypes.string.isRequired,
-  }).isRequired,
-}
-
-// Données d'exemple pour les avis
-const fakeReviews = [
-  {
-    id: 1,
-    name: "Jean Dupont",
-    comment: "Service impeccable et livraison rapide !",
-    rating: 5,
-    date: "12 Mars 2025",
-  },
-  {
-    id: 2,
-    name: "Sophie Martin",
-    comment: "Bon service mais un peu de retard sur la commande.",
-    rating: 4,
-    date: "10 Mars 2025",
-  },
-  {
-    id: 3,
-    name: "Paul Bernard",
-    comment: "Très satisfait, je recommande !",
-    rating: 5,
-    date: "8 Mars 2025",
-  },
-  {
-    id: 4,
-    name: "Alice Morel",
-    comment: "Peut mieux faire sur le service client.",
-    rating: 3,
-    date: "6 Mars 2025",
-  },
-]
-
-const getAverageRating = (reviews) => {
-  if (!reviews.length) return 0
-  const total = reviews.reduce((sum, review) => sum + review.rating, 0)
-  return (total / reviews.length).toFixed(1)
-}
+import { StarRating, ReviewCard, getAverageRating } from "../../Components/Reviews/ReviewDisplay"
 
 // Couleurs pour les graphiques
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
@@ -126,6 +50,9 @@ const DashboardPageCommercant = () => {
   const { data: commandesData, isLoading } = useGetUserCommandes()
   const [timeRange, setTimeRange] = useState("month")
   const [activeTab, setActiveTab] = useState("statistiques")
+
+  // Récupérer les avis pour le commerçant
+  const { data: reviews, isLoading: isLoadingReviews } = useGetReviewsForUser(authUser?._id)
 
   // Traitement des données des commandes
   const {
@@ -910,23 +837,31 @@ const DashboardPageCommercant = () => {
           <div className="bg-white p-8 rounded-xl shadow-lg mb-8 hover:shadow-xl transition-shadow duration-300">
             <h2 className="text-2xl font-bold text-emerald-800 mb-4 border-b border-emerald-100 pb-2">Note Globale</h2>
             <div className="flex items-center text-3xl font-bold">
-              <span className="text-4xl text-yellow-500 mr-3">{getAverageRating(fakeReviews)}</span>
+              <span className="text-4xl text-yellow-500 mr-3">{getAverageRating(reviews || [])}</span>
               <span className="mr-3">/</span>
               <span className="text-gray-400">5</span>
               <span className="ml-4">
-                <StarRating rating={Math.round(getAverageRating(fakeReviews))} />
+                <StarRating rating={Math.round(getAverageRating(reviews || []))} />
               </span>
             </div>
-            <p className="text-gray-500 mt-2 text-sm">Basé sur {fakeReviews.length} avis clients</p>
+            <p className="text-gray-500 mt-2 text-sm">Basé sur {reviews?.length || 0} avis clients</p>
           </div>
           <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
             <h2 className="text-2xl font-bold text-emerald-800 mb-6 border-b border-emerald-100 pb-2">
               Avis des Clients
             </h2>
             <div className="space-y-6">
-              {fakeReviews.map((review) => (
-                <ReviewCard key={review.id} review={review} />
-              ))}
+              {isLoadingReviews ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-600"></div>
+                </div>
+              ) : reviews && reviews.length > 0 ? (
+                reviews.map((review) => <ReviewCard key={review._id} review={review} />)
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Aucun avis client pour le moment. Les avis apparaîtront ici lorsque vos clients en laisseront.
+                </div>
+              )}
             </div>
           </div>
         </div>

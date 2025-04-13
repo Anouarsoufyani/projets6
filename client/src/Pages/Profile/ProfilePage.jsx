@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import PropTypes from "prop-types"
-import { useAuthUserQuery, useUpdateProfile  } from "../../Hooks"
+import { useAuthUserQuery, useUpdateProfile } from "../../Hooks"
 import toast from "react-hot-toast"
 
 // Initial form structure with empty values

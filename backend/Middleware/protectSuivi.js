@@ -24,7 +24,7 @@ export const protectSuivi = async (req, res, next) => {
                 error: "Forbidden : Access denied",
             });
         }
-        console.log("next");
+        
 
         next();
     } catch (error) {

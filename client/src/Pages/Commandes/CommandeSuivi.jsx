@@ -1,10 +1,12 @@
 "use client"
-import { useGetCoords, useAuthUserQuery, useLivreurTracking  } from "../../Hooks"
+import { useGetCoords, useAuthUserQuery, useLivreurTracking } from "../../Hooks"
 import { useEffect, useState, useRef, useCallback } from "react"
 import { GoogleMap, Marker } from "@react-google-maps/api"
 import { useParams } from "react-router"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import toast from "react-hot-toast"
+// Ajouter l'import pour le composant ReviewForm
+import ReviewForm from "../../Components/Reviews/ReviewForm"
 
 const containerStyle = {
   width: "100%",
@@ -488,55 +490,98 @@ const CommandeSuivi = () => {
             )}
 
             {/* Delivery status with actual distance and duration */}
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <h3 className="font-medium text-blue-800 mb-2">Statut</h3>
-              <div className="space-y-2">
-                <p className="text-blue-700 font-medium">
-                  {deliveryStatus === "en_livraison"
-                    ? "En cours de livraison"
-                    : deliveryStatus === "commande_prise"
-                      ? "Commande récupérée"
-                      : deliveryStatus === "en_route_vers_commercant"
-                        ? "En route vers le commerçant"
-                        : deliveryStatus === "arrive"
-                          ? "Arrivé à destination"
-                          : "En route"}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Arrivée estimée: <span className="font-medium">{formattedArrival}</span>
-                </p>
-                {distance && (
-                  <p className="text-sm text-gray-600">
-                    Distance: <span className="font-medium">{distance}</span>
-                  </p>
-                )}
-                {duration && (
-                  <p className="text-sm text-gray-600">
-                    Durée estimée: <span className="font-medium">{duration}</span>
-                  </p>
-                )}
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                  <div
-                    className="bg-blue-600 h-2.5 rounded-full"
-                    style={{
-                      width: `${calculateProgressPercentage()}%`,
-                    }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-
+            {/* Remplacer le bloc bleu de statut par un système d'avis quand la commande est livrée */}
+            {/* Chercher ce bloc dans le code: */}
             {commande.data.statut === "livree" ? (
-              <div className="p-4 bg-green-50 rounded-lg text-center">
-                <h3 className="font-medium text-green-800 mb-2">La commande a été livrée avec succès.</h3>
-                <p className="text-green-700">
-                  Merci d'avoir utilisé notre service. Nous espérons vous revoir bientôt !
-                </p>
+              <div>
+                {isAssignedClient && (
+                  <div className="space-y-6">
+                    <div className="p-4 bg-green-50 rounded-lg text-center mb-4">
+                      <h3 className="font-medium text-green-800 mb-2">La commande a été livrée avec succès.</h3>
+                      <p className="text-green-700">
+                        Merci d'avoir utilisé notre service. Nous espérons vous revoir bientôt !
+                      </p>
+                    </div>
+
+                    {/* Section d'avis pour le client */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Avis pour le livreur */}
+                      {commande.data.livreur_id && (
+                        <div className="bg-white p-4 rounded-lg shadow-md">
+                          <h3 className="text-lg font-semibold text-emerald-700 mb-4">Évaluer le livreur</h3>
+                          <ReviewForm
+                            targetId={commande.data.livreur_id._id}
+                            targetType="livreur"
+                            commandeId={commande.data._id}
+                          />
+                        </div>
+                      )}
+
+                      {/* Avis pour le commerçant */}
+                      <div className="bg-white p-4 rounded-lg shadow-md">
+                        <h3 className="text-lg font-semibold text-emerald-700 mb-4">Évaluer le commerçant</h3>
+                        <ReviewForm
+                          targetId={commande.data.commercant_id._id}
+                          targetType="commercant"
+                          commandeId={commande.data._id}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!isAssignedClient && (
+                  <div className="p-4 bg-green-50 rounded-lg text-center">
+                    <h3 className="font-medium text-green-800 mb-2">La commande a été livrée avec succès.</h3>
+                    <p className="text-green-700">
+                      Merci d'avoir utilisé notre service. Nous espérons vous revoir bientôt !
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <>
+                {/* Bloc d'information sur le statut de livraison */}
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h3 className="font-medium text-blue-800 mb-2">Statut</h3>
+                  <div className="space-y-2">
+                    <p className="text-blue-700 font-medium">
+                      {deliveryStatus === "en_livraison"
+                        ? "En cours de livraison"
+                        : deliveryStatus === "commande_prise"
+                          ? "Commande récupérée"
+                          : deliveryStatus === "en_route_vers_commercant"
+                            ? "En route vers le commerçant"
+                            : deliveryStatus === "arrive"
+                              ? "Arrivé à destination"
+                              : "En route"}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Arrivée estimée: <span className="font-medium">{formattedArrival}</span>
+                    </p>
+                    {distance && (
+                      <p className="text-sm text-gray-600">
+                        Distance: <span className="font-medium">{distance}</span>
+                      </p>
+                    )}
+                    {duration && (
+                      <p className="text-sm text-gray-600">
+                        Durée estimée: <span className="font-medium">{duration}</span>
+                      </p>
+                    )}
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                      <div
+                        className="bg-blue-600 h-2.5 rounded-full"
+                        style={{
+                          width: `${calculateProgressPercentage()}%`,
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+
                 {isAssignedLivreur && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 mt-4">
                     {canConfirmPickup && (
                       <div className="p-4 bg-amber-50 rounded-lg">
                         <h3 className="font-medium text-amber-800 mb-2">Confirmer la prise de commande</h3>
@@ -584,7 +629,7 @@ const CommandeSuivi = () => {
                 )}
 
                 {isAssignedCommercant && deliveryStatus === "prete_a_etre_recuperee" && (
-                  <div className="space-y-4 p-4 border border-yellow-300 rounded-md bg-yellow-50">
+                  <div className="space-y-4 p-4 border border-yellow-300 rounded-md bg-yellow-50 mt-4">
                     <h3 className="font-semibold text-yellow-800">Code commerçant: {commande.data.code_Commercant}</h3>
                     <span className="text-yellow-600 text-sm">
                       ⚠️ Veuillez remettre ce code au livreur lorsque la commande est prise en main.
@@ -593,17 +638,17 @@ const CommandeSuivi = () => {
                 )}
 
                 {isAssignedCommercant && deliveryStatus === "recuperee_par_livreur" && (
-                  <div className="bg-green-50 p-4 border border-green-300 rounded-md">
+                  <div className="bg-green-50 p-4 border border-green-300 rounded-md mt-4">
                     <h3 className="text-green-800 font-semibold">Code commerçant remis.</h3>
                     <p className="text-green-600 text-sm">✅ Le code a bien été donné au livreur.</p>
                   </div>
                 )}
 
                 {isAssignedClient && (
-                  <div className="space-y-4 p-4 border border-yellow-300 rounded-md bg-yellow-50">
+                  <div className="space-y-4 p-4 border border-yellow-300 rounded-md bg-yellow-50 mt-4">
                     <h3 className="font-semibold text-yellow-800">Code client: {commande.data.code_Client}</h3>
                     <span className="text-yellow-600 text-sm">
-                      ⚠️ Veuillez remettre ce code au livreur lorsque la commande est prise en main.
+                      ⚠️ Veuillez remettre ce code au livreur lorsque la commande est livrée.
                     </span>
                   </div>
                 )}

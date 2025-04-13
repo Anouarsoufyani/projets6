@@ -16,6 +16,8 @@ import CreateCommandePage from "./Pages/Commandes/CreateCommandePage";
 import CommandeSuivi from "./Pages/Commandes/CommandeSuivi";
 import NotificationsPage from "./Pages/User/NotificationsPage";
 
+import DetailCommande from "./Pages/Commandes/DetailCommande";
+
 import GestionPiecesPage from "./Pages/Admin/GestionPiecesPage";
 import DashboardPageAdmin from "./Pages/Admin/DashboardPageAdmin";
 import GestionUsersPage from "./Pages/Admin/GestionUsersPage";
@@ -256,6 +258,17 @@ function App() {
                         element={
                             authUser ? (
                                 <NotificationsPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+
+                    <Route
+                        path="/commande/:id"
+                        element={
+                            authUser ? (
+                                <DetailCommande />
                             ) : (
                                 <Navigate to="/login" />
                             )

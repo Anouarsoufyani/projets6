@@ -34,7 +34,7 @@ const DashboardPageLivreur = () => {
     };
 
     return (
-        <div className="w-full h-full bg-gray-100 p-6">
+        <div className="w-full h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-6">
             {authUser?.statut !== "vérifié" ? (
                 <div className="flex flex-col gap-4 bg-white p-6 rounded-lg shadow-lg mb-6 text-center">
                     <h1 className="text-2xl font-bold text-red-600 mb-6">

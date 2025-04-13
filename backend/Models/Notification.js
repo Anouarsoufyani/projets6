@@ -12,6 +12,10 @@ const notificationSchema = new mongoose.Schema(
             ref: "User", // the id will be of the user model
             required: true,
         },
+        commande_id: {
+            type: mongoose.Schema.Types.ObjectId, // ref: refer to the id of the model
+            ref: "Commande", // the id will be of the commande model
+        },
         // postId: {
         //     type: mongoose.Schema.Types.ObjectId, // ref: refer to the id of the model
         //     ref: "Post", // the id will be of the post model

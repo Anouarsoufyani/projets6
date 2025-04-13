@@ -421,6 +421,7 @@ export const assignLivreur = async (req, res) => {
             const notification = new Notification({
                 sender: req.user._id,
                 receiver: livreurId,
+                commande_id: commandeId,
                 type: "nouvelle commande assignée",
             });
             await notification.save();
@@ -430,6 +431,7 @@ export const assignLivreur = async (req, res) => {
             const notification = new Notification({
                 sender: req.user._id,
                 receiver: commande.client_id,
+                commande_id: commandeId,
                 type: "nouveau livreur assigné",
             });
             await notification.save();

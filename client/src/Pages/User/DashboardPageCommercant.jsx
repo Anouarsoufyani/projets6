@@ -525,7 +525,7 @@ const DashboardPageCommercant = () => {
                     {/* Cartes de statistiques */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-hidden">
                         {/* Carte Total Commandes */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-500 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-500">
                             <div className="flex flex-row items-center justify-between pb-4">
                                 <h3 className="text-lg font-semibold text-gray-800">
                                     Total Commandes
@@ -559,7 +559,7 @@ const DashboardPageCommercant = () => {
                         </div>
 
                         {/* Carte Revenus */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
                             <div className="flex flex-row items-center justify-between pb-4">
                                 <h3 className="text-lg font-semibold text-gray-800">
                                     Revenus
@@ -591,7 +591,7 @@ const DashboardPageCommercant = () => {
                         </div>
 
                         {/* Carte Clients Uniques */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
                             <div className="flex flex-row items-center justify-between pb-4">
                                 <h3 className="text-lg font-semibold text-gray-800">
                                     Clients Uniques

@@ -1,7 +1,11 @@
 import React from "react";
 
 const GestionCommandePage = () => {
-    return <div>GestionCommandePage</div>;
+    return (
+        <div className="w-full h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-6">
+            GestionCommandePage
+        </div>
+    );
 };
 
 export default GestionCommandePage;

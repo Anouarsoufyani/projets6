@@ -12,6 +12,7 @@ import {
     FaUser,
     FaExclamationTriangle,
 } from "react-icons/fa";
+import { Link } from "react-router";
 
 const getNotifications = async () => {
     try {
@@ -112,9 +113,9 @@ const NotificationsPage = () => {
 
     const getNotificationIcon = (type) => {
         switch (type?.toLowerCase()) {
-            case "commande":
+            case "acceptation de commande":
                 return <FaStore className="text-emerald-500" />;
-            case "livraison":
+            case "nouveau livreur assigné":
                 return <FaTruck className="text-blue-500" />;
             case "utilisateur":
                 return <FaUser className="text-purple-500" />;
@@ -173,7 +174,7 @@ const NotificationsPage = () => {
 
     if (isLoading) {
         return (
-            <div className="w-full h-full bg-gray-50 p-6 flex flex-col">
+            <div className="w-full h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-6 flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold text-emerald-700">
                         Notifications
@@ -188,7 +189,7 @@ const NotificationsPage = () => {
 
     if (isError) {
         return (
-            <div className="w-full h-full bg-gray-50 p-6 flex flex-col">
+            <div className="w-full h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-6 flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold text-emerald-700">
                         Notifications
@@ -218,7 +219,7 @@ const NotificationsPage = () => {
     }
 
     return (
-        <div className="w-full h-full bg-gray-50 p-6 flex flex-col">
+        <div className="w-full h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-6 flex flex-col">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                 <h1 className="text-2xl font-bold text-emerald-700">
                     Notifications
@@ -315,12 +316,30 @@ const NotificationsPage = () => {
                                             {getTimeAgo(notification.createdAt)}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-gray-800 mt-1">
-                                        {notification.message ||
-                                            `Notification de ${
-                                                notification.sender?.nom ||
-                                                "Système"
-                                            }`}
+                                    <p className="text-sm text-gray-800 mt-1 leading-relaxed">
+                                        {notification.message ? (
+                                            notification.message
+                                        ) : (
+                                            <>
+                                                Notification de{" "}
+                                                <span className="font-semibold">
+                                                    {notification.sender?.nom ??
+                                                        "Système"}
+                                                </span>
+                                            </>
+                                        )}
+                                        <br />
+                                        {(notification.type ===
+                                            "nouveau livreur assigné" ||
+                                            notification.type ===
+                                                "nouvelle commande assignée") && (
+                                            <Link
+                                                to={`/livraison/${notification.commande_id}`}
+                                                className="text-emerald-600 underline hover:text-emerald-400 transition-all mt-2"
+                                            >
+                                                Suivi de la commande
+                                            </Link>
+                                        )}
                                     </p>
                                     <div className="mt-2 flex justify-between items-center">
                                         <span className="text-xs text-gray-500">

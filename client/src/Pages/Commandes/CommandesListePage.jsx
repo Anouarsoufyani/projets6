@@ -5,6 +5,7 @@ import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import toast from "react-hot-toast";
 import PropTypes from "prop-types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router";
 
 const STATUS_STYLES = {
     en_attente: "bg-gray-100 text-gray-800",
@@ -49,11 +50,7 @@ const ROLE_COLUMNS = {
 };
 
 const CommandesListePage = () => {
-    const {
-        data: commandesData,
-        isLoading,
-        isError,
-    } = useGetUserCommandes(10000); // Rafraîchir toutes les 10 secondes
+    const { data: commandesData, isLoading, isError } = useGetUserCommandes(); // Rafraîchir toutes les 10 secondes
     const { data: authUser, isLoading: authLoading } = useAuthUserQuery();
     const queryClient = useQueryClient();
 
@@ -140,7 +137,7 @@ const CommandesListePage = () => {
     const columns = ROLE_COLUMNS[authUser.role] || ROLE_COLUMNS.client;
 
     return (
-        <main className="w-full min-h-full bg-gray-100 p-6">
+        <main className="w-full min-h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-6">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
                 Mes Commandes
             </h1>
@@ -219,6 +216,13 @@ const CommandesListePage = () => {
                                             ).toLocaleDateString("fr-FR")}
                                         </td>
                                         <td className="py-3 px-4 flex gap-2">
+                                            <button className="px-2 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-xs">
+                                                <Link
+                                                    to={`/commande/${commande._id}`}
+                                                >
+                                                    Voir
+                                                </Link>
+                                            </button>
                                             {/* Actions pour les commandes en livraison ou livrées */}
                                             {(commande.statut ===
                                                 "prete_a_etre_recuperee" ||
@@ -227,12 +231,13 @@ const CommandesListePage = () => {
                                                 commande.statut === "livree" ||
                                                 commande.statut ===
                                                     "en_livraison") && (
-                                                <a
-                                                    href={`/livraison/${commande._id}`}
-                                                    className="text-emerald-500 hover:text-emerald-800 transition-colors"
-                                                >
-                                                    Suivre
-                                                </a>
+                                                <button className="px-2 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-xs">
+                                                    <Link
+                                                        to={`/livraison/${commande._id}`}
+                                                    >
+                                                        Suivre
+                                                    </Link>
+                                                </button>
                                             )}
 
                                             {/* Actions pour les commandes en attente */}
@@ -248,7 +253,7 @@ const CommandesListePage = () => {
                                                                     commande._id
                                                                 )
                                                             }
-                                                            className="text-red-500 hover:text-red-700 transition-colors"
+                                                            className="px-2 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-xs"
                                                             disabled={
                                                                 updateCommandeStatusMutation.isPending
                                                             }
@@ -299,7 +304,7 @@ const CommandesListePage = () => {
                                                     "commercant" && (
                                                     <a
                                                         href={`/livreurs/${commande._id}`}
-                                                        className="text-emerald-500 hover:text-emerald-700 transition-colors"
+                                                        className="px-2 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors text-xs"
                                                     >
                                                         Assigner un livreur
                                                     </a>

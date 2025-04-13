@@ -25,7 +25,7 @@ const GestionLivreurPage = () => {
     }
 
     return (
-        <main className="w-full min-h-full bg-gray-100 p-6">
+        <main className="w-full min-h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-6">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
                 Gestion livreurs
             </h1>

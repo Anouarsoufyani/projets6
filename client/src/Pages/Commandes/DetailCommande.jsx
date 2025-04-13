@@ -131,9 +131,9 @@ const DetailCommande = () => {
 
         if (role === "commercant" && statut === "en_attente") {
             return (
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <button
-                        className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-emerald-700 transition-colors"
+                        className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 sm:px-6 py-3 rounded-xl shadow-md hover:bg-emerald-700 transition-colors"
                         onClick={() => handleUpdateStatus("en_preparation")}
                         disabled={isUpdating}
                     >
@@ -141,7 +141,7 @@ const DetailCommande = () => {
                         {isUpdating ? "Traitement..." : "Valider"}
                     </button>
                     <button
-                        className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-red-700 transition-colors"
+                        className="flex items-center justify-center gap-2 bg-red-600 text-white px-4 sm:px-6 py-3 rounded-xl shadow-md hover:bg-red-700 transition-colors"
                         onClick={() => handleUpdateStatus("refusee")}
                         disabled={isUpdating}
                     >
@@ -154,7 +154,7 @@ const DetailCommande = () => {
 
         if (role === "commercant" && statut === "en_preparation") {
             return (
-                <button className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-blue-700 transition-colors">
+                <button className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 sm:px-6 py-3 rounded-xl shadow-md hover:bg-blue-700 transition-colors w-full sm:w-auto">
                     <FaTruck className="text-white" />
                     <Link to={`/livreurs/${_id}`}>Assigner un livreur</Link>
                 </button>
@@ -164,7 +164,7 @@ const DetailCommande = () => {
         if (role === "client" && statut === "en_attente") {
             return (
                 <button
-                    className="flex items-center gap-2 bg-yellow-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-yellow-700 transition-colors"
+                    className="flex items-center justify-center gap-2 bg-yellow-600 text-white px-4 sm:px-6 py-3 rounded-xl shadow-md hover:bg-yellow-700 transition-colors w-full sm:w-auto"
                     onClick={handleCancelCommande}
                     disabled={isCancelling}
                 >
@@ -176,16 +176,16 @@ const DetailCommande = () => {
 
         if (role === "livreur" && statut === "en_preparation") {
             return (
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <button
-                        className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-emerald-700 transition-colors"
+                        className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 sm:px-6 py-3 rounded-xl shadow-md hover:bg-emerald-700 transition-colors"
                         onClick={() => {}}
                     >
                         <FaCheck className="text-white" />
                         Accepter la course
                     </button>
                     <button
-                        className="flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-red-700 transition-colors"
+                        className="flex items-center justify-center gap-2 bg-red-600 text-white px-4 sm:px-6 py-3 rounded-xl shadow-md hover:bg-red-700 transition-colors"
                         onClick={() => {}}
                     >
                         <FaTimes className="text-white" />
@@ -205,7 +205,7 @@ const DetailCommande = () => {
         ) {
             return (
                 <button
-                    className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl shadow-md hover:bg-indigo-700 transition-colors"
+                    className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 sm:px-6 py-3 rounded-xl shadow-md hover:bg-indigo-700 transition-colors w-full sm:w-auto"
                     onClick={handleRedirect}
                 >
                     <FaShippingFast className="text-white" />
@@ -221,9 +221,9 @@ const DetailCommande = () => {
     const canReview = authUser?.role === "client" && statut === "livree";
 
     return (
-        <div className="w-full min-h-screen p-6 flex justify-center bg-gradient-to-br from-emerald-50 to-teal-100">
-            <div className="w-full max-w-5xl bg-white rounded-3xl shadow-xl p-8 space-y-8">
-                <div className="flex items-center justify-between mb-6">
+        <div className="w-full min-h-screen p-4 md:p-6 flex justify-center bg-gradient-to-br from-emerald-50 to-teal-100 overflow-x-hidden">
+            <div className="w-full max-w-5xl bg-white rounded-3xl shadow-xl p-4 md:p-8 space-y-6 md:space-y-8">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center text-emerald-700 hover:text-emerald-900 transition-colors"
@@ -234,7 +234,7 @@ const DetailCommande = () => {
 
                     <div className="flex items-center">
                         <span
-                            className={`px-4 py-2 rounded-full text-sm font-medium inline-flex items-center ${getStatusColor(
+                            className={`px-3 py-1.5 rounded-full text-xs md:text-sm font-medium inline-flex items-center ${getStatusColor(
                                 statut
                             )}`}
                         >
@@ -248,86 +248,86 @@ const DetailCommande = () => {
                     </div>
                 </div>
 
-                <h1 className="text-3xl font-bold text-emerald-700 border-b border-emerald-100 pb-4">
+                <h1 className="text-xl md:text-3xl font-bold text-emerald-700 border-b border-emerald-100 pb-4 break-words">
                     Commande #{_id.slice(-6)}
                 </h1>
 
-                <div className="flex flex-col md:flex-row gap-6 mb-8">
-                    <div className="flex-1 space-y-6">
-                        <div className="bg-gray-50 p-6 rounded-2xl shadow-sm">
-                            <div className="flex items-center mb-4 text-emerald-700">
-                                <FaUser className="mr-2 text-xl" />
-                                <h2 className="text-xl font-semibold">
+                <div className="flex flex-col md:flex-row gap-4 md:gap-6 mb-6 md:mb-8">
+                    <div className="flex-1 space-y-4 md:space-y-6">
+                        <div className="bg-gray-50 p-4 md:p-6 rounded-2xl shadow-sm">
+                            <div className="flex items-center mb-3 md:mb-4 text-emerald-700">
+                                <FaUser className="mr-2 text-lg md:text-xl" />
+                                <h2 className="text-lg md:text-xl font-semibold">
                                     Client
                                 </h2>
                             </div>
-                            <div className="space-y-3">
-                                <div className="flex justify-between">
+                            <div className="space-y-2 md:space-y-3 text-sm md:text-base">
+                                <div className="flex justify-between flex-wrap gap-2">
                                     <span className="text-gray-600">Nom</span>
-                                    <span className="font-medium">
+                                    <span className="font-medium break-words max-w-full">
                                         {client_id.nom}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between flex-wrap gap-2">
                                     <span className="text-gray-600">Email</span>
-                                    <span className="font-medium">
+                                    <span className="font-medium break-words max-w-full">
                                         {client_id.email}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between flex-wrap gap-2">
                                     <span className="text-gray-600">
                                         Téléphone
                                     </span>
-                                    <span className="font-medium">
+                                    <span className="font-medium break-words max-w-full">
                                         {client_id.numero}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between flex-wrap gap-2">
                                     <span className="text-gray-600">
                                         Code Client
                                     </span>
-                                    <span className="font-medium bg-emerald-50 px-3 py-1 rounded-full text-emerald-700">
+                                    <span className="font-medium bg-emerald-50 px-3 py-1 rounded-full text-emerald-700 break-words">
                                         {code_Client}
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-gray-50 p-6 rounded-2xl shadow-sm">
-                            <div className="flex items-center mb-4 text-emerald-700">
-                                <FaStore className="mr-2 text-xl" />
-                                <h2 className="text-xl font-semibold">
+                        <div className="bg-gray-50 p-4 md:p-6 rounded-2xl shadow-sm">
+                            <div className="flex items-center mb-3 md:mb-4 text-emerald-700">
+                                <FaStore className="mr-2 text-lg md:text-xl" />
+                                <h2 className="text-lg md:text-xl font-semibold">
                                     Commerçant
                                 </h2>
                             </div>
-                            <div className="space-y-3">
-                                <div className="flex justify-between">
+                            <div className="space-y-2 md:space-y-3 text-sm md:text-base">
+                                <div className="flex justify-between flex-wrap gap-2">
                                     <span className="text-gray-600">
                                         Boutique
                                     </span>
-                                    <span className="font-medium">
+                                    <span className="font-medium break-words max-w-full">
                                         {commercant_id.nom_boutique}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between flex-wrap gap-2">
                                     <span className="text-gray-600">Email</span>
-                                    <span className="font-medium">
+                                    <span className="font-medium break-words max-w-full">
                                         {commercant_id.email}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between flex-wrap gap-2">
                                     <span className="text-gray-600">
                                         Téléphone
                                     </span>
-                                    <span className="font-medium">
+                                    <span className="font-medium break-words max-w-full">
                                         {commercant_id.numero}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between flex-wrap gap-2">
                                     <span className="text-gray-600">
                                         Code Commerçant
                                     </span>
-                                    <span className="font-medium bg-blue-50 px-3 py-1 rounded-full text-blue-700">
+                                    <span className="font-medium bg-blue-50 px-3 py-1 rounded-full text-blue-700 break-words">
                                         {code_Commercant}
                                     </span>
                                 </div>
@@ -335,51 +335,51 @@ const DetailCommande = () => {
                         </div>
                     </div>
 
-                    <div className="flex-1 space-y-6">
-                        <div className="bg-gray-50 p-6 rounded-2xl shadow-sm">
-                            <div className="flex items-center mb-4 text-emerald-700">
-                                <FaTruck className="mr-2 text-xl" />
-                                <h2 className="text-xl font-semibold">
+                    <div className="flex-1 space-y-4 md:space-y-6">
+                        <div className="bg-gray-50 p-4 md:p-6 rounded-2xl shadow-sm">
+                            <div className="flex items-center mb-3 md:mb-4 text-emerald-700">
+                                <FaTruck className="mr-2 text-lg md:text-xl" />
+                                <h2 className="text-lg md:text-xl font-semibold">
                                     Livreur
                                 </h2>
                             </div>
                             {!livreur_id ? (
-                                <div className="flex items-center justify-center h-32 bg-gray-100 rounded-xl">
+                                <div className="flex items-center justify-center h-24 md:h-32 bg-gray-100 rounded-xl">
                                     <p className="text-gray-500">
                                         Aucun livreur n'a été attribué
                                     </p>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
-                                    <div className="flex justify-between">
+                                <div className="space-y-2 md:space-y-3 text-sm md:text-base">
+                                    <div className="flex justify-between flex-wrap gap-2">
                                         <span className="text-gray-600">
                                             Nom
                                         </span>
-                                        <span className="font-medium">
+                                        <span className="font-medium break-words max-w-full">
                                             {livreur_id.nom}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between">
+                                    <div className="flex justify-between flex-wrap gap-2">
                                         <span className="text-gray-600">
                                             Email
                                         </span>
-                                        <span className="font-medium">
+                                        <span className="font-medium break-words max-w-full">
                                             {livreur_id.email}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between">
+                                    <div className="flex justify-between flex-wrap gap-2">
                                         <span className="text-gray-600">
                                             Téléphone
                                         </span>
-                                        <span className="font-medium">
+                                        <span className="font-medium break-words max-w-full">
                                             {livreur_id.numero}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between">
+                                    <div className="flex justify-between flex-wrap gap-2">
                                         <span className="text-gray-600">
                                             Véhicule
                                         </span>
-                                        <span className="font-medium">
+                                        <span className="font-medium break-words max-w-full">
                                             {livreur_id?.vehicule?.type &&
                                             livreur_id?.vehicule?.plaque
                                                 ? `${livreur_id.vehicule.type} - ${livreur_id.vehicule.plaque}`
@@ -390,31 +390,31 @@ const DetailCommande = () => {
                             )}
                         </div>
 
-                        <div className="bg-gray-50 p-6 rounded-2xl shadow-sm">
-                            <div className="flex items-center mb-4 text-emerald-700">
-                                <FaMapMarkerAlt className="mr-2 text-xl" />
-                                <h2 className="text-xl font-semibold">
+                        <div className="bg-gray-50 p-4 md:p-6 rounded-2xl shadow-sm">
+                            <div className="flex items-center mb-3 md:mb-4 text-emerald-700">
+                                <FaMapMarkerAlt className="mr-2 text-lg md:text-xl" />
+                                <h2 className="text-lg md:text-xl font-semibold">
                                     Adresse de Livraison
                                 </h2>
                             </div>
-                            <div className="space-y-3">
-                                <div className="flex justify-between">
+                            <div className="space-y-2 md:space-y-3 text-sm md:text-base">
+                                <div className="flex justify-between flex-wrap gap-2">
                                     <span className="text-gray-600">Rue</span>
-                                    <span className="font-medium">
+                                    <span className="font-medium break-words max-w-full">
                                         {adresse_livraison.rue}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between flex-wrap gap-2">
                                     <span className="text-gray-600">Ville</span>
-                                    <span className="font-medium">
+                                    <span className="font-medium break-words max-w-full">
                                         {adresse_livraison.ville}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between flex-wrap gap-2">
                                     <span className="text-gray-600">
                                         Code Postal
                                     </span>
-                                    <span className="font-medium">
+                                    <span className="font-medium break-words max-w-full">
                                         {adresse_livraison.code_postal}
                                     </span>
                                 </div>
@@ -423,61 +423,61 @@ const DetailCommande = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-emerald-50 p-6 rounded-2xl text-center">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
+                    <div className="bg-emerald-50 p-4 md:p-6 rounded-2xl text-center">
                         <FaClock
-                            className="text-emerald-600 mx-auto mb-3"
-                            size={28}
+                            className="text-emerald-600 mx-auto mb-2 md:mb-3"
+                            size={24}
                         />
-                        <p className="font-semibold text-gray-700 mb-1">
+                        <p className="font-semibold text-gray-700 mb-1 text-sm md:text-base">
                             Créée le
                         </p>
-                        <p className="text-lg font-bold text-emerald-700">
+                        <p className="text-base md:text-lg font-bold text-emerald-700 break-words">
                             {new Date(date_creation).toLocaleString()}
                         </p>
                     </div>
-                    <div className="bg-emerald-50 p-6 rounded-2xl text-center">
+                    <div className="bg-emerald-50 p-4 md:p-6 rounded-2xl text-center">
                         <FaBarcode
-                            className="text-emerald-600 mx-auto mb-3"
-                            size={28}
+                            className="text-emerald-600 mx-auto mb-2 md:mb-3"
+                            size={24}
                         />
-                        <p className="font-semibold text-gray-700 mb-1">
+                        <p className="font-semibold text-gray-700 mb-1 text-sm md:text-base">
                             Statut
                         </p>
-                        <p className="text-lg font-bold text-emerald-700 capitalize">
+                        <p className="text-base md:text-lg font-bold text-emerald-700 capitalize break-words">
                             {statut.replace(/_/g, " ")}
                         </p>
                     </div>
-                    <div className="bg-emerald-50 p-6 rounded-2xl text-center">
+                    <div className="bg-emerald-50 p-4 md:p-6 rounded-2xl text-center">
                         <FaEuroSign
-                            className="text-emerald-600 mx-auto mb-3"
-                            size={28}
+                            className="text-emerald-600 mx-auto mb-2 md:mb-3"
+                            size={24}
                         />
-                        <p className="font-semibold text-gray-700 mb-1">
+                        <p className="font-semibold text-gray-700 mb-1 text-sm md:text-base">
                             Total
                         </p>
-                        <p className="text-lg font-bold text-emerald-700">
+                        <p className="text-base md:text-lg font-bold text-emerald-700 break-words">
                             {total.toFixed(2)} €
                         </p>
                     </div>
                 </div>
 
-                <div className="flex justify-center pt-6">
+                <div className="flex justify-center pt-4 md:pt-6">
                     {renderActionButtons()}
                 </div>
 
                 {/* Section d'avis pour le client */}
                 {canReview && (
-                    <div className="mt-12 space-y-8">
-                        <h2 className="text-2xl font-semibold text-emerald-700 border-b border-emerald-200 pb-2 flex items-center">
+                    <div className="mt-8 md:mt-12 space-y-6 md:space-y-8">
+                        <h2 className="text-xl md:text-2xl font-semibold text-emerald-700 border-b border-emerald-200 pb-2 flex items-center">
                             <FaStar className="mr-2 text-yellow-500" />
                             Évaluations
                         </h2>
 
                         {/* Avis pour le commerçant */}
-                        <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-medium text-gray-800 flex items-center">
+                        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-md border border-gray-100">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                                <h3 className="text-base md:text-lg font-medium text-gray-800 flex items-center">
                                     <FaStore className="mr-2 text-emerald-600" />
                                     Évaluer le commerçant
                                 </h3>
@@ -528,9 +528,9 @@ const DetailCommande = () => {
 
                         {/* Avis pour le livreur (seulement si un livreur a été assigné) */}
                         {livreur_id && (
-                            <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-medium text-gray-800 flex items-center">
+                            <div className="bg-white p-4 md:p-6 rounded-2xl shadow-md border border-gray-100">
+                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                                    <h3 className="text-base md:text-lg font-medium text-gray-800 flex items-center">
                                         <FaTruck className="mr-2 text-emerald-600" />
                                         Évaluer le livreur
                                     </h3>

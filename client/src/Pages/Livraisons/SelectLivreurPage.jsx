@@ -508,9 +508,9 @@ const SelectLivreurPage = () => {
                 </div>
             )}
 
-            <div className="flex flex-1 gap-5 rounded-lg md:flex-row-reverse flex-col">
+            <div className="flex flex-1 gap-5 rounded-lg md:flex-row-reverse flex-col min-h-[600px]">
                 {/* Carte placée avant le tableau pour l'ordre sur mobile */}
-                <div className="md:w-7/12 w-full h-96 md:h-full">
+                <div className="md:w-7/12 w-full h-96 md:min-h-[600px]">
                     <GoogleMap
                         mapContainerStyle={mapContainerStyle}
                         center={mapCenter}

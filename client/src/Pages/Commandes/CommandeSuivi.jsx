@@ -587,7 +587,7 @@ const CommandeSuivi = () => {
                                     </div>
 
                                     {/* Section d'avis pour le client */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 gap-3">
                                         {/* Avis pour le livreur */}
                                         {commande.data.livreur_id && (
                                             <div className="bg-white p-6 rounded-2xl shadow-md">

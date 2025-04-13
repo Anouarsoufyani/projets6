@@ -390,16 +390,16 @@ const DashboardPageAdmin = () => {
     }
 
     return (
-        <div className="w-full h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-6 overflow-x-hidden">
-            <h1 className="text-3xl font-bold text-emerald-800 mb-8 border-b-2 border-emerald-300 pb-2">
+        <div className="w-full bg-gradient-to-br from-emerald-50 to-teal-100 p-4 md:p-6 overflow-hidden">
+            <h1 className="text-2xl md:text-3xl font-bold text-emerald-800 mb-6 md:mb-8 border-b-2 border-emerald-300 pb-2 break-words">
                 Bienvenue {authUser?.nom}
             </h1>
 
             {/* Onglets personnalisés */}
-            <div className="mb-8">
-                <div className="flex border-b-2 border-emerald-200 bg-white rounded-t-lg shadow-sm">
+            <div className="mb-6 md:mb-8 overflow-x-auto">
+                <div className="flex border-b-2 border-emerald-200 bg-white rounded-t-lg shadow-sm min-w-max">
                     <button
-                        className={`py-3 px-6 font-medium text-sm focus:outline-none transition-all duration-200 ${
+                        className={`py-3 px-4 md:px-6 font-medium text-sm focus:outline-none transition-all duration-200 ${
                             activeTab === "statistiques"
                                 ? "text-emerald-700 border-b-3 border-emerald-500 bg-emerald-50 rounded-t-lg"
                                 : "text-gray-600 hover:text-emerald-600 hover:bg-emerald-50"
@@ -412,7 +412,7 @@ const DashboardPageAdmin = () => {
                         </div>
                     </button>
                     <button
-                        className={`py-3 px-6 font-medium text-sm focus:outline-none transition-all duration-200 ${
+                        className={`py-3 px-4 md:px-6 font-medium text-sm focus:outline-none transition-all duration-200 ${
                             activeTab === "utilisateurs"
                                 ? "text-emerald-700 border-b-3 border-emerald-500 bg-emerald-50 rounded-t-lg"
                                 : "text-gray-600 hover:text-emerald-600 hover:bg-emerald-50"
@@ -429,16 +429,16 @@ const DashboardPageAdmin = () => {
 
             {/* Contenu de l'onglet Statistiques */}
             {activeTab === "statistiques" && (
-                <div className="space-y-8 max-h-[calc(100vh-12rem)]">
+                <div className="space-y-6 md:space-y-8">
                     {/* Filtres de période */}
-                    <div className="flex justify-end mb-4">
-                        <div className="bg-white rounded-lg shadow-md p-1 flex items-center">
+                    <div className="flex justify-end mb-4 overflow-x-auto">
+                        <div className="bg-white rounded-lg shadow-md p-1 flex items-center min-w-max">
                             <FaFilter className="text-emerald-500 mx-2" />
                             <span className="text-sm text-gray-600 mr-2">
                                 Période:
                             </span>
                             <button
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                                className={`px-3 py-2 md:px-4 rounded-md text-sm font-medium transition-all duration-200 ${
                                     timeRange === "week"
                                         ? "bg-emerald-500 text-white shadow-sm"
                                         : "text-gray-600 hover:bg-emerald-100"
@@ -448,7 +448,7 @@ const DashboardPageAdmin = () => {
                                 Semaine
                             </button>
                             <button
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                                className={`px-3 py-2 md:px-4 rounded-md text-sm font-medium transition-all duration-200 ${
                                     timeRange === "month"
                                         ? "bg-emerald-500 text-white shadow-sm"
                                         : "text-gray-600 hover:bg-emerald-100"
@@ -458,7 +458,7 @@ const DashboardPageAdmin = () => {
                                 Mois
                             </button>
                             <button
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                                className={`px-3 py-2 md:px-4 rounded-md text-sm font-medium transition-all duration-200 ${
                                     timeRange === "year"
                                         ? "bg-emerald-500 text-white shadow-sm"
                                         : "text-gray-600 hover:bg-emerald-100"
@@ -471,29 +471,29 @@ const DashboardPageAdmin = () => {
                     </div>
 
                     {/* Cartes de statistiques */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 overflow-hidden">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 overflow-hidden">
                         {/* Carte Total Commandes */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-500">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-l-4 border-emerald-500">
                             <div className="flex flex-row items-center justify-between pb-4">
-                                <h3 className="text-lg font-semibold text-gray-800">
+                                <h3 className="text-base md:text-lg font-semibold text-gray-800">
                                     Total Commandes
                                 </h3>
-                                <div className="p-3 bg-emerald-100 rounded-full">
-                                    <FaShoppingBag className="h-6 w-6 text-emerald-600" />
+                                <div className="p-2 md:p-3 bg-emerald-100 rounded-full">
+                                    <FaShoppingBag className="h-5 w-5 md:h-6 md:w-6 text-emerald-600" />
                                 </div>
                             </div>
-                            <div className="text-3xl font-bold text-emerald-700">
+                            <div className="text-2xl md:text-3xl font-bold text-emerald-700">
                                 {totalCommandes}
                             </div>
-                            <div className="flex justify-between mt-2 text-sm">
-                                <span className="text-gray-500">
+                            <div className="flex flex-col md:flex-row md:justify-between mt-2 text-xs md:text-sm">
+                                <span className="text-gray-500 mb-1 md:mb-0">
                                     {timeRange === "week"
                                         ? "Cette semaine"
                                         : timeRange === "month"
                                         ? "Ce mois"
                                         : "Cette année"}
                                 </span>
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2">
                                     <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
                                         {nombreCommandesParStatut.livrees}{" "}
                                         livrées
@@ -507,27 +507,27 @@ const DashboardPageAdmin = () => {
                         </div>
 
                         {/* Carte Revenus */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-l-4 border-blue-500">
                             <div className="flex flex-row items-center justify-between pb-4">
-                                <h3 className="text-lg font-semibold text-gray-800">
+                                <h3 className="text-base md:text-lg font-semibold text-gray-800">
                                     Revenus
                                 </h3>
-                                <div className="p-3 bg-blue-100 rounded-full">
-                                    <FaMoneyBillWave className="h-6 w-6 text-blue-600" />
+                                <div className="p-2 md:p-3 bg-blue-100 rounded-full">
+                                    <FaMoneyBillWave className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
                                 </div>
                             </div>
-                            <div className="text-3xl font-bold text-blue-700">
+                            <div className="text-2xl md:text-3xl font-bold text-blue-700 break-words">
                                 {formatCurrency(totalRevenu)}
                             </div>
-                            <div className="flex justify-between mt-2 text-sm">
-                                <span className="text-gray-500">
+                            <div className="flex flex-col md:flex-row md:justify-between mt-2 text-xs md:text-sm">
+                                <span className="text-gray-500 mb-1 md:mb-0">
                                     {timeRange === "week"
                                         ? "Cette semaine"
                                         : timeRange === "month"
                                         ? "Ce mois"
                                         : "Cette année"}
                                 </span>
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2">
                                     <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
                                         {formatCurrency(revenuLivrees)}
                                     </span>
@@ -539,23 +539,25 @@ const DashboardPageAdmin = () => {
                         </div>
 
                         {/* Carte Utilisateurs */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-l-4 border-purple-500">
                             <div className="flex flex-row items-center justify-between pb-4">
-                                <h3 className="text-lg font-semibold text-gray-800">
+                                <h3 className="text-base md:text-lg font-semibold text-gray-800">
                                     Utilisateurs
                                 </h3>
-                                <div className="p-3 bg-purple-100 rounded-full">
-                                    <FaUsers className="h-6 w-6 text-purple-600" />
+                                <div className="p-2 md:p-3 bg-purple-100 rounded-full">
+                                    <FaUsers className="h-5 w-5 md:h-6 md:w-6 text-purple-600" />
                                 </div>
                             </div>
-                            <div className="text-3xl font-bold text-purple-700">
+                            <div className="text-2xl md:text-3xl font-bold text-purple-700">
                                 {clientsCount +
                                     livreursCount +
                                     commercantsCount}
                             </div>
-                            <div className="flex justify-between mt-2 text-sm">
-                                <span className="text-gray-500">Total</span>
-                                <div className="flex gap-2">
+                            <div className="flex flex-col md:flex-row md:justify-between mt-2 text-xs md:text-sm">
+                                <span className="text-gray-500 mb-1 md:mb-0">
+                                    Total
+                                </span>
+                                <div className="flex flex-wrap gap-2">
                                     <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">
                                         {clientsCount} clients
                                     </span>
@@ -570,20 +572,20 @@ const DashboardPageAdmin = () => {
                         </div>
 
                         {/* Carte Livreurs en attente */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-amber-500">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-l-4 border-amber-500">
                             <div className="flex flex-row items-center justify-between pb-4">
-                                <h3 className="text-lg font-semibold text-gray-800">
+                                <h3 className="text-base md:text-lg font-semibold text-gray-800">
                                     Vérifications
                                 </h3>
-                                <div className="p-3 bg-amber-100 rounded-full">
-                                    <FaTruck className="h-6 w-6 text-amber-600" />
+                                <div className="p-2 md:p-3 bg-amber-100 rounded-full">
+                                    <FaTruck className="h-5 w-5 md:h-6 md:w-6 text-amber-600" />
                                 </div>
                             </div>
-                            <div className="text-3xl font-bold text-amber-700">
+                            <div className="text-2xl md:text-3xl font-bold text-amber-700">
                                 {livreursPendingVerification}
                             </div>
-                            <div className="flex justify-between mt-2 text-sm">
-                                <span className="text-gray-500">
+                            <div className="flex flex-col md:flex-row md:justify-between mt-2 text-xs md:text-sm">
+                                <span className="text-gray-500 mb-1 md:mb-0">
                                     Livreurs en attente
                                 </span>
                                 <a
@@ -597,19 +599,19 @@ const DashboardPageAdmin = () => {
                     </div>
 
                     {/* Statistiques détaillées */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mt-4 md:mt-6">
                         {/* Taux de conversion */}
-                        <div className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow duration-300">
+                        <div className="bg-white rounded-xl shadow-md p-4 md:p-5 hover:shadow-lg transition-shadow duration-300">
                             <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-sm font-medium text-gray-600">
+                                <h3 className="text-xs md:text-sm font-medium text-gray-600">
                                     Taux de conversion
                                 </h3>
-                                <span className="text-xs text-gray-400">
+                                <span className="text-xs text-gray-400 hidden md:inline">
                                     Commandes livrées / Total
                                 </span>
                             </div>
                             <div className="flex items-end gap-2">
-                                <span className="text-2xl font-bold text-emerald-600">
+                                <span className="text-xl md:text-2xl font-bold text-emerald-600">
                                     {tauxConversion}%
                                 </span>
                                 <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -619,14 +621,17 @@ const DashboardPageAdmin = () => {
                                     ></div>
                                 </div>
                             </div>
+                            <span className="text-xs text-gray-400 md:hidden mt-1 block">
+                                Commandes livrées / Total
+                            </span>
                         </div>
 
                         {/* Commandes par statut */}
-                        <div className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow duration-300">
-                            <h3 className="text-sm font-medium text-gray-600 mb-2">
+                        <div className="bg-white rounded-xl shadow-md p-4 md:p-5 hover:shadow-lg transition-shadow duration-300">
+                            <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-2">
                                 Commandes par statut
                             </h3>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                                 <div className="flex items-center gap-1">
                                     <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
                                     <span>
@@ -666,12 +671,12 @@ const DashboardPageAdmin = () => {
                         </div>
 
                         {/* Valeur moyenne */}
-                        <div className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow duration-300">
-                            <h3 className="text-sm font-medium text-gray-600 mb-2">
+                        <div className="bg-white rounded-xl shadow-md p-4 md:p-5 hover:shadow-lg transition-shadow duration-300">
+                            <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-2">
                                 Valeur moyenne
                             </h3>
                             <div className="flex items-center justify-between">
-                                <span className="text-2xl font-bold text-blue-600">
+                                <span className="text-xl md:text-2xl font-bold text-blue-600 break-words">
                                     {formatCurrency(
                                         Number.parseFloat(valeurMoyenneCommande)
                                     )}
@@ -683,8 +688,8 @@ const DashboardPageAdmin = () => {
                         </div>
 
                         {/* Répartition utilisateurs */}
-                        <div className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow duration-300">
-                            <h3 className="text-sm font-medium text-gray-600 mb-2">
+                        <div className="bg-white rounded-xl shadow-md p-4 md:p-5 hover:shadow-lg transition-shadow duration-300">
+                            <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-2">
                                 Répartition utilisateurs
                             </h3>
                             <div className="space-y-2 text-xs">
@@ -720,15 +725,15 @@ const DashboardPageAdmin = () => {
                     </div>
 
                     {/* Graphiques */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 overflow-hidden">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 overflow-hidden">
                         {/* Évolution des ventes */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 col-span-1 lg:col-span-2 hover:shadow-xl transition-shadow duration-300">
-                            <div className="mb-6">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-xl font-bold text-gray-800">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 col-span-1 lg:col-span-2 hover:shadow-xl transition-shadow duration-300">
+                            <div className="mb-4 md:mb-6">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                    <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2 sm:mb-0">
                                         Évolution des ventes
                                     </h3>
-                                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+                                    <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium self-start sm:self-auto">
                                         {timeRange === "week"
                                             ? "Cette semaine"
                                             : timeRange === "month"
@@ -736,18 +741,18 @@ const DashboardPageAdmin = () => {
                                             : "Cette année"}
                                     </span>
                                 </div>
-                                <p className="text-sm text-gray-500 mt-1">
+                                <p className="text-xs md:text-sm text-gray-500 mt-1">
                                     Suivi des commandes et revenus dans le temps
                                 </p>
                             </div>
-                            <div className="h-64 md:h-80 border border-gray-100 rounded-lg p-4 bg-gray-50 overflow-x-auto">
+                            <div className="h-64 md:h-80 border border-gray-100 rounded-lg p-2 md:p-4 bg-gray-50 overflow-hidden">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart
                                         data={commandesParJour}
                                         margin={{
                                             top: 5,
                                             right: 30,
-                                            left: 20,
+                                            left: 5,
                                             bottom: 5,
                                         }}
                                     >
@@ -758,15 +763,18 @@ const DashboardPageAdmin = () => {
                                         <XAxis
                                             dataKey="date"
                                             stroke="#6b7280"
+                                            tick={{ fontSize: 10 }}
                                         />
                                         <YAxis
                                             yAxisId="left"
                                             stroke="#10b981"
+                                            tick={{ fontSize: 10 }}
                                         />
                                         <YAxis
                                             yAxisId="right"
                                             orientation="right"
                                             stroke="#3b82f6"
+                                            tick={{ fontSize: 10 }}
                                         />
                                         <Tooltip
                                             contentStyle={{
@@ -829,19 +837,19 @@ const DashboardPageAdmin = () => {
                         </div>
 
                         {/* Répartition par statut */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-                            <div className="mb-6">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow duration-300">
+                            <div className="mb-4 md:mb-6">
                                 <div className="flex items-center">
                                     <FaChartPie className="text-emerald-600 mr-2" />
-                                    <h3 className="text-xl font-bold text-gray-800">
+                                    <h3 className="text-lg md:text-xl font-bold text-gray-800">
                                         Répartition des commandes
                                     </h3>
                                 </div>
-                                <p className="text-sm text-gray-500 mt-1">
+                                <p className="text-xs md:text-sm text-gray-500 mt-1">
                                     Par statut
                                 </p>
                             </div>
-                            <div className="h-64 border border-gray-100 rounded-lg p-4 bg-gray-50 overflow-x-auto">
+                            <div className="h-64 border border-gray-100 rounded-lg p-2 md:p-4 bg-gray-50 overflow-hidden">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
@@ -894,19 +902,19 @@ const DashboardPageAdmin = () => {
                         </div>
 
                         {/* Commandes par jour de la semaine */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-                            <div className="mb-6">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow duration-300">
+                            <div className="mb-4 md:mb-6">
                                 <div className="flex items-center">
                                     <FaChartBar className="text-emerald-600 mr-2" />
-                                    <h3 className="text-xl font-bold text-gray-800">
+                                    <h3 className="text-lg md:text-xl font-bold text-gray-800">
                                         Commandes par jour
                                     </h3>
                                 </div>
-                                <p className="text-sm text-gray-500 mt-1">
+                                <p className="text-xs md:text-sm text-gray-500 mt-1">
                                     Répartition hebdomadaire
                                 </p>
                             </div>
-                            <div className="h-64 border border-gray-100 rounded-lg p-4 bg-gray-50 overflow-x-auto">
+                            <div className="h-64 border border-gray-100 rounded-lg p-2 md:p-4 bg-gray-50 overflow-hidden">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={commandesParJourSemaine}>
                                         <CartesianGrid
@@ -916,8 +924,12 @@ const DashboardPageAdmin = () => {
                                         <XAxis
                                             dataKey="jour"
                                             stroke="#6b7280"
+                                            tick={{ fontSize: 10 }}
                                         />
-                                        <YAxis stroke="#6b7280" />
+                                        <YAxis
+                                            stroke="#6b7280"
+                                            tick={{ fontSize: 10 }}
+                                        />
                                         <Tooltip
                                             contentStyle={{
                                                 backgroundColor:
@@ -954,37 +966,37 @@ const DashboardPageAdmin = () => {
                     </div>
 
                     {/* Commandes récentes */}
-                    <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-                        <div className="mb-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center">
+                    <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow duration-300">
+                        <div className="mb-4 md:mb-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                <div className="flex items-center mb-2 sm:mb-0">
                                     <FaListAlt className="text-emerald-600 mr-2" />
-                                    <h3 className="text-xl font-bold text-gray-800">
+                                    <h3 className="text-lg md:text-xl font-bold text-gray-800">
                                         Commandes récentes
                                     </h3>
                                 </div>
-                                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+                                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium self-start sm:self-auto">
                                     {commandesRecentes.length} commandes
                                 </span>
                             </div>
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                            <table className="w-full text-xs md:text-sm">
                                 <thead>
                                     <tr className="bg-gray-50">
-                                        <th className="text-left py-4 px-4 font-semibold text-gray-600 rounded-tl-lg">
+                                        <th className="text-left py-3 px-2 md:py-4 md:px-4 font-semibold text-gray-600 rounded-tl-lg">
                                             ID
                                         </th>
-                                        <th className="text-left py-4 px-4 font-semibold text-gray-600">
+                                        <th className="text-left py-3 px-2 md:py-4 md:px-4 font-semibold text-gray-600">
                                             Client
                                         </th>
-                                        <th className="text-left py-4 px-4 font-semibold text-gray-600">
+                                        <th className="text-left py-3 px-2 md:py-4 md:px-4 font-semibold text-gray-600">
                                             Date
                                         </th>
-                                        <th className="text-left py-4 px-4 font-semibold text-gray-600">
+                                        <th className="text-left py-3 px-2 md:py-4 md:px-4 font-semibold text-gray-600">
                                             Statut
                                         </th>
-                                        <th className="text-right py-4 px-4 font-semibold text-gray-600 rounded-tr-lg">
+                                        <th className="text-right py-3 px-2 md:py-4 md:px-4 font-semibold text-gray-600 rounded-tr-lg">
                                             Montant
                                         </th>
                                     </tr>
@@ -1001,21 +1013,21 @@ const DashboardPageAdmin = () => {
                                                         : ""
                                                 }`}
                                             >
-                                                <td className="py-4 px-4 font-medium text-emerald-600 truncate max-w-[100px]">
+                                                <td className="py-3 px-2 md:py-4 md:px-4 font-medium text-emerald-600 truncate max-w-[60px] md:max-w-[100px]">
                                                     #{cmd._id.slice(-6)}
                                                 </td>
-                                                <td className="py-4 px-4 truncate max-w-[150px]">
+                                                <td className="py-3 px-2 md:py-4 md:px-4 truncate max-w-[80px] md:max-w-[150px]">
                                                     {cmd.client_id?.nom ||
                                                         "Client inconnu"}
                                                 </td>
-                                                <td className="py-4 px-4">
+                                                <td className="py-3 px-2 md:py-4 md:px-4">
                                                     {new Date(
                                                         cmd.date_creation
                                                     ).toLocaleDateString()}
                                                 </td>
-                                                <td className="py-4 px-4">
+                                                <td className="py-3 px-2 md:py-4 md:px-4">
                                                     <span
-                                                        className="px-3 py-1.5 rounded-full text-xs font-medium inline-flex items-center"
+                                                        className="px-2 py-1 md:px-3 md:py-1.5 rounded-full text-xs font-medium inline-flex items-center"
                                                         style={{
                                                             backgroundColor: `${
                                                                 STATUS_COLORS[
@@ -1028,7 +1040,7 @@ const DashboardPageAdmin = () => {
                                                         }}
                                                     >
                                                         <span
-                                                            className="w-2 h-2 rounded-full mr-1.5"
+                                                            className="w-2 h-2 rounded-full mr-1 md:mr-1.5"
                                                             style={{
                                                                 backgroundColor:
                                                                     STATUS_COLORS[
@@ -1043,7 +1055,7 @@ const DashboardPageAdmin = () => {
                                                         )}
                                                     </span>
                                                 </td>
-                                                <td className="py-4 px-4 text-right font-semibold">
+                                                <td className="py-3 px-2 md:py-4 md:px-4 text-right font-semibold break-words">
                                                     {formatCurrency(cmd.total)}
                                                 </td>
                                             </tr>
@@ -1067,24 +1079,26 @@ const DashboardPageAdmin = () => {
 
             {/* Contenu de l'onglet Utilisateurs */}
             {activeTab === "utilisateurs" && (
-                <div className="space-y-8">
+                <div className="space-y-6 md:space-y-8">
                     {/* Cartes de statistiques utilisateurs */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                         {/* Carte Clients */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow duration-300">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow duration-300">
                             <div className="flex flex-row items-center justify-between pb-4">
-                                <h3 className="text-lg font-semibold text-gray-800">
+                                <h3 className="text-base md:text-lg font-semibold text-gray-800">
                                     Clients
                                 </h3>
-                                <div className="p-3 bg-blue-100 rounded-full">
-                                    <FaUserFriends className="h-6 w-6 text-blue-600" />
+                                <div className="p-2 md:p-3 bg-blue-100 rounded-full">
+                                    <FaUserFriends className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
                                 </div>
                             </div>
-                            <div className="text-3xl font-bold text-blue-700">
+                            <div className="text-2xl md:text-3xl font-bold text-blue-700">
                                 {clientsCount}
                             </div>
-                            <div className="flex justify-between mt-2 text-sm">
-                                <span className="text-gray-500">Total</span>
+                            <div className="flex flex-col md:flex-row md:justify-between mt-2 text-xs md:text-sm">
+                                <span className="text-gray-500 mb-1 md:mb-0">
+                                    Total
+                                </span>
                                 <a
                                     href="/gestion/client"
                                     className="text-blue-600 hover:underline"
@@ -1095,21 +1109,23 @@ const DashboardPageAdmin = () => {
                         </div>
 
                         {/* Carte Livreurs */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow duration-300">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow duration-300">
                             <div className="flex flex-row items-center justify-between pb-4">
-                                <h3 className="text-lg font-semibold text-gray-800">
+                                <h3 className="text-base md:text-lg font-semibold text-gray-800">
                                     Livreurs
                                 </h3>
-                                <div className="p-3 bg-green-100 rounded-full">
-                                    <FaTruck className="h-6 w-6 text-green-600" />
+                                <div className="p-2 md:p-3 bg-green-100 rounded-full">
+                                    <FaTruck className="h-5 w-5 md:h-6 md:w-6 text-green-600" />
                                 </div>
                             </div>
-                            <div className="text-3xl font-bold text-green-700">
+                            <div className="text-2xl md:text-3xl font-bold text-green-700">
                                 {livreursCount}
                             </div>
-                            <div className="flex justify-between mt-2 text-sm">
-                                <span className="text-gray-500">Total</span>
-                                <div className="flex gap-2">
+                            <div className="flex flex-col md:flex-row md:justify-between mt-2 text-xs md:text-sm">
+                                <span className="text-gray-500 mb-1 md:mb-0">
+                                    Total
+                                </span>
+                                <div className="flex flex-wrap gap-2">
                                     <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full text-xs">
                                         {livreursPendingVerification} en attente
                                     </span>
@@ -1124,20 +1140,22 @@ const DashboardPageAdmin = () => {
                         </div>
 
                         {/* Carte Commerçants */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow duration-300">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow duration-300">
                             <div className="flex flex-row items-center justify-between pb-4">
-                                <h3 className="text-lg font-semibold text-gray-800">
+                                <h3 className="text-base md:text-lg font-semibold text-gray-800">
                                     Commerçants
                                 </h3>
-                                <div className="p-3 bg-purple-100 rounded-full">
-                                    <FaStore className="h-6 w-6 text-purple-600" />
+                                <div className="p-2 md:p-3 bg-purple-100 rounded-full">
+                                    <FaStore className="h-5 w-5 md:h-6 md:w-6 text-purple-600" />
                                 </div>
                             </div>
-                            <div className="text-3xl font-bold text-purple-700">
+                            <div className="text-2xl md:text-3xl font-bold text-purple-700">
                                 {commercantsCount}
                             </div>
-                            <div className="flex justify-between mt-2 text-sm">
-                                <span className="text-gray-500">Total</span>
+                            <div className="flex flex-col md:flex-row md:justify-between mt-2 text-xs md:text-sm">
+                                <span className="text-gray-500 mb-1 md:mb-0">
+                                    Total
+                                </span>
                                 <a
                                     href="/gestion/commercant"
                                     className="text-purple-600 hover:underline"
@@ -1149,21 +1167,21 @@ const DashboardPageAdmin = () => {
                     </div>
 
                     {/* Répartition des utilisateurs */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
                         {/* Graphique de répartition */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-                            <div className="mb-6">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow duration-300">
+                            <div className="mb-4 md:mb-6">
                                 <div className="flex items-center">
                                     <FaChartPie className="text-emerald-600 mr-2" />
-                                    <h3 className="text-xl font-bold text-gray-800">
+                                    <h3 className="text-lg md:text-xl font-bold text-gray-800">
                                         Répartition des utilisateurs
                                     </h3>
                                 </div>
-                                <p className="text-sm text-gray-500 mt-1">
+                                <p className="text-xs md:text-sm text-gray-500 mt-1">
                                     Par type
                                 </p>
                             </div>
-                            <div className="h-64 border border-gray-100 rounded-lg p-4 bg-gray-50 overflow-x-auto">
+                            <div className="h-64 border border-gray-100 rounded-lg p-2 md:p-4 bg-gray-50 overflow-hidden">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
@@ -1213,20 +1231,20 @@ const DashboardPageAdmin = () => {
                         </div>
 
                         {/* Livreurs en attente de vérification */}
-                        <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-                            <div className="mb-6">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center">
+                        <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow duration-300">
+                            <div className="mb-4 md:mb-6">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center mb-2 sm:mb-0">
                                         <FaUserTie className="text-amber-600 mr-2" />
-                                        <h3 className="text-xl font-bold text-gray-800">
+                                        <h3 className="text-lg md:text-xl font-bold text-gray-800">
                                             Livreurs en attente
                                         </h3>
                                     </div>
-                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
+                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium self-start sm:self-auto">
                                         {livreursPendingVerification} livreurs
                                     </span>
                                 </div>
-                                <p className="text-sm text-gray-500 mt-1">
+                                <p className="text-xs md:text-sm text-gray-500 mt-1">
                                     Vérification des documents
                                 </p>
                             </div>
@@ -1263,15 +1281,15 @@ const DashboardPageAdmin = () => {
                     </div>
 
                     {/* Liens rapides vers les pages de gestion */}
-                    <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-                        <div className="mb-6">
+                    <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow duration-300">
+                        <div className="mb-4 md:mb-6">
                             <div className="flex items-center">
                                 <FaUsers className="text-emerald-600 mr-2" />
-                                <h3 className="text-xl font-bold text-gray-800">
+                                <h3 className="text-lg md:text-xl font-bold text-gray-800">
                                     Gestion des utilisateurs
                                 </h3>
                             </div>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-xs md:text-sm text-gray-500 mt-1">
                                 Accès rapide
                             </p>
                         </div>

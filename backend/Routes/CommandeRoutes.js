@@ -11,6 +11,7 @@ import {
     validation_codeCom,
     assignLivreur,
     updateCommandeStatus,
+    requestLivreur,
 } from "../Controllers/CommandeController.js";
 import { protectRoute } from "../Middleware/protectRoute.js";
 import { protectSuivi } from "../Middleware/protectSuivi.js";
@@ -28,7 +29,13 @@ router.get("/code/:id/client", protectRoute, getCodeClient);
 router.get("/code/:id/commercant", protectRoute, getCodeCommercant);
 router.post("/code/validationClient", protectRoute, validation_codeCL);
 router.post("/code/validationCommercant", protectRoute, validation_codeCom);
-router.post("/assign-livreur", protectRoute, protectCommercant, assignLivreur);
+router.post("/assign-livreur", protectRoute, assignLivreur);
+router.post(
+    "/request-livreur",
+    protectRoute,
+    protectCommercant,
+    requestLivreur
+);
 router.post("/update-status", protectRoute, updateCommandeStatus);
 
 export default router;

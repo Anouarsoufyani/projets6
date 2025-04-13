@@ -320,6 +320,7 @@ export const validation_codeCL = async (req, res) => {
         ) {
             commande.is_client_verifie = true;
             commande.statut = "livree";
+            commande.date_livraison = Date.now();
             await commande.save();
             await notification.save();
 
@@ -372,6 +373,7 @@ export const validation_codeCom = async (req, res) => {
         if (commande.code_Commercant == code) {
             commande.is_commercant_verifie = true;
             commande.statut = "recuperee_par_livreur";
+            commande.date_recuperation = Date.now();
             await commande.save();
             await notification.save();
 
@@ -396,6 +398,102 @@ export const validation_codeCom = async (req, res) => {
 
 export const assignLivreur = async (req, res) => {
     try {
+        const { commandeId, livreurId, requestId, response } = req.body;
+
+        const commande = await Commande.findById(commandeId);
+
+        const notification = await Notification.findById(requestId);
+
+        if (!notification) {
+            return res.status(404).json({
+                success: false,
+                error: "Notification non trouvée",
+            });
+        }
+
+        if (!commande) {
+            return res.status(404).json({
+                success: false,
+                error: "Commande non trouvée",
+            });
+        }
+
+        if (commande.livreur_id) {
+            return res.status(400).json({
+                success: false,
+                error: "La commande a déjà un livreur assigné",
+            });
+        }
+
+        const commercantToNotify = await User.findById(
+            commande.commercant_id
+        ).select("-password");
+
+        if (response === "accepter") {
+            const clientToNotify = await User.findById(
+                commande.client_id
+            ).select("-password");
+
+            commande.livreur_id = livreurId;
+            commande.statut = "prete_a_etre_recuperee";
+            notification.isAccepted = true;
+            notification.save();
+            await commande.save();
+            if (commercantToNotify) {
+                const notification = new Notification({
+                    sender: req.user._id,
+                    receiver: commande.commercant_id,
+                    commande_id: commandeId,
+                    type: "nouvelle acceptation de livraison",
+                });
+                await notification.save();
+            }
+            if (clientToNotify) {
+                const notification = new Notification({
+                    sender: req.user._id,
+                    receiver: clientToNotify,
+                    commande_id: commandeId,
+                    type: "nouveau livreur assigné",
+                });
+                await notification.save();
+            }
+        } else if (response === "refuser") {
+            console.log(notification.isRefused);
+
+            commande.livreur_id = null;
+            commande.statut = "en_preparation";
+            notification.isRefused = true;
+            notification.save();
+            await commande.save();
+            if (commercantToNotify) {
+                const notification = new Notification({
+                    sender: req.user._id,
+                    receiver: commercantToNotify,
+                    commande_id: commandeId,
+                    type: "refus de livraison",
+                });
+                await notification.save();
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Livreur assigné à la commande",
+        });
+    } catch (error) {
+        console.error(
+            "Erreur lors de l'assignation du livreur à la commande:",
+            error
+        );
+        return res.status(500).json({
+            success: false,
+            error: "Erreur serveur",
+        });
+    }
+};
+
+export const requestLivreur = async (req, res) => {
+    try {
         const { commandeId, livreurId } = req.body;
 
         const commande = await Commande.findById(commandeId);
@@ -406,44 +504,34 @@ export const assignLivreur = async (req, res) => {
                 error: "Commande non trouvée",
             });
         }
+
         const livreurToNotify = await User.findById(livreurId).select(
             "-password"
         );
 
-        const clientToNotify = await User.findById(commande.client_id).select(
-            "-password"
-        );
-
-        commande.livreur_id = livreurId;
-        commande.statut = "prete_a_etre_recuperee";
-        await commande.save();
-        if (livreurToNotify) {
-            const notification = new Notification({
-                sender: req.user._id,
-                receiver: livreurId,
-                commande_id: commandeId,
-                type: "nouvelle commande assignée",
+        if (!livreurToNotify) {
+            return res.status(404).json({
+                success: false,
+                error: "Livreur non trouvé",
             });
-            await notification.save();
         }
 
-        if (clientToNotify) {
-            const notification = new Notification({
-                sender: req.user._id,
-                receiver: commande.client_id,
-                commande_id: commandeId,
-                type: "nouveau livreur assigné",
-            });
-            await notification.save();
-        }
+        const notification = new Notification({
+            sender: req.user._id,
+            receiver: livreurId,
+            commande_id: commandeId,
+            isRequest: true,
+            type: "nouvelle demande de livraison",
+        });
+        await notification.save();
 
         return res.status(200).json({
             success: true,
-            message: "Livreur assigné à la commande",
+            message: "Notification envoyée au livreur",
         });
     } catch (error) {
         console.error(
-            "Erreur lors de l'assignation du livreur à la commande:",
+            "Erreur lors de l'envoi de la notification au livreur:",
             error
         );
         return res.status(500).json({

@@ -138,6 +138,10 @@ const CommercantSchema = new mongoose.Schema({
             type: Number,
         },
     },
+    note_moyenne: {
+        type: Number,
+        default: 0,
+    },
 });
 
 const Commercant = User.discriminator("commercant", CommercantSchema);

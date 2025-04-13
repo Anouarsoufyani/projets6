@@ -9,6 +9,10 @@ export const getNotifications = async (req, res) => {
             .populate({
                 path: "sender",
                 select: "nom",
+            })
+            .populate({
+                path: "commande_id",
+                select: "livreur_id",
             });
 
         await Notification.updateMany({ receiver: userId }, { read: true });

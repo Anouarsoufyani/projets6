@@ -61,6 +61,9 @@ const CommandeSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    date_recuperation: {
+        type: Date,
+    },
     date_livraison: {
         type: Date,
     }, // Rempli quand livrée

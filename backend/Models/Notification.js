@@ -26,6 +26,23 @@ const notificationSchema = new mongoose.Schema(
         //     ref: "Comment", // the id will be of the comment model
         //     required: true
         // },
+        isRequest: {
+            type: Boolean,
+            default: false,
+        },
+        isAccepted: {
+            type: Boolean,
+            default: function () {
+                return this.isRequest ? false : undefined;
+            },
+        },
+        isRefused: {
+            type: Boolean,
+            default: function () {
+                return this.isRequest ? false : undefined;
+            },
+        },
+
         type: {
             type: String,
             required: true,
@@ -46,6 +63,7 @@ const notificationSchema = new mongoose.Schema(
                 "nouvelle livraison",
                 "nouveau refus de livraison",
                 "nouvelle acceptation de livraison",
+                "nouvelle demande de livraison",
                 "nouvelle annulation de commande",
                 "nouvelle modification de commande",
             ],

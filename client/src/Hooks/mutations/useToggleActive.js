@@ -1,13 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { useGetUserCommandes } from "../queries/useGetCommandes";
+import { useGetLatestPendingCommande } from "../../Hooks";
 
 const useToggleActive = () => {
     const queryClient = useQueryClient();
-    const { data: commandesData } = useGetUserCommandes();
-    const commandeEnCours = commandesData?.commandes?.find(
-        (cmd) => cmd.statut === "en_livraison"
-    );
+    const { data: commandeEnCours } = useGetLatestPendingCommande();
 
     const { mutateAsync: toggleActive, isPending: isToggleActive } =
         useMutation({

@@ -26,10 +26,16 @@ export const getLatestPendingCommande = async () => {
     }
     const commandes = data.commandes;
     const commande = commandes.reduce((prev, current) =>
-        prev.date_de_creation > current.date_de_creation ? prev : current
+        prev.date_de_creation > current.date_de_creation &&
+        current.statut !== "livree"
+            ? prev
+            : current
     );
+    if (commande.statut === "livree") {
+        return;
+    }
 
-    console.log(commande);
+    console.log("CONMNCENEOCNEOCENOCNEOCE ", commande);
 
     return commande;
 };

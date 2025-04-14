@@ -23,7 +23,6 @@ const DashboardPageLivreur = () => {
     const { data: authUser } = useAuthUserQuery();
     const { toggleActive, isToggleActive } = useToggleActive();
     const { data: commandeEnCours, isLoading } = useGetLatestPendingCommande();
-    console.log(commandeEnCours);
 
     const { position, loading, error } = useDeliveryPosition(
         authUser?.disponibilite,
@@ -43,7 +42,7 @@ const DashboardPageLivreur = () => {
 
     const navigate = useNavigate();
 
-    if (commandeEnCours && !isLoading) {
+    if (commandeEnCours != null && !isLoading) {
         navigate(`/livraison/${commandeEnCours._id}`);
     }
 

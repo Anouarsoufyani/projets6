@@ -18,6 +18,8 @@ import { useAuthUserQuery } from "./Hooks";
 import CreateCommandePage from "./Pages/Commandes/CreateCommandePage";
 import CommandeSuivi from "./Pages/Commandes/CommandeSuivi";
 import NotificationsPage from "./Pages/User/NotificationsPage";
+import useDeliveryPosition from "./Hooks/mutations/useDeliveryPosition";
+import { useFilteredNotifications } from "./Hooks";
 
 import DetailCommande from "./Pages/Commandes/DetailCommande";
 
@@ -64,6 +66,14 @@ function App() {
 
     const { data: authUser, isLoading } = useAuthUserQuery();
 
+    // Récupérer les notifications
+    const { data: notifications } = useFilteredNotifications();
+
+    // Utiliser le hook de position pour les livreurs
+    const isLivreur = authUser?.role === "livreur";
+    const isLivreurActive = isLivreur && authUser?.disponibilite;
+    useDeliveryPosition(isLivreurActive, authUser?._id);
+
     if (isLoading) {
         return (
             <div className="h-screen flex justify-center items-center">
@@ -88,6 +98,7 @@ function App() {
                     navbarHeight={navbarSize}
                     isOpen={sidebarOpen}
                     isMobile={isMobile}
+                    notifications={notifications}
                 />
             )}
 

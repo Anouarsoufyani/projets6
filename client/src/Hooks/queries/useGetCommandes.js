@@ -32,7 +32,7 @@ export const getLatestPendingCommande = async () => {
             : current
     );
     if (commande.statut === "livree") {
-        return;
+        return null;
     }
 
     console.log("CONMNCENEOCNEOCENOCNEOCE ", commande);

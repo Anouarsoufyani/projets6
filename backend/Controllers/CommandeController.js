@@ -1,8 +1,8 @@
 // import { generateTokenAndSetCookie } from "../Lib/utils/generateToken.js";
 import userModels from "../Models/User.js";
-const { User } = userModels;
 import Commande from "../Models/Commandes.js";
 import Notification from "../Models/Notification.js";
+const { User } = userModels;
 
 export const getCommandeById = async (req, res) => {
     try {
@@ -597,6 +597,81 @@ export const updateCommandeStatus = async (req, res) => {
             "Erreur lors de la mise à jour du statut de la commande:",
             error
         );
+        return res.status(500).json({
+            success: false,
+            error: "Erreur serveur",
+        });
+    }
+};
+
+// Ajouter cette fonction à la fin du fichier
+
+export const updateCommandeItineraire = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { position, timestamp } = req.body;
+
+        if (!position || !position.lat || !position.lng) {
+            return res.status(400).json({
+                success: false,
+                error: "Position invalide",
+            });
+        }
+
+        const commande = await Commande.findById(id);
+
+        if (!commande) {
+            return res.status(404).json({
+                success: false,
+                error: "Commande non trouvée",
+            });
+        }
+
+        // Vérifier que le livreur qui fait la requête est bien celui assigné à la commande
+        if (commande.livreur_id.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                error: "Vous n'êtes pas autorisé à mettre à jour cette commande",
+            });
+        }
+
+        if (commande.statut === "prete_a_etre_recuperee") {
+            // Initialiser l'itinéraire s'il n'existe pas
+            if (!commande.itineraire_parcouru_commercant) {
+                commande.itineraire_parcouru_commercant = [];
+            }
+
+            // Ajouter la nouvelle position à l'itinéraire
+            commande.itineraire_parcouru_commercant.push({
+                position,
+                timestamp: timestamp || new Date(),
+            });
+        } else if (commande.statut === "recuperee_par_livreur") {
+            // Initialiser l'itinéraire s'il n'existe pas
+            if (!commande.itineraire_parcouru_client) {
+                commande.itineraire_parcouru_client = [];
+            }
+
+            // Ajouter la nouvelle position à l'itinéraire
+            commande.itineraire_parcouru_client.push({
+                position,
+                timestamp: timestamp || new Date(),
+            });
+        } else {
+            return res.status(400).json({
+                success: false,
+                error: "Statut de la commande invalide",
+            });
+        }
+
+        await commande.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Itinéraire mis à jour avec succès",
+        });
+    } catch (error) {
+        console.error("Erreur lors de la mise à jour de l'itinéraire:", error);
         return res.status(500).json({
             success: false,
             error: "Erreur serveur",

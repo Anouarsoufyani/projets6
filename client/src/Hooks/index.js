@@ -14,7 +14,10 @@ export { useGetDocuments } from "./queries/useGetDocuments";
 export { default as useLivreurTracking } from "./queries/useLivreurTracking";
 export { default as useUserPosition } from "./queries/useUserPosition";
 export { useGetCommande } from "./queries/useGetCommande";
-export { useGetNotifications } from "./queries/useGetNotifications";
+export {
+    useGetNotifications,
+    useFilteredNotifications,
+} from "./queries/useGetNotifications";
 export {
     useGetReviewsForUser,
     useGetUserReviews,

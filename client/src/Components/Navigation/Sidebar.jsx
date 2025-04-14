@@ -13,9 +13,20 @@ import PropTypes from "prop-types";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-const Sidebar = ({ authUser, sidebarSize, navbarHeight, isOpen, isMobile }) => {
+// Modifier la fonction Sidebar pour accepter les notifications en props
+const Sidebar = ({
+    authUser,
+    sidebarSize,
+    navbarHeight,
+    isOpen,
+    isMobile,
+    notifications,
+}) => {
     const location = useLocation();
     const queryClient = useQueryClient();
+
+    // Ajouter après la déclaration de la variable location
+    // Calculer le nombre de notifications non lues
 
     // Mutation for logout
     const { mutate: logout } = useMutation({
@@ -84,7 +95,19 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight, isOpen, isMobile }) => {
                   {
                       to: "/notifications",
                       icon: <MdOutlineNotificationsNone className="w-5 h-5" />,
-                      label: "Notifications",
+
+                      label: (
+                          <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">
+                                  Notifications
+                              </span>
+                              {notifications > 0 && (
+                                  <span className="inline-flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5 min-w-5 h-5">
+                                      {notifications}
+                                  </span>
+                              )}
+                          </div>
+                      ),
                   },
               ],
               client: [
@@ -106,7 +129,16 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight, isOpen, isMobile }) => {
                   {
                       to: "/notifications",
                       icon: <MdOutlineNotificationsNone className="w-5 h-5" />,
-                      label: "Notifications",
+                      label: (
+                          <div className="flex items-center">
+                              Notifications
+                              {notifications > 0 && (
+                                  <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                                      {notifications}
+                                  </span>
+                              )}
+                          </div>
+                      ),
                   },
               ],
               commercant: [
@@ -128,7 +160,16 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight, isOpen, isMobile }) => {
                   {
                       to: "/notifications",
                       icon: <MdOutlineNotificationsNone className="w-5 h-5" />,
-                      label: "Notifications",
+                      label: (
+                          <div className="flex items-center">
+                              Notifications
+                              {notifications > 0 && (
+                                  <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                                      {notifications}
+                                  </span>
+                              )}
+                          </div>
+                      ),
                   },
               ],
               admin: [
@@ -161,6 +202,20 @@ const Sidebar = ({ authUser, sidebarSize, navbarHeight, isOpen, isMobile }) => {
                       to: "/gestion/livreur",
                       icon: <FaRegListAlt className="w-5 h-5" />,
                       label: "Gestion Livreurs",
+                  },
+                  {
+                      to: "/notifications",
+                      icon: <MdOutlineNotificationsNone className="w-5 h-5" />,
+                      label: (
+                          <div className="flex items-center">
+                              Notifications
+                              {notifications > 0 && (
+                                  <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                                      {notifications}
+                                  </span>
+                              )}
+                          </div>
+                      ),
                   },
               ],
           }[authUser.role] || []
@@ -236,6 +291,7 @@ Sidebar.propTypes = {
     authUser: PropTypes.object,
     isOpen: PropTypes.bool,
     isMobile: PropTypes.bool,
+    notifications: PropTypes.number,
 };
 
 Sidebar.defaultProps = {

@@ -12,11 +12,12 @@ import {
     assignLivreur,
     updateCommandeStatus,
     requestLivreur,
+    updateCommandeItineraire,
 } from "../Controllers/CommandeController.js";
 import { protectRoute } from "../Middleware/protectRoute.js";
 import { protectSuivi } from "../Middleware/protectSuivi.js";
-import { protectLivreur } from "../Middleware/protectLivreur.js";
 import { protectCommercant } from "../Middleware/protectCommercant.js";
+import { protectLivreur } from "../Middleware/protectLivreur.js";
 
 const router = express.Router();
 
@@ -37,5 +38,11 @@ router.post(
     requestLivreur
 );
 router.post("/update-status", protectRoute, updateCommandeStatus);
+router.post(
+    "/:id/itineraire",
+    protectRoute,
+    protectLivreur,
+    updateCommandeItineraire
+);
 
 export default router;

@@ -83,10 +83,24 @@ const CommandeSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    itineraire: [
+    itineraire_parcouru_commercant: [
         {
-            lat: Number,
-            lng: Number,
+            position: {
+                lat: Number,
+                lng: Number,
+            },
+            timestamp: {
+                type: Date,
+                default: Date.now,
+            },
+        },
+    ],
+    itineraire_parcouru_client: [
+        {
+            position: {
+                lat: Number,
+                lng: Number,
+            },
             timestamp: {
                 type: Date,
                 default: Date.now,

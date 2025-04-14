@@ -262,13 +262,13 @@ const CommandesListePage = () => {
                                         </td>
                                         <td className="py-4 px-4 text-right">
                                             <div className="flex gap-2 justify-end">
-                                                <button className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-xs">
-                                                    <Link
-                                                        to={`/commande/${commande._id}`}
-                                                    >
+                                                <Link
+                                                    to={`/commande/${commande._id}`}
+                                                >
+                                                    <button className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-xs">
                                                         Voir
-                                                    </Link>
-                                                </button>
+                                                    </button>
+                                                </Link>
                                                 {/* Actions pour les commandes en livraison ou livrées */}
                                                 {(commande.statut ===
                                                     "prete_a_etre_recuperee" ||
@@ -278,13 +278,13 @@ const CommandesListePage = () => {
                                                         "livree" ||
                                                     commande.statut ===
                                                         "en_livraison") && (
-                                                    <button className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-xs">
-                                                        <Link
-                                                            to={`/livraison/${commande._id}`}
-                                                        >
+                                                    <Link
+                                                        to={`/livraison/${commande._id}`}
+                                                    >
+                                                        <button className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-xs">
                                                             Suivre
-                                                        </Link>
-                                                    </button>
+                                                        </button>
+                                                    </Link>
                                                 )}
 
                                                 {/* Actions pour les commandes en attente */}

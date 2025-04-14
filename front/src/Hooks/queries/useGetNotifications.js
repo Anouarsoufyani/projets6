@@ -28,30 +28,33 @@ export const useGetNotifications = () => {
     });
 };
 
-export const useFilteredNotifications = (authUser) => {
+export const useFilteredNotifications = () => {
     return useQuery({
         queryKey: ["filteredNotifications"],
         queryFn: async () => {
-            const res = await fetch(`/api/notifications`, {
-                method: "GET",
-                headers: { "Content-Type": "application/json" },
-            });
+            try {
+                const res = await fetch(`/api/notifications`, {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                });
 
-            const data = await res.json();
+                const data = await res.json();
 
-            if (!res.ok) {
-                throw new Error(data.error || "Erreur lors du chargement");
+                if (!res.ok) {
+                    throw new Error(data.error || "Erreur lors du chargement");
+                }
+
+                const unreadNotifications = data.notifications.filter(
+                    (notif) => !notif.read
+                )?.length;
+
+                return unreadNotifications;
+            } catch (error) {
+                toast.error(error.message);
+                throw error;
             }
-
-            const unreadNotifications = data.notifications.filter(
-                (notif) => !notif.read
-            )?.length;
-
-            return unreadNotifications;
         },
         retry: false,
         refetchInterval: 5000,
-        enabled: !!authUser,
-        onError: () => {},
     });
 };

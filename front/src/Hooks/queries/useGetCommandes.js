@@ -35,6 +35,8 @@ export const getLatestPendingCommande = async () => {
         return null;
     }
 
+    console.log("CONMNCENEOCNEOCENOCNEOCE ", commande);
+
     return commande;
 };
 

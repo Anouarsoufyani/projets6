@@ -66,13 +66,12 @@ function App() {
 
     const { data: authUser, isLoading } = useAuthUserQuery();
 
-    // Récupérer les notifications seulement si l'utilisateur est connecté
-    const { data: notifications } = useFilteredNotifications(authUser);
+    // Récupérer les notifications
+    const { data: notifications } = useFilteredNotifications();
 
     // Utiliser le hook de position pour les livreurs
     const isLivreur = authUser?.role === "livreur";
     const isLivreurActive = isLivreur && authUser?.disponibilite;
-    // useDeliveryPosition est déjà conditionnel grâce à isLivreurActive
     useDeliveryPosition(isLivreurActive, authUser?._id);
 
     if (isLoading) {

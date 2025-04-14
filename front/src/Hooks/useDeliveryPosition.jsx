@@ -59,7 +59,6 @@ const useDeliveryPosition = (isDeliveryActive, userId) => {
 
             return response.json();
         },
-        enabled: !!userId,
         onSuccess: () => {
             // Invalider les requêtes qui dépendent de la position du livreur
             if (commandeId) {

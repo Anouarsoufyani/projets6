@@ -6,7 +6,7 @@ const useToggleActive = () => {
     const queryClient = useQueryClient();
     const { data: commandesData } = useGetUserCommandes();
     const commandeEnCours = commandesData?.commandes?.find(
-        (cmd) => cmd.statut === "en_livraison"
+        (cmd) => cmd.statut !== "livree"
     );
 
     const { mutateAsync: toggleActive, isPending: isToggleActive } =

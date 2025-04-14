@@ -42,7 +42,7 @@ const DashboardPageLivreur = () => {
 
     const navigate = useNavigate();
 
-    if (commandeEnCours != null && !isLoading) {
+    if (commandeEnCours && !isLoading) {
         navigate(`/livraison/${commandeEnCours._id}`);
     }
 

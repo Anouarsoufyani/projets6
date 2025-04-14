@@ -7,12 +7,34 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 
 const STATUS_STYLES = {
-    en_attente: "bg-gray-100 text-gray-800",
-    en_preparation: "bg-yellow-100 text-yellow-800",
-    en_livraison: "bg-blue-100 text-blue-800",
-    livree: "bg-green-100 text-green-800",
-    annulee: "bg-red-100 text-red-800",
-    refusee: "bg-red-100 text-red-800",
+    en_attente: {
+        bg: "bg-gray-100",
+        text: "text-gray-800",
+        dot: "bg-gray-500",
+    },
+    en_preparation: {
+        bg: "bg-yellow-100",
+        text: "text-yellow-800",
+        dot: "bg-yellow-500",
+    },
+    prete_a_etre_recuperee: {
+        bg: "bg-purple-100",
+        text: "text-purple-800",
+        dot: "bg-purple-500",
+    },
+    recuperee_par_livreur: {
+        bg: "bg-pink-100",
+        text: "text-pink-800",
+        dot: "bg-pink-500",
+    },
+    en_livraison: {
+        bg: "bg-blue-100",
+        text: "text-blue-800",
+        dot: "bg-blue-500",
+    },
+    livree: { bg: "bg-green-100", text: "text-green-800", dot: "bg-green-500" },
+    annulee: { bg: "bg-red-100", text: "text-red-800", dot: "bg-red-500" },
+    refusee: { bg: "bg-red-100", text: "text-red-800", dot: "bg-red-500" },
 };
 
 const ROLE_COLUMNS = {
@@ -210,47 +232,22 @@ const CommandesListePage = () => {
                                         )}
                                         <td className="py-4 px-4">
                                             <span
-                                                className="px-3 py-1.5 rounded-full text-xs font-medium inline-flex items-center"
-                                                style={{
-                                                    backgroundColor: `${
-                                                        STATUS_STYLES[
-                                                            commande.statut
-                                                        ]
-                                                            ?.replace(
-                                                                "text-",
-                                                                "bg-"
-                                                            )
-                                                            .replace(
-                                                                "-800",
-                                                                "-100"
-                                                            ) || "bg-gray-100"
-                                                    }`,
-                                                    color:
-                                                        STATUS_STYLES[
-                                                            commande.statut
-                                                        ]?.replace(
-                                                            "bg-",
-                                                            "text-"
-                                                        ) || "text-gray-800",
-                                                }}
+                                                className={`px-3 py-1.5 rounded-full text-xs font-medium inline-flex items-center ${
+                                                    STATUS_STYLES[
+                                                        commande.statut
+                                                    ]?.bg || "bg-gray-100"
+                                                } ${
+                                                    STATUS_STYLES[
+                                                        commande.statut
+                                                    ]?.text || "text-gray-800"
+                                                }`}
                                             >
                                                 <span
-                                                    className="w-2 h-2 rounded-full mr-1.5"
-                                                    style={{
-                                                        backgroundColor:
-                                                            STATUS_STYLES[
-                                                                commande.statut
-                                                            ]
-                                                                ?.replace(
-                                                                    "bg-",
-                                                                    "text-"
-                                                                )
-                                                                .replace(
-                                                                    "-100",
-                                                                    "-800"
-                                                                ) ||
-                                                            "text-gray-800",
-                                                    }}
+                                                    className={`w-2 h-2 rounded-full mr-1.5 ${
+                                                        STATUS_STYLES[
+                                                            commande.statut
+                                                        ]?.dot || "bg-gray-500"
+                                                    }`}
                                                 ></span>
                                                 {commande.statut.replace(
                                                     /_/g,

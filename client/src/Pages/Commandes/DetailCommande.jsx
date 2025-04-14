@@ -23,7 +23,7 @@ import {
     FaStar,
 } from "react-icons/fa";
 import ReviewForm from "../../Components/Reviews/ReviewForm";
-import { useGetReviewsForUser } from "../../Hooks/queries/useGetReviews";
+import { useGetUserReviews } from "../../Hooks/queries/useGetReviews";
 
 const DetailCommande = () => {
     const { data: authUser } = useAuthUserQuery();
@@ -39,22 +39,21 @@ const DetailCommande = () => {
         useState(false);
     const [showLivreurReviewForm, setShowLivreurReviewForm] = useState(false);
 
-    // Récupérer les avis existants pour cette commande
-    const { data: commercantReviews } = useGetReviewsForUser(
-        commande?.commercant_id?._id
-    );
-    const { data: livreurReviews } = useGetReviewsForUser(
-        commande?.livreur_id?._id
-    );
+    // Récupérer les avis laissés par l'utilisateur
+    const { data: userReviews, isLoading: isLoadingUserReviews } =
+        useGetUserReviews();
 
     // Vérifier si l'utilisateur a déjà laissé un avis
-    const hasReviewedCommercant = commercantReviews?.some(
+    const hasReviewedCommercant = userReviews?.some(
         (review) =>
-            review.commandeId === id && review.clientId === authUser?._id
+            review.commandeId === id &&
+            review.targetId === commande?.commercant_id?._id
     );
-    const hasReviewedLivreur = livreurReviews?.some(
+
+    const hasReviewedLivreur = userReviews?.some(
         (review) =>
-            review.commandeId === id && review.clientId === authUser?._id
+            review.commandeId === id &&
+            review.targetId === commande?.livreur_id?._id
     );
 
     if (isLoading || !commande) {

@@ -21,8 +21,9 @@ import {
     FaBox,
     FaCar,
 } from "react-icons/fa";
-// Ajouter l'import pour le composant ReviewForm
+// Ajouter l'import pour le composant ReviewForm et useGetUserReviews
 import ReviewForm from "../../Components/Reviews/ReviewForm";
+import { useGetUserReviews } from "../../Hooks/queries/useGetReviews";
 
 const containerStyle = {
     width: "100%",
@@ -66,8 +67,9 @@ const CommandeSuivi = () => {
         isLoading: isLoadingLivreur,
     } = useLivreurTracking(id, 15000);
 
-    // État local pour stocker la dernière position connue du livreur
-    // const [currentLivreurPosition, setCurrentLivreurPosition] = useState(null)
+    // Récupérer les avis de l'utilisateur pour vérifier s'il a déjà laissé un avis
+    const { data: userReviews, isLoading: isLoadingReviews } =
+        useGetUserReviews();
 
     const queryClient = useQueryClient();
 
@@ -99,6 +101,34 @@ const CommandeSuivi = () => {
         retry: false,
         refetchInterval: 5000, // Rafraîchir toutes les 5 secondes
     });
+
+    // Vérifier si l'utilisateur a déjà laissé un avis pour le livreur et le commerçant
+    const [hasReviewedLivreur, setHasReviewedLivreur] = useState(false);
+    const [hasReviewedCommercant, setHasReviewedCommercant] = useState(false);
+
+    useEffect(() => {
+        if (userReviews && commande?.data) {
+            // Vérifier si l'utilisateur a déjà laissé un avis pour le livreur
+            if (commande.data.livreur_id) {
+                const reviewedLivreur = userReviews.some(
+                    (review) =>
+                        review.targetId === commande.data.livreur_id._id &&
+                        review.commandeId === commande.data._id
+                );
+                setHasReviewedLivreur(reviewedLivreur);
+            }
+
+            // Vérifier si l'utilisateur a déjà laissé un avis pour le commerçant
+            if (commande.data.commercant_id) {
+                const reviewedCommercant = userReviews.some(
+                    (review) =>
+                        review.targetId === commande.data.commercant_id._id &&
+                        review.commandeId === commande.data._id
+                );
+                setHasReviewedCommercant(reviewedCommercant);
+            }
+        }
+    }, [userReviews, commande]);
 
     // Mutation pour valider le code commerçant
     const validateCommercantMutation = useMutation({
@@ -300,11 +330,17 @@ const CommandeSuivi = () => {
         }
     }, [commande]);
 
+    // Callback pour rafraîchir les avis après soumission
+    const handleReviewSubmitted = () => {
+        queryClient.invalidateQueries({ queryKey: ["getUserReviews"] });
+    };
+
     if (
         isLoading ||
         isLoadingLivreur ||
         isLoadingCoords ||
-        isLoadingCoordsCommercant
+        isLoadingCoordsCommercant ||
+        isLoadingReviews
     ) {
         return <LoadingSpinner />;
     }
@@ -596,16 +632,32 @@ const CommandeSuivi = () => {
                                                     <FaTruck className="mr-2 text-emerald-600" />
                                                     Évaluer le livreur
                                                 </h3>
-                                                <ReviewForm
-                                                    targetId={
-                                                        commande.data.livreur_id
-                                                            ._id
-                                                    }
-                                                    targetType="livreur"
-                                                    commandeId={
-                                                        commande.data._id
-                                                    }
-                                                />
+                                                {hasReviewedLivreur ? (
+                                                    <div className="bg-green-50 p-4 rounded-lg text-center">
+                                                        <p className="text-green-700">
+                                                            Vous avez déjà
+                                                            évalué ce livreur.
+                                                        </p>
+                                                        <p className="text-green-600 text-sm mt-1">
+                                                            Merci pour votre
+                                                            avis !
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <ReviewForm
+                                                        targetId={
+                                                            commande.data
+                                                                .livreur_id._id
+                                                        }
+                                                        targetType="livreur"
+                                                        commandeId={
+                                                            commande.data._id
+                                                        }
+                                                        onReviewSubmitted={
+                                                            handleReviewSubmitted
+                                                        }
+                                                    />
+                                                )}
                                             </div>
                                         )}
 
@@ -615,14 +667,31 @@ const CommandeSuivi = () => {
                                                 <FaStore className="mr-2 text-emerald-600" />
                                                 Évaluer le commerçant
                                             </h3>
-                                            <ReviewForm
-                                                targetId={
-                                                    commande.data.commercant_id
-                                                        ._id
-                                                }
-                                                targetType="commercant"
-                                                commandeId={commande.data._id}
-                                            />
+                                            {hasReviewedCommercant ? (
+                                                <div className="bg-green-50 p-4 rounded-lg text-center">
+                                                    <p className="text-green-700">
+                                                        Vous avez déjà évalué ce
+                                                        commerçant.
+                                                    </p>
+                                                    <p className="text-green-600 text-sm mt-1">
+                                                        Merci pour votre avis !
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <ReviewForm
+                                                    targetId={
+                                                        commande.data
+                                                            .commercant_id._id
+                                                    }
+                                                    targetType="commercant"
+                                                    commandeId={
+                                                        commande.data._id
+                                                    }
+                                                    onReviewSubmitted={
+                                                        handleReviewSubmitted
+                                                    }
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 </div>

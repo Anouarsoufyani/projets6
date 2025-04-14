@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const ReviewSchema = new mongoose.Schema(
+const reviewSchema = new mongoose.Schema(
     {
         auteur: {
             type: mongoose.Schema.Types.ObjectId,
@@ -14,7 +14,7 @@ const ReviewSchema = new mongoose.Schema(
         },
         roleCible: {
             type: String,
-            enum: ["livreur", "commercant"],
+            enum: ["commercant", "livreur"],
             required: true,
         },
         note: {
@@ -25,18 +25,17 @@ const ReviewSchema = new mongoose.Schema(
         },
         commentaire: {
             type: String,
-            maxlength: 500,
+            required: true,
         },
         commande: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Commande",
+            default: null,
         },
     },
-    {
-        timestamps: true,
-    }
+    { timestamps: true }
 );
 
-const Review = mongoose.model("Review", ReviewSchema);
+const Review = mongoose.model("Review", reviewSchema);
 
 export default Review;

@@ -14,11 +14,7 @@ import {
     FaChartBar,
     FaUserFriends,
 } from "react-icons/fa";
-import {
-    useAuthUserQuery,
-    useGetUserCommandes,
-    useGetReviewsForUser,
-} from "../../Hooks";
+import { useAuthUserQuery, useGetUserCommandes } from "../../Hooks";
 import {
     Bar,
     BarChart,
@@ -39,6 +35,7 @@ import {
     ReviewCard,
     getAverageRating,
 } from "../../Components/Reviews/ReviewDisplay";
+import { useGetReviewsForUser } from "../../Hooks/queries/useGetReviews";
 
 // Couleurs pour les graphiques
 const COLORS = [
@@ -1145,7 +1142,8 @@ const DashboardPageCommercant = () => {
                         </h2>
                         <div className="flex flex-col sm:flex-row sm:items-center">
                             <span className="text-3xl md:text-4xl text-yellow-500 mr-3 font-bold">
-                                {getAverageRating(reviews || [])}
+                                {/* {getAverageRating(reviews || [])} */}
+                                {authUser.note_moyenne}
                             </span>
                             <span className="mr-3 text-2xl md:text-3xl font-bold">
                                 /
@@ -1156,7 +1154,8 @@ const DashboardPageCommercant = () => {
                             <span className="ml-0 mt-2 sm:ml-4 sm:mt-0">
                                 <StarRating
                                     rating={Math.round(
-                                        getAverageRating(reviews || [])
+                                        // getAverageRating(reviews || [])
+                                        authUser.note_moyenne
                                     )}
                                 />
                             </span>

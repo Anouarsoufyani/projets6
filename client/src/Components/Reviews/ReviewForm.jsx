@@ -1,6 +1,5 @@
 "use client";
 
-// Ajouter un import pour useEffect et useState pour gérer l'état des avis déjà soumis
 import { useState, useEffect } from "react";
 import { FaStar } from "react-icons/fa";
 import PropTypes from "prop-types";
@@ -35,7 +34,14 @@ const ReviewForm = ({
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
         if (rating === 0) {
+            alert("Veuillez attribuer une note");
+            return;
+        }
+
+        if (comment.trim() === "") {
+            alert("Veuillez laisser un commentaire");
             return;
         }
 
@@ -79,11 +85,15 @@ const ReviewForm = ({
     }
 
     return (
-        <div className="bg-white rounded-xl">
-            <form onSubmit={handleSubmit}>
-                <div className="flex mb-4 justify-center">
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Votre note
+                </label>
+                <div className="flex">
                     {[...Array(5)].map((_, index) => {
                         const ratingValue = index + 1;
+
                         return (
                             <label key={index} className="cursor-pointer">
                                 <input
@@ -97,8 +107,8 @@ const ReviewForm = ({
                                     className="w-8 h-8 transition-colors duration-200"
                                     color={
                                         ratingValue <= (hover || rating)
-                                            ? "#fbbf24"
-                                            : "#e5e7eb"
+                                            ? "#FBBF24"
+                                            : "#D1D5DB"
                                     }
                                     onMouseEnter={() => setHover(ratingValue)}
                                     onMouseLeave={() => setHover(0)}
@@ -107,28 +117,40 @@ const ReviewForm = ({
                         );
                     })}
                 </div>
-                <div className="mb-4">
-                    <textarea
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        placeholder="Partagez votre expérience..."
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
-                        rows="3"
-                    ></textarea>
-                </div>
+            </div>
+
+            <div>
+                <label
+                    htmlFor="comment"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                    Votre commentaire
+                </label>
+                <textarea
+                    id="comment"
+                    rows={4}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Partagez votre expérience..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500"
+                    required
+                />
+            </div>
+
+            <div className="flex justify-end">
                 <button
                     type="submit"
-                    disabled={isLoading || rating === 0}
-                    className={`w-full px-4 py-2 rounded-lg text-white font-medium transition-colors duration-200 ${
-                        isLoading || rating === 0
+                    disabled={isLoading}
+                    className={`px-4 py-2 rounded-md text-white font-medium ${
+                        isLoading
                             ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-emerald-600 hover:bg-emerald-700"
+                            : "bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
                     }`}
                 >
-                    {isLoading ? "Envoi en cours..." : "Soumettre l'avis"}
+                    {isLoading ? "Envoi en cours..." : "Soumettre"}
                 </button>
-            </form>
-        </div>
+            </div>
+        </form>
     );
 };
 

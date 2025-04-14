@@ -66,6 +66,10 @@ body {
     cursor: pointer;
 }
 
+button {
+    cursor: pointer;
+}
+
 /* Fix for mobile overflow issues */
 .overflow-fix {
     overflow-x: hidden;

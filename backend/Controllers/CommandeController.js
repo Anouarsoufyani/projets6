@@ -1,8 +1,8 @@
 // import { generateTokenAndSetCookie } from "../Lib/utils/generateToken.js";
 import userModels from "../Models/User.js";
+const { User } = userModels;
 import Commande from "../Models/Commandes.js";
 import Notification from "../Models/Notification.js";
-const { User } = userModels;
 
 export const getCommandeById = async (req, res) => {
     try {

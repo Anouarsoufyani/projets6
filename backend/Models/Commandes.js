@@ -46,6 +46,7 @@ const CommandeSchema = new mongoose.Schema({
             "recuperee_par_livreur",
             "livree",
             "annulee",
+            "probleme",
         ],
         default: "en_attente",
     },

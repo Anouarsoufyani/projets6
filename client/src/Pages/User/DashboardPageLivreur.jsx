@@ -25,7 +25,7 @@ const DashboardPageLivreur = () => {
     const { data: commandeEnCours, isLoading } = useGetLatestPendingCommande();
 
     const { position, loading, error } = useDeliveryPosition(
-        authUser?.disponibilite,
+        authUser?.isWorking,
         authUser?._id,
         commandeEnCours?._id
     );
@@ -126,7 +126,7 @@ const DashboardPageLivreur = () => {
                             </p>
                         )}
 
-                        {authUser.disponibilite && (
+                        {authUser.isWorking && (
                             <div className="w-full h-[500px] mt-4">
                                 {loading ? (
                                     <p className="text-gray-600">

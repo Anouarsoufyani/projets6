@@ -93,6 +93,10 @@ const LivreurSchema = new mongoose.Schema({
     ],
     disponibilite: {
         type: Boolean,
+        default: true,
+    },
+    isWorking: {
+        type: Boolean,
         default: false,
     },
     distance_max: {

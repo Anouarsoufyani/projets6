@@ -146,7 +146,7 @@ export const toggleActive = async (req, res) => {
                 .status(404)
                 .json({ success: false, error: "User not found" });
         }
-        user.disponibilite = !user.disponibilite;
+        user.isWorking = !user.isWorking;
         await user.save();
         return res.status(200).json({ success: true, data: user });
     } catch (error) {
@@ -183,7 +183,7 @@ export const updateUserPosition = async (req, res) => {
         }
 
         // Vérifier que le livreur est disponible
-        if (!livreur.disponibilite) {
+        if (!livreur.isWorking) {
             return res.status(400).json({
                 success: false,
                 message:

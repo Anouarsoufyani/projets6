@@ -1084,7 +1084,7 @@ const DashboardPageAdmin = () => {
             {activeTab === "utilisateurs" && (
                 <div className="space-y-6 md:space-y-8">
                     {/* Cartes de statistiques utilisateurs */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                         {/* Carte Clients */}
                         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow duration-300">
                             <div className="flex flex-row items-center justify-between pb-4">

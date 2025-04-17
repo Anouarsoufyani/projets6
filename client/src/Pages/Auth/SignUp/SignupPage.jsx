@@ -57,10 +57,7 @@ const SignupPage = () => {
                             numero: "",
                             role: "client",
                         });
-                        // Redirection vers la page de connexion après inscription réussie
-                        toast.success(
-                            "Inscription réussie! Veuillez vous connecter."
-                        );
+
                         navigate("/login");
                     },
                 }

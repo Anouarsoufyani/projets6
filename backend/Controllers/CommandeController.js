@@ -2,7 +2,7 @@
 import userModels from "../Models/User.js";
 import Commande from "../Models/Commandes.js";
 import Notification from "../Models/Notification.js";
-const { User } = userModels;
+const { User, Livreur } = userModels;
 
 export const getCommandeById = async (req, res) => {
     try {
@@ -293,6 +293,8 @@ export const validation_codeCL = async (req, res) => {
         const commande = await Commande.findById(id).populate("livreur_id");
         console.log("ID", id, code, commande.code_Client);
 
+        const livreur = await User.findById(commande.livreur_id);
+
         if (!commande) {
             return res.status(404).json({
                 success: false,
@@ -321,6 +323,8 @@ export const validation_codeCL = async (req, res) => {
             commande.is_client_verifie = true;
             commande.statut = "livree";
             commande.date_livraison = Date.now();
+            livreur.disponibilite = true;
+            await livreur.save();
             await commande.save();
             await notification.save();
 
@@ -403,6 +407,7 @@ export const assignLivreur = async (req, res) => {
         const commande = await Commande.findById(commandeId);
 
         const notification = await Notification.findById(requestId);
+        console.log(commande, notification);
 
         if (!notification) {
             return res.status(404).json({
@@ -429,15 +434,19 @@ export const assignLivreur = async (req, res) => {
             commande.commercant_id
         ).select("-password");
 
+        const livreur = await User.findById(livreurId).select("-password");
+
         if (response === "accepter") {
             const clientToNotify = await User.findById(
                 commande.client_id
             ).select("-password");
 
             commande.livreur_id = livreurId;
+            livreur.disponibilite = false;
             commande.statut = "prete_a_etre_recuperee";
             notification.isAccepted = true;
             notification.save();
+            await livreur.save();
             await commande.save();
             if (commercantToNotify) {
                 const notification = new Notification({
@@ -458,8 +467,6 @@ export const assignLivreur = async (req, res) => {
                 await notification.save();
             }
         } else if (response === "refuser") {
-            console.log(notification.isRefused);
-
             commande.livreur_id = null;
             commande.statut = "en_preparation";
             notification.isRefused = true;
@@ -473,6 +480,40 @@ export const assignLivreur = async (req, res) => {
                     type: "refus de livraison",
                 });
                 await notification.save();
+            }
+            const livreurs = await Livreur.find({ disponibilite: true }).select(
+                "-password"
+            );
+            const livreursDisponibles = livreurs
+                .filter((livreur) => !livreur._id.equals(req.user._id))
+                .map((livreur) => ({
+                    livreur,
+                    distance: Math.sqrt(
+                        Math.pow(
+                            commande.adresse_livraison.lat -
+                                livreur.position.lat,
+                            2
+                        ) +
+                            Math.pow(
+                                commande.adresse_livraison.lng -
+                                    livreur.position.lng,
+                                2
+                            )
+                    ),
+                }))
+                .sort((a, b) => a.distance - b.distance);
+            const livreurChoisi = livreursDisponibles[0].livreur;
+            console.log("livreur choisi", livreurChoisi);
+
+            if (livreurChoisi) {
+                const newNotification = new Notification({
+                    sender: commande.commercant_id,
+                    receiver: livreurChoisi._id,
+                    isRequest: true,
+                    commande_id: commandeId,
+                    type: "nouvelle demande de livraison",
+                });
+                await newNotification.save();
             }
         }
 

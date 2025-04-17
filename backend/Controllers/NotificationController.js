@@ -15,7 +15,7 @@ export const getNotifications = async (req, res) => {
                 select: "livreur_id",
             });
 
-        await Notification.updateMany({ receiver: userId }, { read: true });
+        // await Notification.updateMany({ receiver: userId }, { read: true });
 
         return res.status(200).json({ success: true, notifications });
     } catch (error) {

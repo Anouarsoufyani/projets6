@@ -72,8 +72,6 @@ const DetailCommande = () => {
         total,
         statut,
         date_creation,
-        code_Client,
-        code_Commercant,
         adresse_livraison,
     } = commande;
 
@@ -281,14 +279,6 @@ const DetailCommande = () => {
                                         {client_id.numero}
                                     </span>
                                 </div>
-                                <div className="flex justify-between flex-wrap gap-2">
-                                    <span className="text-gray-600">
-                                        Code Client
-                                    </span>
-                                    <span className="font-medium bg-emerald-50 px-3 py-1 rounded-full text-emerald-700 break-words">
-                                        {code_Client}
-                                    </span>
-                                </div>
                             </div>
                         </div>
 
@@ -320,14 +310,6 @@ const DetailCommande = () => {
                                     </span>
                                     <span className="font-medium break-words max-w-full">
                                         {commercant_id.numero}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between flex-wrap gap-2">
-                                    <span className="text-gray-600">
-                                        Code Commerçant
-                                    </span>
-                                    <span className="font-medium bg-blue-50 px-3 py-1 rounded-full text-blue-700 break-words">
-                                        {code_Commercant}
                                     </span>
                                 </div>
                             </div>

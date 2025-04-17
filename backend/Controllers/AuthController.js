@@ -172,6 +172,15 @@ export const login = async (req, res) => {
 };
 export const logout = async (req, res) => {
     try {
+        const { id } = req.body;
+        if (id) {
+            const livreur = await User.findById(id).select("-password");
+            if (livreur) {
+                livreur.isWorking = false;
+                livreur.disponibilite = false;
+                await livreur.save();
+            }
+        }
         res.cookie("jwt", "", { maxAge: 0 });
         return res
             .status(200)

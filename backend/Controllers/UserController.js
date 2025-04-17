@@ -136,8 +136,6 @@ export const updateProfile = async (req, res) => {
 };
 
 export const toggleActive = async (req, res) => {
-    console.log("req.body", req.body);
-
     try {
         const { id } = req.body;
         const user = await Livreur.findById(id);
@@ -147,6 +145,11 @@ export const toggleActive = async (req, res) => {
                 .json({ success: false, error: "User not found" });
         }
         user.isWorking = !user.isWorking;
+        if (user.isWorking === false) {
+            user.disponibilite = false;
+        } else {
+            user.disponibilite = true;
+        }
         await user.save();
         return res.status(200).json({ success: true, data: user });
     } catch (error) {
@@ -212,9 +215,10 @@ export const updateUserPosition = async (req, res) => {
 
 export const getAvailableLivreurs = async (req, res) => {
     try {
-        const livreurs = await Livreur.find({ disponibilite: true }).select(
-            "-password"
-        );
+        const livreurs = await Livreur.find({
+            disponibilite: true,
+            isWorking: true,
+        }).select("-password");
         return res.status(200).json({
             success: true,
             data: livreurs,
@@ -358,4 +362,17 @@ export const getUserById = async (req, res) => {
             error: "Erreur lors de la récupération de l'utilisateur",
         });
     }
+};
+
+export const addVehicules = async (req, res) => {
+    try {
+        const livreur = await Livreur.findById(req.user.id);
+        const vehicules = req.body.map((type) => ({
+            type,
+            plaque: null,
+            couleur: null,
+        }));
+        livreur.vehicules.push(...vehicules);
+        await livreur.save();
+    } catch (error) {}
 };

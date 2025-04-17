@@ -26,7 +26,7 @@ export const getLatestPendingCommande = async () => {
     }
     const commandes = data.commandes;
     const commande = commandes.reduce((prev, current) =>
-        prev.date_de_creation > current.date_de_creation &&
+        prev.date_creation > current.date_creation &&
         current.statut !== "livree"
             ? prev
             : current

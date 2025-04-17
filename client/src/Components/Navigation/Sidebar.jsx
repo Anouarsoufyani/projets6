@@ -12,7 +12,6 @@ import { HiOutlineDocumentText } from "react-icons/hi";
 import PropTypes from "prop-types";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-
 // Modifier la fonction Sidebar pour accepter les notifications en props
 const Sidebar = ({
     authUser,
@@ -27,11 +26,18 @@ const Sidebar = ({
 
     // Ajouter après la déclaration de la variable location
     // Calculer le nombre de notifications non lues
-
     // Mutation for logout
     const { mutate: logout } = useMutation({
         mutationFn: async () => {
-            const res = await fetch("/api/auth/logout", { method: "POST" });
+            const res = await fetch("/api/auth/logout", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(
+                    authUser?.role === "livreur" ? { id: authUser._id } : {}
+                ),
+            });
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.error || "Something went wrong");

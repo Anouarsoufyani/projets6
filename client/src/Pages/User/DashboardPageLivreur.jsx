@@ -114,7 +114,7 @@ const DashboardPageLivreur = () => {
                                     ? "Activation..."
                                     : commandeEnCours
                                     ? "Livraison en cours"
-                                    : authUser.disponibilite
+                                    : authUser.isWorking
                                     ? "Arrêter de livrer"
                                     : "Commencer à livrer"}
                             </button>

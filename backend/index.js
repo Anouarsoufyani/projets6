@@ -70,15 +70,17 @@ app.use(cookieParser());
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Routes API
+connectDB();
+
+// Register API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/commandes", commandeRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/documents", docRoutes);
 app.use("/api/notifications", notificationRoutes);
-// Ajouter cette ligne avec les autres app.use pour les routes
 app.use("/api/reviews", reviewRoutes);
 
-// Sert les fichiers statiques (PDF, images, etc.)
+// Serve static files (PDF, images, etc.)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ✅ Sert le frontend s’il est buildé dans client/dist
@@ -93,6 +95,6 @@ const PORT = process.env.PORT || 5001;
 
 // Lancer le serveur
 server.listen(PORT, () => {
-    connectDB(); // Connexion MongoDB
+    // connectDB(); // Connexion MongoDB
     console.log(`🚀 Server started on http://localhost:${PORT}`);
 });

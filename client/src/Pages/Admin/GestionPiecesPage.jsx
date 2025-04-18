@@ -122,7 +122,7 @@ const GestionPiecesPage = () => {
                                     Pièces
                                 </th>
                                 <th className="text-left py-4 px-4 font-semibold text-gray-600">
-                                    Nom
+                                    Label
                                 </th>
                                 <th className="text-left py-4 px-4 font-semibold text-gray-600">
                                     Statut
@@ -146,7 +146,7 @@ const GestionPiecesPage = () => {
                                         {data.nomFichier ||
                                             data._id.slice(0, 5)}
                                     </td>
-                                    <td className="py-4 px-4">{data.nom}</td>
+                                    <td className="py-4 px-4">{data.label}</td>
                                     <td className="py-4 px-4">
                                         <span
                                             className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center ${

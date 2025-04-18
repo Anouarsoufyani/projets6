@@ -75,6 +75,7 @@ const useDeliveryPosition = (isDeliveryActive, userId) => {
 
     const getCurrentPosition = () => {
         // Éviter les mises à jour simultanées
+
         if (isUpdatingRef.current) return;
 
         isUpdatingRef.current = true;
@@ -95,6 +96,7 @@ const useDeliveryPosition = (isDeliveryActive, userId) => {
                     lng: pos.coords.longitude,
                 };
                 setPosition(newPosition);
+
                 setLoading(false);
 
                 // Mettre à jour la position dans la base de données
@@ -118,6 +120,7 @@ const useDeliveryPosition = (isDeliveryActive, userId) => {
 
         if (isDeliveryActive && userId) {
             // Récupérer la position immédiatement
+
             getCurrentPosition();
 
             // Puis toutes les 5 secondes

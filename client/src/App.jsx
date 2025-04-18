@@ -72,6 +72,7 @@ function App() {
     // Utiliser le hook de position pour les livreurs
     const isLivreur = authUser?.role === "livreur";
     const isLivreurActive = isLivreur && authUser?.isWorking;
+
     // useDeliveryPosition est déjà conditionnel grâce à isLivreurActive
     useDeliveryPosition(isLivreurActive, authUser?._id);
 
@@ -146,7 +147,9 @@ function App() {
                         element={
                             authUser ? (
                                 authUser.role === "livreur" ? (
-                                    <DashboardPageLivreur />
+                                    <DashboardPageLivreur
+                                        notifications={notifications}
+                                    />
                                 ) : authUser.role === "commercant" ? (
                                     <DashboardPageCommercant />
                                 ) : authUser.role === "admin" ? (

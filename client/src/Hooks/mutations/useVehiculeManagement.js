@@ -12,6 +12,7 @@ export const useUploadVehicule = () => {
             // Validation des données selon le type de véhicule
 
             // Définir le statut comme non vérifié par défaut
+            console.log("vehiculeData", vehiculeData);
 
             const res = await fetch("/api/user/livreur/vehicules", {
                 method: "POST",

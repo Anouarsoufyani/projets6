@@ -182,6 +182,8 @@ const JustificativePage = () => {
         });
 
         if (allDocsPresent) {
+            console.log("selectedVehicles", selectedVehicles);
+
             uploadVehicule(selectedVehicles);
             uploadDocument(formData, {
                 onSuccess: () => {
@@ -334,6 +336,8 @@ const JustificativePage = () => {
                 return <FaHourglassHalf className="text-yellow-500" />;
             case "validé":
                 return <FaCheckCircle className="text-green-500" />;
+            case "vérifié":
+                return <FaCheckCircle className="text-green-500" />;
             case "refusé":
                 return <FaTimesCircle className="text-red-500" />;
             case "non vérifié":
@@ -349,6 +353,8 @@ const JustificativePage = () => {
                 return "En attente de vérification";
             case "validé":
                 return "Validé";
+            case "vérifié":
+                return "Vérifié";
             case "refusé":
                 return "Refusé";
             case "non vérifié":
@@ -363,6 +369,8 @@ const JustificativePage = () => {
             case "en attente":
                 return "bg-yellow-100 text-yellow-800 border-yellow-200";
             case "validé":
+                return "bg-green-100 text-green-800 border-green-200";
+            case "vérifié":
                 return "bg-green-100 text-green-800 border-green-200";
             case "refusé":
                 return "bg-red-100 text-red-800 border-red-200";

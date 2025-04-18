@@ -481,9 +481,10 @@ export const assignLivreur = async (req, res) => {
                 });
                 await notification.save();
             }
-            const livreurs = await Livreur.find({ disponibilite: true }).select(
-                "-password"
-            );
+            const livreurs = await Livreur.find({
+                disponibilite: true,
+                isWorking: true,
+            }).select("-password");
             const livreursDisponibles = livreurs
                 .filter((livreur) => !livreur._id.equals(req.user._id))
                 .map((livreur) => ({

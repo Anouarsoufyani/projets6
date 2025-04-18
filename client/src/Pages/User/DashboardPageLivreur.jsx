@@ -12,23 +12,57 @@ import {
     getAverageRating,
 } from "../../Components/Reviews/ReviewDisplay";
 import { FaStar } from "react-icons/fa";
-import { useGetReviewsForUser } from "../../Hooks/queries/useGetReviews";
+import { useGetReviewsForUser, useAssignLivreur } from "../../Hooks";
 import { useNavigate } from "react-router";
 const containerStyle = {
     width: "100%",
     height: "100%",
+};
+import toast from "react-hot-toast";
+import { Link } from "react-router";
+
+import { useQuery } from "@tanstack/react-query";
+
+const getNotifications = async () => {
+    try {
+        const res = await fetch(`/api/notifications`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.error || "Erreur lors du chargement");
+        }
+
+        return data;
+    } catch (error) {
+        toast.error(error.message);
+        throw error;
+    }
 };
 
 const DashboardPageLivreur = () => {
     const { data: authUser } = useAuthUserQuery();
     const { toggleActive, isToggleActive } = useToggleActive();
     const { data: commandeEnCours, isLoading } = useGetLatestPendingCommande();
+    const { data: notifications, isLoading: isLoadingNotifications } = useQuery(
+        {
+            queryKey: ["notifications"],
+            queryFn: getNotifications,
+            retry: false,
+            refetchInterval: 5000,
+        }
+    );
 
     const { position, loading, error } = useDeliveryPosition(
         authUser?.isWorking,
         authUser?._id,
         commandeEnCours?._id
     );
+
+    const assignLivreur = useAssignLivreur();
 
     // Récupérer les avis pour le livreur
     const { data: reviews } = useGetReviewsForUser(authUser?._id);
@@ -44,6 +78,21 @@ const DashboardPageLivreur = () => {
 
     if (commandeEnCours != null && !isLoading) {
         navigate(`/livraison/${commandeEnCours._id}`);
+    }
+
+    if (isLoadingNotifications) {
+        return (
+            <div className="w-full h-full p-6 flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold text-emerald-700">
+                        Notifications
+                    </h1>
+                </div>
+                <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600"></div>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -161,6 +210,111 @@ const DashboardPageLivreur = () => {
                             </div>
                         )}
                     </div>
+
+                    {/* Affichage des notifications de demande de livraison */}
+                    {notifications &&
+                        notifications.notifications.length > 0 && (
+                            <div className="bg-white p-6 rounded-lg shadow-lg">
+                                <h2 className="text-xl font-semibold text-emerald-700 mb-4 border-b border-emerald-100 pb-2">
+                                    Demandes de livraison
+                                </h2>
+                                <ul className="space-y-4">
+                                    {notifications.notifications
+                                        .filter(
+                                            (notification) =>
+                                                notification.isRequest
+                                        )
+                                        .map((notification) => (
+                                            <li
+                                                key={notification._id}
+                                                className="flex items-center justify-between p-4 bg-gray-100 rounded-lg shadow-md"
+                                            >
+                                                {notification.isRequest &&
+                                                    (notification.isAccepted &&
+                                                    notification.commande_id
+                                                        .livreur_id ==
+                                                        authUser._id ? (
+                                                        <>
+                                                            <span className="mt-2 text-green-600">
+                                                                Vous avez
+                                                                accepté la
+                                                                commande
+                                                            </span>
+                                                            <br />
+                                                            <Link
+                                                                to={`/livraison/${notification.commande_id._id}`}
+                                                                className="text-emerald-600 underline hover:text-emerald-400 transition-all mt-2"
+                                                            >
+                                                                Suivi de la
+                                                                commande
+                                                            </Link>
+                                                        </>
+                                                    ) : notification.isRefused ? (
+                                                        <span className="mt-2 text-red-600">
+                                                            Vous avez refusé la
+                                                            commande
+                                                        </span>
+                                                    ) : notification.commande_id &&
+                                                      notification.commande_id
+                                                          .livreur_id ==
+                                                          authUser._id ? (
+                                                        <>
+                                                            <span className="mt-2 text-green-600">
+                                                                Vous avez
+                                                                accepté la
+                                                                commande
+                                                            </span>
+                                                            <br />
+                                                            <Link
+                                                                to={`/livraison/${notification.commande_id._id}`}
+                                                                className="text-emerald-600 underline hover:text-emerald-400 transition-all mt-2"
+                                                            >
+                                                                Suivi de la
+                                                                commande
+                                                            </Link>
+                                                        </>
+                                                    ) : notification.commande_id &&
+                                                      notification.commande_id
+                                                          .livreur_id ? (
+                                                        <span className="mt-2 text-gray-600">
+                                                            La commande a déjà
+                                                            un livreur assigné
+                                                        </span>
+                                                    ) : (
+                                                        <div className="mt-2 flex gap-2">
+                                                            <button
+                                                                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                                                                onClick={() => {
+                                                                    assignLivreur(
+                                                                        notification.commande_id,
+                                                                        authUser._id,
+                                                                        notification._id,
+                                                                        "accepter"
+                                                                    );
+                                                                }}
+                                                            >
+                                                                Accepter
+                                                            </button>
+                                                            <button
+                                                                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                                                                onClick={() => {
+                                                                    assignLivreur(
+                                                                        notification.commande_id,
+                                                                        authUser._id,
+                                                                        notification._id,
+                                                                        "refuser"
+                                                                    );
+                                                                }}
+                                                            >
+                                                                Refuser
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                            </li>
+                                        ))}
+                                </ul>
+                            </div>
+                        )}
 
                     {/* Affichage des derniers avis reçus */}
                     {reviews && reviews.length > 0 && (

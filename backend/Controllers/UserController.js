@@ -310,17 +310,67 @@ export const updateLivreurDocuments = async (req, res) => {
 
         document.statut = statut;
 
-        const tousValides =
-            livreur.documents.length > 0 &&
-            livreur.documents.every(
-                (doc) => doc.statut === "validé" || doc.statut === "refusé"
+        const hasCarteIdentite = livreur.documents.some(
+            (d) => d.label === "carte d'identité" && d.statut === "validé"
+        );
+        const hasPhotoTete = livreur.documents.some(
+            (d) => d.label === "photo de votre tête" && d.statut === "validé"
+        );
+
+        // Statuts des véhicules en fonction de leurs documents associés
+        livreur.vehicules = livreur.vehicules.map((v) => {
+            let requiredDocs = [];
+
+            if (v.type === "vélo" || v.type === "autres") {
+                // Aucun document requis pour ces types, donc toujours vérifiés
+                v.statut = "vérifié";
+                return v;
+            }
+
+            if (v.type === "voiture") {
+                requiredDocs = [
+                    "permis voiture",
+                    "carte grise voiture",
+                    "assurance voiture",
+                ];
+            } else if (v.type === "moto") {
+                requiredDocs = [
+                    "permis moto",
+                    "carte grise moto",
+                    "assurance moto",
+                ];
+            }
+
+            const allValid = requiredDocs.every((label) =>
+                livreur.documents.some(
+                    (d) => d.label === label && d.statut === "validé"
+                )
             );
 
-        livreur.statut = tousValides
-            ? livreur.documents.every((doc) => doc.statut === "validé")
-                ? "vérifié"
-                : "refusé"
-            : "en vérification";
+            v.statut = allValid ? "vérifié" : "non vérifié";
+            return v;
+        });
+
+        const hasVehiculeVerifie = livreur.vehicules.some(
+            (v) => v.statut === "vérifié"
+        );
+
+        if (hasCarteIdentite && hasPhotoTete && hasVehiculeVerifie) {
+            livreur.statut = "vérifié";
+        } else {
+            // Si tous les documents ont un statut, mais certains sont refusés, on met "refusé"
+            const tousValides =
+                livreur.documents.length > 0 &&
+                livreur.documents.every(
+                    (doc) => doc.statut === "validé" || doc.statut === "refusé"
+                );
+
+            livreur.statut = tousValides
+                ? livreur.documents.every((doc) => doc.statut === "validé")
+                    ? "vérifié"
+                    : "refusé"
+                : "en vérification";
+        }
 
         await livreur.save();
 
@@ -367,12 +417,33 @@ export const getUserById = async (req, res) => {
 export const addVehicules = async (req, res) => {
     try {
         const livreur = await Livreur.findById(req.user.id);
+        console.log("livreur", livreur);
+
+        if (!livreur) {
+            return res.status(404).json({ message: "Livreur non trouvé" });
+        }
+
         const vehicules = req.body.map((type) => ({
             type,
-            plaque: null,
-            couleur: null,
         }));
+
+        console.log("vehicules", vehicules);
+
         livreur.vehicules.push(...vehicules);
-        await livreur.save();
-    } catch (error) {}
+        console.log("livreur après ajout", livreur);
+
+        const savedLivreur = await livreur.save();
+        console.log("livreur sauvegardé", savedLivreur);
+
+        return res.status(200).json({
+            message: "Véhicules ajoutés avec succès",
+            vehicules: savedLivreur.vehicules,
+        });
+    } catch (error) {
+        console.error("Erreur lors de l'ajout des véhicules:", error);
+        return res.status(500).json({
+            message: "Erreur lors de l'ajout des véhicules",
+            error: error.message,
+        });
+    }
 };

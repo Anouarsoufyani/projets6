@@ -175,9 +175,8 @@ export const logout = async (req, res) => {
         const { id } = req.body;
         if (id) {
             const livreur = await User.findById(id).select("-password");
-            if (livreur) {
+            if (livreur.isWorking == true && livreur.disponibilite == true) {
                 livreur.isWorking = false;
-                livreur.disponibilite = false;
                 await livreur.save();
             }
         }

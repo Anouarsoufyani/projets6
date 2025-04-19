@@ -721,8 +721,7 @@ export const updateCommandeItineraire = async (req, res) => {
 };
 
 export const problemsDelivery = async (req, res) => {
-
-    const {commandeId, problem , description ,reportedBy } = req.body;
+    const { commandeId, problem, description, reportedBy } = req.body;
     const commande = await Commande.findById(commandeId).populate("livreur_id");
 
     if (!commande) {
@@ -741,9 +740,7 @@ export const problemsDelivery = async (req, res) => {
 
     const admins = await User.find({ role: "admin" });
 
-
-    if (reportedBy=="livreur"){
-        
+    if (reportedBy == "livreur") {
         const notificationClient = new Notification({
             sender: commande.livreur_id,
             receiver: commande.client_id,
@@ -751,11 +748,10 @@ export const problemsDelivery = async (req, res) => {
         });
         await notificationClient.save();
 
-
         const notificationCommercant = new Notification({
             sender: commande.livreur_id,
             receiver: commande.commercant_id,
-            type:  problem,
+            type: problem,
         });
         await notificationCommercant.save();
 
@@ -767,15 +763,12 @@ export const problemsDelivery = async (req, res) => {
             });
             await notificationAdmin.save();
         }
-
-        
     }
 
-    if (reportedBy == "client"){
-        
+    if (reportedBy == "client") {
         const notificationLivreur = new Notification({
             sender: commande.client_id,
-            receiver: commande.client_id,
+            receiver: commande.livreur_id,
             type: problem,
         });
         await notificationLivreur.save();
@@ -786,7 +779,7 @@ export const problemsDelivery = async (req, res) => {
             type: problem,
         });
         await notificationCommercant.save();
-        
+
         for (const admin of admins) {
             const notificationAdmin = new Notification({
                 sender: commande.client_id,
@@ -797,18 +790,11 @@ export const problemsDelivery = async (req, res) => {
         }
     }
 
-
-    // NOTIFICATION À TOUS LES ADMINS
-    
-    
+    commande.statut = "probleme";
+    await commande.save();
 
     return res.status(200).json({
         success: true,
         message: "Problème signalé et notifications envoyées.",
     });
-    // commande.statut="probleme"
-    // await commande.save();
-
-
-
-}
+};

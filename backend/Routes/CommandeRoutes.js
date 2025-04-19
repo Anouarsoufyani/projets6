@@ -13,6 +13,7 @@ import {
     updateCommandeStatus,
     requestLivreur,
     updateCommandeItineraire,
+    problemsDelivery,
 } from "../Controllers/CommandeController.js";
 import { protectRoute } from "../Middleware/protectRoute.js";
 import { protectSuivi } from "../Middleware/protectSuivi.js";
@@ -44,5 +45,6 @@ router.post(
     protectLivreur,
     updateCommandeItineraire
 );
+router.post("/problems",protectRoute,problemsDelivery)
 
 export default router;

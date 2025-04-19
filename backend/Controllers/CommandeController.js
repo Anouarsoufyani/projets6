@@ -350,7 +350,6 @@ export const validation_codeCL = async (req, res) => {
 export const validation_codeCom = async (req, res) => {
     try {
         const { code, id } = req.body;
-        console.log("ID", id, code);
 
         const commande = await Commande.findById(id).populate("livreur_id");
 
@@ -720,3 +719,96 @@ export const updateCommandeItineraire = async (req, res) => {
         });
     }
 };
+
+export const problemsDelivery = async (req, res) => {
+
+    const {commandeId, problem , description ,reportedBy } = req.body;
+    const commande = await Commande.findById(commandeId).populate("livreur_id");
+
+    if (!commande) {
+        return res.status(404).json({
+            success: false,
+            error: "Commande non trouvée",
+        });
+    }
+
+    if (!commande.livreur_id) {
+        return res.status(404).json({
+            success: false,
+            error: "Aucun livreur assigné à cette commande",
+        });
+    }
+
+    const admins = await User.find({ role: "admin" });
+
+
+    if (reportedBy=="livreur"){
+        
+        const notificationClient = new Notification({
+            sender: commande.livreur_id,
+            receiver: commande.client_id,
+            type: problem,
+        });
+        await notificationClient.save();
+
+
+        const notificationCommercant = new Notification({
+            sender: commande.livreur_id,
+            receiver: commande.commercant_id,
+            type:  problem,
+        });
+        await notificationCommercant.save();
+
+        for (const admin of admins) {
+            const notificationAdmin = new Notification({
+                sender: commande.livreur_id,
+                receiver: admin._id,
+                type: problem,
+            });
+            await notificationAdmin.save();
+        }
+
+        
+    }
+
+    if (reportedBy == "client"){
+        
+        const notificationLivreur = new Notification({
+            sender: commande.client_id,
+            receiver: commande.client_id,
+            type: problem,
+        });
+        await notificationLivreur.save();
+
+        const notificationCommercant = new Notification({
+            sender: commande.client_id,
+            receiver: commande.commercant_id,
+            type: problem,
+        });
+        await notificationCommercant.save();
+        
+        for (const admin of admins) {
+            const notificationAdmin = new Notification({
+                sender: commande.client_id,
+                receiver: admin._id,
+                type: problem,
+            });
+            await notificationAdmin.save();
+        }
+    }
+
+
+    // NOTIFICATION À TOUS LES ADMINS
+    
+    
+
+    return res.status(200).json({
+        success: true,
+        message: "Problème signalé et notifications envoyées.",
+    });
+    // commande.statut="probleme"
+    // await commande.save();
+
+
+
+}

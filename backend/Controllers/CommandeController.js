@@ -723,7 +723,9 @@ export const updateCommandeItineraire = async (req, res) => {
 export const problemsDelivery = async (req, res) => {
     const { commandeId, problem, description, reportedBy } = req.body;
     const commande = await Commande.findById(commandeId).populate("livreur_id");
-
+    const livreur = await User.findById(commande.livreur_id);
+    livreur.disponibilite = true;
+    await livreur.save();
     if (!commande) {
         return res.status(404).json({
             success: false,

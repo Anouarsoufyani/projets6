@@ -3,7 +3,7 @@
 import { useAuthUserQuery, useGetUsersByRole, useGetCoords } from "../../Hooks";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { FaStore, FaMapMarkerAlt, FaMoneyBillWave } from "react-icons/fa";
 
 const CreateCommandePage = () => {
@@ -41,6 +41,18 @@ const CreateCommandePage = () => {
 
     const { data: commercantsData, isLoading: isLoadingCommercants } =
         useGetUsersByRole("commercant");
+
+    const commercantsWithAddress = useMemo(() => {
+        if (!commercantsData?.data) return [];
+
+        return commercantsData.data.filter(
+            (commercant) =>
+                commercant.adresse_boutique &&
+                commercant.adresse_boutique.rue &&
+                commercant.adresse_boutique.ville &&
+                commercant.adresse_boutique.code_postal
+        );
+    }, [commercantsData]);
 
     const { mutate: createCommandeMutation, isPending } = useMutation({
         mutationFn: async (commandeData) => {
@@ -157,20 +169,34 @@ const CreateCommandePage = () => {
                                 <option value="">
                                     Sélectionner un commerçant
                                 </option>
-                                {commercantsData?.data?.map((commercant) => (
-                                    <option
-                                        key={commercant._id}
-                                        value={commercant._id}
-                                    >
-                                        {commercant.nom_boutique ||
-                                            commercant.nom}{" "}
-                                        -{" "}
-                                        {commercant.adresse_boutique?.ville ||
-                                            "Adresse non spécifiée"}
+                                {commercantsWithAddress.length > 0 ? (
+                                    commercantsWithAddress.map((commercant) => (
+                                        <option
+                                            key={commercant._id}
+                                            value={commercant._id}
+                                        >
+                                            {commercant.nom_boutique ||
+                                                commercant.nom}{" "}
+                                            -{" "}
+                                            {commercant.adresse_boutique?.ville}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option value="" disabled>
+                                        Aucun commerçant avec adresse disponible
                                     </option>
-                                ))}
+                                )}
                             </select>
                         </div>
+                        {commercantsData?.data &&
+                            commercantsData.data.length > 0 &&
+                            commercantsWithAddress.length === 0 && (
+                                <p className="text-amber-600 text-sm mt-1">
+                                    Aucun commerçant n'a renseigné son adresse.
+                                    Veuillez contacter un commerçant pour qu'il
+                                    complète son profil.
+                                </p>
+                            )}
                     </div>
 
                     {/* Adresse de livraison */}

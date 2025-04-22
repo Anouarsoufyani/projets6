@@ -5,7 +5,7 @@ import {
     useLivreurTracking,
 } from "../../Hooks";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { GoogleMap, Marker } from "@react-google-maps/api";
+import { GoogleMap, Marker, Polyline } from "@react-google-maps/api";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -509,6 +509,18 @@ const CommandeSuivi = () => {
         return (
             statusColors[status] || "bg-gray-100 text-gray-800 border-gray-200"
         );
+    };
+
+    // Function to create path points from itinerary data
+    const createPathFromItinerary = (itinerary) => {
+        if (!itinerary || !Array.isArray(itinerary) || itinerary.length === 0) {
+            return [];
+        }
+
+        return itinerary.map((point) => ({
+            lat: point.position.lat,
+            lng: point.position.lng,
+        }));
     };
 
     return (
@@ -1153,6 +1165,46 @@ const CommandeSuivi = () => {
                                     }}
                                     title="Commerçant"
                                 />
+                            )}
+                            {/* Display itineraries when order is delivered */}
+                            {commande.data.statut === "livree" && (
+                                <>
+                                    {/* Path from livreur to merchant (orange) */}
+                                    {commande.data
+                                        .itineraire_parcouru_commercant &&
+                                        commande.data
+                                            .itineraire_parcouru_commercant
+                                            .length > 1 && (
+                                            <Polyline
+                                                path={createPathFromItinerary(
+                                                    commande.data
+                                                        .itineraire_parcouru_commercant
+                                                )}
+                                                options={{
+                                                    strokeColor: "#FF8C00", // Orange
+                                                    strokeOpacity: 0.8,
+                                                    strokeWeight: 5,
+                                                }}
+                                            />
+                                        )}
+
+                                    {/* Path from merchant to client (blue) */}
+                                    {commande.data.itineraire_parcouru_client &&
+                                        commande.data.itineraire_parcouru_client
+                                            .length > 1 && (
+                                            <Polyline
+                                                path={createPathFromItinerary(
+                                                    commande.data
+                                                        .itineraire_parcouru_client
+                                                )}
+                                                options={{
+                                                    strokeColor: "#3b82f6", // Blue
+                                                    strokeOpacity: 0.8,
+                                                    strokeWeight: 5,
+                                                }}
+                                            />
+                                        )}
+                                </>
                             )}
                         </GoogleMap>
                     )}

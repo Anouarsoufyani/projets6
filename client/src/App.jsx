@@ -29,6 +29,7 @@ import GestionUsersPage from "./Pages/Admin/GestionUsersPage";
 
 import ViewDocs from "./Pages/Documents/ViewDocs";
 import GestionCommandePage from "./Pages/Admin/GestionCommandePage";
+import UserProfileAdmin from "./Pages/Admin/UserProfileAdmin";
 
 function App() {
     const navbarSize = "4rem";
@@ -308,6 +309,17 @@ function App() {
                         element={
                             authUser ? (
                                 <DetailCommande />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+
+                    <Route
+                        path="/admin/user/:userId"
+                        element={
+                            authUser && authUser.role === "admin" ? (
+                                <UserProfileAdmin />
                             ) : (
                                 <Navigate to="/login" />
                             )

@@ -50,6 +50,13 @@ export {
 } from "./mutations/useNotifications";
 export { useSubmitReview } from "./mutations/useSubmitReview";
 
+// Admin mutations
+export {
+    useUpdateUserStatus,
+    useDeleteUser,
+    useAdminUpdateUserProfile,
+} from "./mutations/useAdminUserManagement";
+
 // Autres hooks (qui ne sont pas des queries ou mutations)
 export { default as useGoogleMapDirections } from "./useGoogleMapDirections";
 

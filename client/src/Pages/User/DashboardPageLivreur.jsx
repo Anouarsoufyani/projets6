@@ -12,7 +12,7 @@ import {
     getAverageRating,
 } from "../../Components/Reviews/ReviewDisplay";
 import { FaStar } from "react-icons/fa";
-import { useGetReviewsForUser, useAssignLivreur } from "../../Hooks";
+import { useGetReviewsForUser } from "../../Hooks";
 import { useNavigate } from "react-router";
 const containerStyle = {
     width: "100%",
@@ -22,6 +22,7 @@ import toast from "react-hot-toast";
 import { Link } from "react-router";
 
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 const getNotifications = async () => {
     try {
@@ -62,16 +63,118 @@ const DashboardPageLivreur = () => {
         commandeEnCours?._id
     );
 
-    const assignLivreur = useAssignLivreur();
-
     // Récupérer les avis pour le livreur
     const { data: reviews } = useGetReviewsForUser(authUser?._id);
     const averageRating = getAverageRating(reviews);
 
+    const [selectedVehicle, setSelectedVehicle] = useState("");
+    const [showVehicleSelector, setShowVehicleSelector] = useState(false);
+
+    const assignLivreur = async (
+        commandeId,
+        livreurId,
+        notificationId,
+        action
+    ) => {
+        try {
+            const res = await fetch(`/api/commandes/${commandeId}/assign`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    livreurId: livreurId,
+                    notificationId: notificationId,
+                    action: action,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(
+                    data.error || "Erreur lors de l'assignation du livreur"
+                );
+            }
+
+            toast.success(data.message || "Livreur assigné avec succès");
+        } catch (error) {
+            toast.error(
+                error.message || "Erreur lors de l'assignation du livreur"
+            );
+        } finally {
+            window.location.reload();
+        }
+    };
+
     const handleToggleActive = async () => {
         if (!authUser?._id) return;
-        await toggleActive(authUser._id);
-        window.location.reload();
+
+        if (!authUser.isWorking) {
+            // If starting to work, show vehicle selector
+            setShowVehicleSelector(true);
+        } else {
+            // If stopping work, directly toggle and reset current vehicle
+            try {
+                // First update all vehicles to set current = false
+                const updateVehicleRes = await fetch(`/api/user/update`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        _id: authUser._id,
+                        isWorking: false,
+                        disponibilite: false,
+                    }),
+                });
+
+                if (!updateVehicleRes.ok) {
+                    const errorData = await updateVehicleRes.json();
+                    throw new Error(
+                        errorData.error ||
+                            "Erreur lors de la mise à jour du statut"
+                    );
+                }
+
+                // Then toggle active status
+                await toggleActive(authUser._id);
+                setShowVehicleSelector(false);
+                window.location.reload();
+            } catch (error) {
+                toast.error(error.message || "Une erreur est survenue");
+            }
+        }
+    };
+
+    const handleVehicleSelect = async () => {
+        if (!selectedVehicle) {
+            toast.error("Veuillez sélectionner un véhicule");
+            return;
+        }
+
+        try {
+            // First update the selected vehicle to set current = true
+            const updateVehicleRes = await fetch(`/api/user/update`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    _id: authUser._id,
+                    isWorking: true,
+                    disponibilite: true,
+                }),
+            });
+
+            if (!updateVehicleRes.ok) {
+                const errorData = await updateVehicleRes.json();
+                throw new Error(
+                    errorData.error || "Erreur lors de la mise à jour du statut"
+                );
+            }
+
+            // Then toggle active status
+            await toggleActive(authUser._id);
+            setShowVehicleSelector(false);
+            window.location.reload();
+        } catch (error) {
+            toast.error(error.message || "Une erreur est survenue");
+        }
     };
 
     const navigate = useNavigate();
@@ -168,6 +271,132 @@ const DashboardPageLivreur = () => {
                                     : "Commencer à livrer"}
                             </button>
                         </div>
+                        {showVehicleSelector && (
+                            <div className="mt-4 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                                <h3 className="text-lg font-semibold text-emerald-700 mb-3">
+                                    Sélectionnez un véhicule
+                                </h3>
+                                {authUser.vehicules &&
+                                authUser.vehicules.length > 0 ? (
+                                    <>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                                            {authUser.vehicules.map(
+                                                (vehicule) => (
+                                                    <div
+                                                        key={vehicule._id}
+                                                        onClick={() =>
+                                                            setSelectedVehicle(
+                                                                vehicule._id
+                                                            )
+                                                        }
+                                                        className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                                                            selectedVehicle ===
+                                                            vehicule._id
+                                                                ? "bg-emerald-100 border-emerald-500"
+                                                                : "bg-white border-gray-200 hover:border-emerald-300"
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center">
+                                                            <div
+                                                                className={`w-4 h-4 rounded-full mr-2 ${
+                                                                    vehicule.statut ===
+                                                                    "vérifié"
+                                                                        ? "bg-green-500"
+                                                                        : "bg-yellow-500"
+                                                                }`}
+                                                            ></div>
+                                                            <span className="font-medium capitalize">
+                                                                {vehicule.type}
+                                                            </span>
+                                                        </div>
+                                                        {vehicule.plaque && (
+                                                            <p className="text-sm text-gray-600 mt-1">
+                                                                Plaque:{" "}
+                                                                {
+                                                                    vehicule.plaque
+                                                                }
+                                                            </p>
+                                                        )}
+                                                        {vehicule.couleur && (
+                                                            <p className="text-sm text-gray-600">
+                                                                Couleur:{" "}
+                                                                {
+                                                                    vehicule.couleur
+                                                                }
+                                                            </p>
+                                                        )}
+                                                        <p className="text-xs text-gray-500 mt-1">
+                                                            Statut:{" "}
+                                                            {vehicule.statut}
+                                                        </p>
+                                                    </div>
+                                                )
+                                            )}
+                                        </div>
+                                        <div className="flex justify-end gap-2">
+                                            <button
+                                                onClick={() =>
+                                                    setShowVehicleSelector(
+                                                        false
+                                                    )
+                                                }
+                                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition"
+                                            >
+                                                Annuler
+                                            </button>
+                                            <button
+                                                onClick={handleVehicleSelect}
+                                                disabled={
+                                                    !selectedVehicle ||
+                                                    authUser.vehicules.find(
+                                                        (v) =>
+                                                            v._id ===
+                                                            selectedVehicle
+                                                    )?.statut !== "vérifié"
+                                                }
+                                                className={`px-4 py-2 rounded-md transition ${
+                                                    !selectedVehicle ||
+                                                    authUser.vehicules.find(
+                                                        (v) =>
+                                                            v._id ===
+                                                            selectedVehicle
+                                                    )?.statut !== "vérifié"
+                                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                                        : "bg-emerald-500 text-white hover:bg-emerald-600"
+                                                }`}
+                                            >
+                                                Commencer à livrer
+                                            </button>
+                                        </div>
+                                        {selectedVehicle &&
+                                            authUser.vehicules.find(
+                                                (v) => v._id === selectedVehicle
+                                            )?.statut !== "vérifié" && (
+                                                <p className="text-sm text-amber-600 mt-2">
+                                                    Ce véhicule n'est pas encore
+                                                    vérifié. Veuillez choisir un
+                                                    véhicule vérifié ou
+                                                    contacter un administrateur.
+                                                </p>
+                                            )}
+                                    </>
+                                ) : (
+                                    <div className="text-center py-4">
+                                        <p className="text-gray-600 mb-3">
+                                            Vous n'avez pas encore ajouté de
+                                            véhicule.
+                                        </p>
+                                        <a
+                                            href="/profile"
+                                            className="text-emerald-600 hover:text-emerald-700 font-medium underline"
+                                        >
+                                            Ajouter un véhicule dans votre
+                                            profil
+                                        </a>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         {commandeEnCours && (
                             <p className="text-center text-amber-600 mt-2">
                                 Vous ne pouvez pas arrêter de livrer pendant une

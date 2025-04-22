@@ -1,25 +1,24 @@
 "use client";
 
-import { useParams } from "react-router";
+import { useParams, useNavigate, Link } from "react-router";
 import { useGetUsersByRole, useAuthUserQuery } from "../../Hooks";
 import {
     FaSpinner,
     FaTimesCircle,
     FaCheckCircle,
     FaHourglassHalf,
+    FaEye,
 } from "react-icons/fa";
 
 const GestionUsersPage = () => {
     const { role } = useParams(); // "client", "livreur", etc.
+    const navigate = useNavigate();
     const { data: authUser, isLoading: authLoading } = useAuthUserQuery();
-
     const {
         data: usersData,
         isLoading: usersLoading,
         error,
     } = useGetUsersByRole(role);
-
-    console.log("usersData", usersData);
 
     if (authLoading || usersLoading) {
         return (
@@ -103,6 +102,10 @@ const GestionUsersPage = () => {
         }
     };
 
+    const handleViewUser = (userId) => {
+        navigate(`/admin/user/${userId}`);
+    };
+
     return (
         <main className="w-full min-h-full p-6">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
@@ -167,26 +170,24 @@ const GestionUsersPage = () => {
                                     )}
                                     <td className="py-4 px-4 text-right">
                                         <div className="flex gap-2 justify-end">
-                                            <button className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-xs">
+                                            <button
+                                                onClick={() =>
+                                                    handleViewUser(data._id)
+                                                }
+                                                className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-xs flex items-center gap-1"
+                                            >
+                                                <FaEye className="text-xs" />{" "}
                                                 Voir
                                             </button>
-                                            <button className="px-3 py-1 bg-amber-500 text-white rounded-md hover:bg-amber-600 transition-colors text-xs">
-                                                Modifier
-                                            </button>
-                                            <button className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-xs">
-                                                Supprimer
-                                            </button>
-                                            {role === "livreur" &&
-                                                data.statut !==
-                                                    "non vérifié" && (
-                                                    <button className="px-3 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors text-xs">
-                                                        <a
-                                                            href={`/livreur/${data._id}/pieces`}
-                                                        >
-                                                            Voir pièces
-                                                        </a>
-                                                    </button>
-                                                )}
+                                            {data.role === "livreur" && (
+                                                <Link
+                                                    to={`/livreur/${data._id}/pieces`}
+                                                    className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-xs flex items-center gap-1"
+                                                >
+                                                    <FaEye className="text-xs" />{" "}
+                                                    Voir Pièce
+                                                </Link>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

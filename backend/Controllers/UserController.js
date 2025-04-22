@@ -394,6 +394,8 @@ export const updateLivreurDocuments = async (req, res) => {
 
 export const getUserById = async (req, res) => {
     const { id } = req.params;
+    console.log("id", id);
+
     try {
         const user = await User.findById(id).select("-password");
         if (!user) {
@@ -444,6 +446,73 @@ export const addVehicules = async (req, res) => {
         return res.status(500).json({
             message: "Erreur lors de l'ajout des véhicules",
             error: error.message,
+        });
+    }
+};
+
+export const updateCurrentVehicle = async (req, res) => {
+    try {
+        const { userId, vehicleId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: "ID utilisateur requis",
+            });
+        }
+
+        const livreur = await Livreur.findById(userId);
+        if (!livreur) {
+            return res.status(404).json({
+                success: false,
+                error: "Livreur non trouvé",
+            });
+        }
+
+        // Reset all vehicles to current = false
+        livreur.vehicules = livreur.vehicules.map((v) => ({
+            ...v,
+            current: false,
+        }));
+
+        // If a vehicleId is provided, set that vehicle to current = true
+        if (vehicleId) {
+            const vehicleIndex = livreur.vehicules.findIndex(
+                (v) => v._id.toString() === vehicleId
+            );
+
+            if (vehicleIndex === -1) {
+                return res.status(404).json({
+                    success: false,
+                    error: "Véhicule non trouvé",
+                });
+            }
+
+            // Check if the vehicle is verified
+            if (livreur.vehicules[vehicleIndex].statut !== "vérifié") {
+                return res.status(400).json({
+                    success: false,
+                    error: "Ce véhicule n'est pas vérifié",
+                });
+            }
+
+            livreur.vehicules[vehicleIndex].current = true;
+        }
+
+        await livreur.save();
+
+        return res.status(200).json({
+            success: true,
+            message: vehicleId
+                ? "Véhicule actuel mis à jour"
+                : "Aucun véhicule actuel",
+            data: livreur.vehicules,
+        });
+    } catch (error) {
+        console.error("Erreur updateCurrentVehicle:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Erreur lors de la mise à jour du véhicule actuel",
         });
     }
 };

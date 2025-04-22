@@ -9,6 +9,7 @@ import {
     updateLivreurDocuments,
     getUserById,
     addVehicules,
+    updateCurrentVehicle,
 } from "../Controllers/UserController.js";
 import { protectRoute } from "../Middleware/protectRoute.js";
 import { protectLivreur } from "../Middleware/protectLivreur.js";
@@ -40,6 +41,7 @@ router.patch(
 );
 router.get("/:id", protectRoute, getUserById);
 router.post("/livreur/vehicules", protectRoute, protectLivreur, addVehicules);
+router.put("/vehicules/current", updateCurrentVehicle);
 // router.get("/:id", protectRoute, getCommandeById);
 
 export default router;

@@ -16,6 +16,7 @@ import docRoutes from "./Routes/DocRoutes.js";
 import notificationRoutes from "./Routes/NotificationRoutes.js";
 // Ajouter cet import avec les autres imports de routes
 import reviewRoutes from "./Routes/ReviewRoutes.js";
+import adminRoutes from "./Routes/AdminRoutes.js";
 
 dotenv.config();
 
@@ -79,6 +80,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/documents", docRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Serve static files (PDF, images, etc.)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

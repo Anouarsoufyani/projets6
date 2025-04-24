@@ -25,7 +25,7 @@ export const getUserProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
     const userId = req.user?.id; // Vérifie que req.user est défini par un middleware d'auth
-    console.log("User ID:", userId);
+   
 
     if (!userId) {
         return res.status(401).json({ error: "Utilisateur non authentifié" });
@@ -249,11 +249,11 @@ export const getUsersByRole = async (req, res) => {
 
 export const getLivreurDocuments = async (req, res) => {
     const { id } = req.params;
-    console.log("livreurId", id);
+
 
     try {
         const livreur = await Livreur.findById(id).select("documents");
-        console.log("livreur", livreur);
+       
 
         if (!livreur) {
             return res.status(404).json({
@@ -394,7 +394,6 @@ export const updateLivreurDocuments = async (req, res) => {
 
 export const getUserById = async (req, res) => {
     const { id } = req.params;
-    console.log("id", id);
 
     try {
         const user = await User.findById(id).select("-password");
@@ -419,7 +418,7 @@ export const getUserById = async (req, res) => {
 export const addVehicules = async (req, res) => {
     try {
         const livreur = await Livreur.findById(req.user.id);
-        console.log("livreur", livreur);
+       
 
         if (!livreur) {
             return res.status(404).json({ message: "Livreur non trouvé" });
@@ -429,13 +428,13 @@ export const addVehicules = async (req, res) => {
             type,
         }));
 
-        console.log("vehicules", vehicules);
+        
 
         livreur.vehicules.push(...vehicules);
-        console.log("livreur après ajout", livreur);
+        
 
         const savedLivreur = await livreur.save();
-        console.log("livreur sauvegardé", savedLivreur);
+        
 
         return res.status(200).json({
             message: "Véhicules ajoutés avec succès",
@@ -450,10 +449,109 @@ export const addVehicules = async (req, res) => {
     }
 };
 
+export const updateStatut = async (req , res)=>{
+    try {
+        
+        const {userId,statut}=req.body;
+
+        
+        
+        if (!userId) {
+            return res.status(401).json({ error: "Utilisateur non authentifié" });
+        }
+        
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
+        }
+
+        user.statut=statut;
+        await user.save();
+
+        
+        
+        return res.status(200).json({
+            success: true,
+            message:"Changement de status effectué avec succès"
+        });
+    }
+    catch (error) {
+        console.error("Erreur updateStatut:", error);
+        return res.status(500).json({
+          success: false,
+          error: "Une erreur est survenue lors du changement de statut.",
+        });
+    }
+}
+
+
+
+export const updateUserInfo = async (req , res)=>{
+    try{
+
+    const {userId,nom,email,adresses_favorites,numero,role,nom_boutique,adresse_boutique,distance_max,vehicules} = req.body;
+    
+    
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+    user.nom=nom;
+    user.email=email;
+    user.numero=numero;
+
+    if (role == "client" ){
+
+        user.adresses_favorites=adresses_favorites;
+
+        }
+
+    else  if (role == "commercant" ){
+
+        user.nom_boutique=nom_boutique;
+        user.adresse_boutique=adresse_boutique;
+
+        }
+
+    else if (role =="livreur"){   
+
+        user.distance_max=distance_max
+        user.vehicules=vehicules;
+
+        let falseVehicule = 0;
+        const invalidStatuts = ["refusé", "en vérification", "non vérifié"];
+        
+        for (const vehicule of user.vehicules) {
+          if (invalidStatuts.includes(vehicule.statut)) {
+            falseVehicule++;
+          }
+        }
+        
+        if (falseVehicule === user.vehicules.length) {
+          user.statut = "non vérifié";
+        }
+        
+
+    }
+
+    await user.save();
+    res.status(200).json({ success: true });
+
+    }
+    catch(error){
+        console.error("Erreur updateUserInfo:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Erreur lors de la mise à jour des infos du user",
+        });
+    }
+}
+
 export const updateCurrentVehicle = async (req, res) => {
     try {
-        const { userId, vehicleId } = req.body;
-
+        const { userId, vehiculeId } = req.body;
+        
+        
         if (!userId) {
             return res.status(400).json({
                 success: false,
@@ -469,18 +567,19 @@ export const updateCurrentVehicle = async (req, res) => {
             });
         }
 
-        // Reset all vehicles to current = false
+      
         livreur.vehicules = livreur.vehicules.map((v) => ({
             ...v,
             current: false,
         }));
-
-        // If a vehicleId is provided, set that vehicle to current = true
-        if (vehicleId) {
+       
+       
+        if (vehiculeId) {
             const vehicleIndex = livreur.vehicules.findIndex(
-                (v) => v._id.toString() === vehicleId
+                (v) => v._id.toString() === vehiculeId
             );
-
+            
+            
             if (vehicleIndex === -1) {
                 return res.status(404).json({
                     success: false,
@@ -488,7 +587,7 @@ export const updateCurrentVehicle = async (req, res) => {
                 });
             }
 
-            // Check if the vehicle is verified
+            
             if (livreur.vehicules[vehicleIndex].statut !== "vérifié") {
                 return res.status(400).json({
                     success: false,
@@ -500,10 +599,12 @@ export const updateCurrentVehicle = async (req, res) => {
         }
 
         await livreur.save();
+       
+        
 
         return res.status(200).json({
             success: true,
-            message: vehicleId
+            message: vehiculeId
                 ? "Véhicule actuel mis à jour"
                 : "Aucun véhicule actuel",
             data: livreur.vehicules,
@@ -516,3 +617,5 @@ export const updateCurrentVehicle = async (req, res) => {
         });
     }
 };
+
+

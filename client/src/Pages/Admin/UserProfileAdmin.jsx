@@ -6,6 +6,7 @@ import {
     useGetUserById,
     useGetDocuments,
     useGetUserCommandes,
+    useGetCoords,
 } from "../../Hooks";
 import {
     FaSpinner,
@@ -39,6 +40,7 @@ import {
 } from "recharts";
 import { toast } from "react-hot-toast";
 
+
 const UserProfileAdmin = () => {
     const { userId } = useParams();
     const navigate = useNavigate();
@@ -57,17 +59,12 @@ const UserProfileAdmin = () => {
     const { data: commandesData, isLoading: isLoadingCommandes } =
         useGetUserCommandes(userId);
 
-    // Debug logs
-    console.log("userId:", userId);
-    console.log("userData:", userData);
-    console.log("error:", error);
-
     // Fetch documents if user is a livreur
     const { data: documents, isLoading: docsLoading } = useGetDocuments(
         userData?.data?.role === "livreur" ? userId : null
     );
 
-    console.log("documents:", documents);
+
 
     // Initialize form data when user data is available
     useEffect(() => {
@@ -321,18 +318,79 @@ const UserProfileAdmin = () => {
             }));
         }
     };
+    const getCoords = useGetCoords();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Implement update profile functionality
-        console.log("Updating profile:", formData);
-        setEdit(false);
-    };
+    
+        try {
+            let url = '/api/user/updateUserform'; 
+            let requestData = {
+                userId: formData._id,
+                nom: formData.nom,
+                email: formData.email,
+                numero: formData.numero,
+                role: formData.role
+            };
+            
+            
+            if(formData.role=="client"){
+                
+                const favorite = formData.adresses_favorites?.[0]; 
 
-    const handleStatusChange = (status) => {
-        // Implement status change functionality
-        console.log("Changing status to:", status);
+                if (favorite?.rue && favorite?.ville && favorite?.code_postal) {
+                        
+                        const adr = `${favorite.rue} ${favorite.ville} ${favorite.code_postal}`;
+                      
+                        try {
+                          const data = getCoords(adr); 
+                          console.log("ici c la data",data);
+                          
+                          formData.adresses_favorites.lat = data.lat;
+                          formData.adresses_favorites.lng = data.lng;
+                        } catch (error) {
+                          console.error("Erreur récupération coordonnées :", error);
+                        }
+                      }
+
+                
+            }
+            
+            if (formData.role === "commercant") {
+                requestData.adresse_boutique = formData.adresse_boutique;
+                requestData.nom_boutique = formData.nom_boutique;
+            }
+            
+            if (formData.role === "livreur") {
+                requestData.distance_max = formData.distance_max;
+                requestData.vehicules = formData.vehicules;
+            }
+
+            
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(requestData),
+            });
+    
+            if (!res.ok) {
+                
+                const err = await res.json();
+                throw new Error(err.message || "Échec de la mise à jour de l'utilisateur");
+            }
+    
+            setEdit(false);
+            
+            
+            // window.location.reload();
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour du profil :", error);
+        }
     };
+    
+      
 
     const handleDeleteUser = () => {
         if (confirmDelete) {
@@ -388,10 +446,11 @@ const UserProfileAdmin = () => {
     // Add this function to handle user status changes
     const handleUserStatusChange = async (newStatus) => {
         try {
-            const response = await fetch(`/api/admin/users/${userId}/status`, {
+            const response = await fetch(`/api/user/changeStatut`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: newStatus }),
+                body: JSON.stringify({userId:userId ,
+                    statut: newStatus }),
             });
 
             if (!response.ok) {
@@ -630,25 +689,6 @@ const UserProfileAdmin = () => {
                                                     "lng",
                                                 ].map((field) => (
                                                     <input
-                                                        key={field}
-                                                        type={
-                                                            field === "lat" ||
-                                                            field === "lng"
-                                                                ? "number"
-                                                                : "text"
-                                                        }
-                                                        name={field}
-                                                        placeholder={
-                                                            field
-                                                                .charAt(0)
-                                                                .toUpperCase() +
-                                                            field
-                                                                .slice(1)
-                                                                .replace(
-                                                                    "_",
-                                                                    " "
-                                                                )
-                                                        }
                                                         value={
                                                             formData
                                                                 .adresse_boutique?.[
@@ -946,8 +986,7 @@ const UserProfileAdmin = () => {
                                                         "rue",
                                                         "ville",
                                                         "code_postal",
-                                                        "lat",
-                                                        "lng",
+                                                        
                                                     ].map((field) => (
                                                         <input
                                                             key={field}

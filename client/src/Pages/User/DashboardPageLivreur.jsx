@@ -144,20 +144,21 @@ const DashboardPageLivreur = () => {
     };
 
     const handleVehicleSelect = async () => {
+       
         if (!selectedVehicle) {
             toast.error("Veuillez sélectionner un véhicule");
             return;
         }
 
+
         try {
-            // First update the selected vehicle to set current = true
-            const updateVehicleRes = await fetch(`/api/user/update`, {
+            
+            const updateVehicleRes = await fetch(`/api/user/vehicules/current`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    _id: authUser._id,
-                    isWorking: true,
-                    disponibilite: true,
+                    userId: authUser._id,
+                   vehiculeId : selectedVehicle,
                 }),
             });
 

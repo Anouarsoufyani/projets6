@@ -1,233 +1,295 @@
-"use client";
+"use client"
 
-import { useParams, useNavigate } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAuthUserQuery } from "../../Hooks";
-import { useGetDocuments, useUpdateDocument } from "../../Hooks";
-import { toast } from "react-hot-toast";
-import { useGetUserById } from "../../Hooks/useGetUsers";
-import { FaEye } from "react-icons/fa";
+import { useState } from "react"
+import { useParams, useNavigate } from "react-router"
+import { useQueryClient } from "@tanstack/react-query"
+import { useAuthUserQuery } from "../../Hooks"
+import { useGetDocuments, useUpdateDocument } from "../../Hooks"
+import { toast } from "react-hot-toast"
+import { useGetUserById } from "../../Hooks/useGetUsers"
+import { FaEye, FaCheck, FaTimes, FaArrowLeft, FaFileAlt, FaFileImage, FaFilePdf } from "react-icons/fa"
+import DataTable from "../../Components/UI/DataTable"
+import StatusBadge from "../../Components/UI/StatusBadge"
+import ActionButton from "../../Components/UI/ActionButton"
 
 const GestionPiecesPage = () => {
-    const { id } = useParams(); // id du livreur
-    const queryClient = useQueryClient(); //
+  const { id } = useParams() // id du livreur
+  const queryClient = useQueryClient()
+  const { data: authUser, isLoading: authLoading } = useAuthUserQuery()
+  const { data: livreur, isLoading: livreurLoading } = useGetUserById(id)
+  const navigate = useNavigate()
+  const { data: docs, isLoading: docsLoading, error } = useGetDocuments(id)
+  const { mutate: updateDocument } = useUpdateDocument()
+  const [selectedDocument, setSelectedDocument] = useState(null)
+  const [previewDocument, setPreviewDocument] = useState(null)
 
-    const { data: authUser, isLoading: authLoading } = useAuthUserQuery();
-    const { data: livreur, isLoading: livreurLoading } = useGetUserById(id);
-    console.log("livreur", livreur);
-    const navigate = useNavigate();
-    const { data: docs, isLoading: usersLoading, error } = useGetDocuments(id);
-    const { mutate: updateDocument } = useUpdateDocument();
-
-    if (authLoading || usersLoading || livreurLoading) {
-        return (
-            <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
-                <div className="relative animate-spin rounded-full h-16 w-16 border-4 border-emerald-200 border-t-emerald-600">
-                    <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-400 opacity-30"></div>
-                </div>
-                <p className="mt-4 text-emerald-700 font-medium">Loading...</p>
-            </div>
-        );
-    }
-
-    if (!authUser) {
-        return (
-            <div className="text-center text-red-600">
-                Erreur : Utilisateur non trouvé
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="text-red-600 text-center">
-                Erreur lors du chargement des utilisateurs
-            </div>
-        );
-    }
-
-    const handleRefuser = (documentId) => {
-        updateDocument(
-            { livreurId: id, documentId, statut: "refusé" },
-            {
-                onSuccess: () => {
-                    toast.success("Document refusé avec succès");
-                    queryClient.invalidateQueries(["getDocuments", id]); //
-                },
-            }
-        );
-    };
-
-    const handleValider = (documentId) => {
-        updateDocument(
-            { livreurId: id, documentId, statut: "validé" },
-            {
-                onSuccess: () => {
-                    toast.success("Document validé avec succès");
-                    queryClient.invalidateQueries(["getDocuments", id]); //
-                },
-            }
-        );
-    };
-
-    const getDocumentUrl = (url) => {
-        if (!url) return "#";
-        // Remplacer les backslashes par des slashes pour l'URL
-        return `/${url.replace(/\\/g, "/")}`;
-    };
-
+  if (authLoading || docsLoading || livreurLoading) {
     return (
-        <main className="w-full min-h-full p-6">
-            <h1 className="text-2xl font-bold text-emerald-700 mb-6">
-                Gestion des documents du livreur {livreur.data?.nom} ({id})
-            </h1>
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
+        <div className="relative">
+          <div className="h-24 w-24 rounded-full border-t-4 border-b-4 border-indigo-500 animate-spin"></div>
+          <div
+            className="absolute top-0 left-0 h-24 w-24 rounded-full border-t-4 border-b-4 border-indigo-300 animate-spin"
+            style={{ animationDirection: "reverse", opacity: 0.7 }}
+          ></div>
+        </div>
+        <p className="mt-4 text-indigo-700 font-medium text-xl">Chargement...</p>
+      </div>
+    )
+  }
 
-            <div className="mb-4">
-                {" "}
-                <button
-                    onClick={() => navigate("/gestion/livreur")}
-                    className="flex items-center px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md transition-colors"
-                >
-                    {" "}
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4 mr-2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        {" "}
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                        />{" "}
-                    </svg>{" "}
-                    Retour à la liste des livreurs{" "}
-                </button>{" "}
+  if (!authUser) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="bg-white shadow-xl rounded-2xl p-8 max-w-md w-full border border-red-100">
+          <div className="flex items-center justify-center w-16 h-16 bg-red-50 rounded-full mx-auto mb-6">
+            <svg className="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-center text-gray-800 mb-2">Erreur d'authentification</h3>
+          <p className="text-center text-gray-600">Utilisateur non trouvé</p>
+          <button
+            onClick={() => navigate("/login")}
+            className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-md hover:shadow-lg"
+          >
+            Se connecter
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="bg-white shadow-xl rounded-2xl p-8 max-w-md w-full border border-red-100">
+          <div className="flex items-center justify-center w-16 h-16 bg-red-50 rounded-full mx-auto mb-6">
+            <svg className="h-10 w-10 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-center text-gray-800 mb-2">Une erreur est survenue</h3>
+          <p className="text-center text-gray-600">Erreur lors du chargement des documents</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-6 w-full bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-md hover:shadow-lg"
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const handleRefuser = (documentId) => {
+    updateDocument(
+      { livreurId: id, documentId, statut: "refusé" },
+      {
+        onSuccess: () => {
+          toast.success("Document refusé avec succès")
+          queryClient.invalidateQueries(["getDocuments", id])
+        },
+      },
+    )
+  }
+
+  const handleValider = (documentId) => {
+    updateDocument(
+      { livreurId: id, documentId, statut: "validé" },
+      {
+        onSuccess: () => {
+          toast.success("Document validé avec succès")
+          queryClient.invalidateQueries(["getDocuments", id])
+        },
+      },
+    )
+  }
+
+  const getDocumentUrl = (url) => {
+    if (!url) return "#"
+    // Remplacer les backslashes par des slashes pour l'URL
+    return `/${url.replace(/\\/g, "/")}`
+  }
+
+  const getFileIcon = (fileName) => {
+    if (!fileName) return <FaFileAlt className="text-gray-500" />
+
+    const extension = fileName.split(".").pop()?.toLowerCase()
+
+    if (extension === "pdf") {
+      return <FaFilePdf className="text-red-500" />
+    } else if (["jpg", "jpeg", "png", "gif"].includes(extension)) {
+      return <FaFileImage className="text-blue-500" />
+    }
+
+    return <FaFileAlt className="text-gray-500" />
+  }
+
+  // Configuration des colonnes pour le DataTable
+  const getTableColumns = () => [
+    {
+      key: "nomFichier",
+      header: "Pièces",
+      render: (row) => (
+        <div className="flex items-center">
+          <div className="p-2 bg-gray-100 rounded-lg mr-3">{getFileIcon(row.nomFichier)}</div>
+          <span className="font-medium text-gray-900">{row.nomFichier || row._id.slice(0, 5)}</span>
+        </div>
+      ),
+    },
+    {
+      key: "label",
+      header: "Label",
+      render: (row) => (
+        <div className="px-3 py-1.5 bg-gray-100 rounded-lg inline-block">{row.label || "Non spécifié"}</div>
+      ),
+    },
+    {
+      key: "statut",
+      header: "Statut",
+      render: (row) => <StatusBadge status={row.statut} />,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      sortable: false,
+      className: "text-right",
+      render: (row) => (
+        <div className="flex gap-2 justify-end">
+          <ActionButton icon={<FaEye />} label="Voir" color="indigo" onClick={() => setPreviewDocument(row)} />
+
+          {row.statut === "en attente" && (
+            <>
+              <ActionButton icon={<FaCheck />} label="Valider" color="green" onClick={() => handleValider(row._id)} />
+
+              <ActionButton icon={<FaTimes />} label="Refuser" color="red" onClick={() => handleRefuser(row._id)} />
+            </>
+          )}
+        </div>
+      ),
+    },
+  ]
+
+  return (
+    <main className="w-full min-h-full p-6 bg-gray-50">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">Documents du livreur</h1>
+          <p className="text-gray-500">Vérification des pièces justificatives</p>
+        </div>
+
+        <button
+          onClick={() => navigate("/gestion/livreur")}
+          className="flex items-center px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+        >
+          <FaArrowLeft className="mr-2" />
+          Retour à la liste des livreurs
+        </button>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-md mb-8 border border-gray-100">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-2xl font-bold">
+              {livreur?.data?.nom?.charAt(0).toUpperCase() || "L"}
             </div>
-
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="p-4 bg-gradient-to-r from-emerald-100 to-emerald-200">
-                    <h2 className="text-lg font-semibold text-emerald-800">
-                        Liste des documents ({docs?.data?.length ?? 0})
-                    </h2>
-                </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="bg-gray-50">
-                                <th className="text-left py-4 px-4 font-semibold text-gray-600 rounded-tl-lg">
-                                    Pièces
-                                </th>
-                                <th className="text-left py-4 px-4 font-semibold text-gray-600">
-                                    Label
-                                </th>
-                                <th className="text-left py-4 px-4 font-semibold text-gray-600">
-                                    Statut
-                                </th>
-                                <th className="text-right py-4 px-4 font-semibold text-gray-600 rounded-tr-lg">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {docs?.data.map((data, index) => (
-                                <tr
-                                    key={data._id}
-                                    className={`hover:bg-emerald-50 transition-colors duration-150 ${
-                                        index === docs.data.length - 1
-                                            ? "rounded-b-lg"
-                                            : ""
-                                    }`}
-                                >
-                                    <td className="py-4 px-4 font-medium text-gray-900">
-                                        {data.nomFichier ||
-                                            data._id.slice(0, 5)}
-                                    </td>
-                                    <td className="py-4 px-4">{data.label}</td>
-                                    <td className="py-4 px-4">
-                                        <span
-                                            className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center ${
-                                                data.statut === "validé"
-                                                    ? "bg-green-100 text-green-800"
-                                                    : data.statut === "refusé"
-                                                    ? "bg-red-100 text-red-800"
-                                                    : data.statut ===
-                                                      "en attente"
-                                                    ? "bg-yellow-100 text-yellow-800"
-                                                    : "bg-gray-100 text-gray-800"
-                                            }`}
-                                        >
-                                            <span
-                                                className="w-2 h-2 rounded-full mr-1.5"
-                                                style={{
-                                                    backgroundColor:
-                                                        data.statut === "validé"
-                                                            ? "#16a34a"
-                                                            : data.statut ===
-                                                              "refusé"
-                                                            ? "#dc2626"
-                                                            : data.statut ===
-                                                              "en attente"
-                                                            ? "#ca8a04"
-                                                            : "#4b5563",
-                                                }}
-                                            ></span>
-                                            {data.statut}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-4 text-right">
-                                        <div className="flex gap-3 justify-end">
-                                            <button
-                                                onClick={() =>
-                                                    window.open(
-                                                        getDocumentUrl(
-                                                            data.url
-                                                        ),
-                                                        "_blank"
-                                                    )
-                                                }
-                                                className="flex items-center px-3 py-1 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                                            >
-                                                <FaEye className="mr-1" />{" "}
-                                                <span>Voir</span>
-                                            </button>
-                                            {data.statut === "en attente" && (
-                                                <>
-                                                    <button
-                                                        className="flex items-center px-3 py-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
-                                                        onClick={() =>
-                                                            handleValider(
-                                                                data._id
-                                                            )
-                                                        }
-                                                    >
-                                                        <span>Valider</span>
-                                                    </button>
-                                                    <button
-                                                        className="flex items-center px-3 py-1 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                                                        onClick={() =>
-                                                            handleRefuser(
-                                                                data._id
-                                                            )
-                                                        }
-                                                    >
-                                                        <span>Refuser</span>
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">{livreur?.data?.nom || "Livreur"}</h2>
+              <p className="text-gray-600">{livreur?.data?.email || "Email non disponible"}</p>
+              <div className="mt-1">
+                <StatusBadge status={livreur?.data?.statut || "non vérifié"} />
+              </div>
             </div>
-        </main>
-    );
-};
+          </div>
+          <div className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl font-medium flex items-center gap-2">
+            <FaFileAlt />
+            <span>
+              {docs?.data?.length || 0} document{docs?.data?.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+        </div>
+      </div>
 
-export default GestionPiecesPage;
+      <DataTable
+        data={docs?.data || []}
+        columns={getTableColumns()}
+        onRowClick={setSelectedDocument}
+        selectedRow={selectedDocument}
+        emptyMessage="Aucun document trouvé"
+        searchable={true}
+        pagination={true}
+      />
+
+      {/* Modal de prévisualisation du document */}
+      {previewDocument && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                {getFileIcon(previewDocument.nomFichier)}
+                {previewDocument.nomFichier || "Document"}
+              </h3>
+              <button
+                onClick={() => setPreviewDocument(null)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4">
+              <iframe
+                src={getDocumentUrl(previewDocument.url)}
+                className="w-full h-[70vh] border border-gray-200 rounded-lg"
+                title="Document Preview"
+              />
+            </div>
+            <div className="p-4 border-t border-gray-200 flex justify-end gap-2">
+              {previewDocument.statut === "en attente" && (
+                <>
+                  <ActionButton
+                    icon={<FaCheck />}
+                    label="Valider"
+                    color="green"
+                    onClick={() => {
+                      handleValider(previewDocument._id)
+                      setPreviewDocument(null)
+                    }}
+                  />
+
+                  <ActionButton
+                    icon={<FaTimes />}
+                    label="Refuser"
+                    color="red"
+                    onClick={() => {
+                      handleRefuser(previewDocument._id)
+                      setPreviewDocument(null)
+                    }}
+                  />
+                </>
+              )}
+              <button
+                onClick={() => setPreviewDocument(null)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  )
+}
+
+export default GestionPiecesPage

@@ -321,30 +321,23 @@ const NotificationsPage = () => {
                                         </span>
                                     </div>
                                     <p className="text-sm text-gray-800 mt-1 leading-relaxed">
-                                        {notification.message ? (
-                                            notification.message
-                                        ) : (
+                                        <>
+                                            Notification de{" "}
+                                            <span className="font-semibold">
+                                                {notification.sender?.nom ??
+                                                    "Système"}
+                                            </span>
+                                        </>
+                                        <br />
+                                        {notification.description && (
                                             <>
-                                                Notification de{" "}
                                                 <span className="font-semibold">
-                                                    {notification.sender?.nom ??
-                                                        "Système"}
-                                                </span>
+                                                    Description du probleme :
+                                                </span>{" "}
+                                                {notification.description}
+                                                <br />
                                             </>
                                         )}
-                                        <br />
-                                        {/* {(notification.type ===
-                                            "nouveau livreur assigné" ||
-                                            notification.type ===
-                                                "nouvelle commande assignée") && (
-                                            <Link
-                                                to={`/livraison/${notification.commande_id}`}
-                                                className="text-emerald-600 underline hover:text-emerald-400 transition-all mt-2"
-                                            >
-                                                Suivi de la commande
-                                            </Link>
-                                        )} */}
-
                                         {notification.isRequest &&
                                             (notification.isAccepted &&
                                             notification.commande_id

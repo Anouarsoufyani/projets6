@@ -16,16 +16,9 @@ const notificationSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId, // ref: refer to the id of the model
             ref: "Commande", // the id will be of the commande model
         },
-        // postId: {
-        //     type: mongoose.Schema.Types.ObjectId, // ref: refer to the id of the model
-        //     ref: "Post", // the id will be of the post model
-        //     required: true
-        // },
-        // commentId: {
-        //     type: mongoose.Schema.Types.ObjectId, // ref: refer to the id of the model
-        //     ref: "Comment", // the id will be of the comment model
-        //     required: true
-        // },
+        description: {
+            type: String,
+        },
         isRequest: {
             type: Boolean,
             default: false,
@@ -86,7 +79,6 @@ const notificationSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
-
     },
     {
         timestamps: true,

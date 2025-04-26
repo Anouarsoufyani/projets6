@@ -769,6 +769,7 @@ export const problemsDelivery = async (req, res) => {
         const notificationClient = new Notification({
             sender: commande.livreur_id,
             receiver: commande.client_id,
+            description: description,
             type: problem,
         });
         await notificationClient.save();
@@ -776,6 +777,8 @@ export const problemsDelivery = async (req, res) => {
         const notificationCommercant = new Notification({
             sender: commande.livreur_id,
             receiver: commande.commercant_id,
+            description: description,
+
             type: problem,
         });
         await notificationCommercant.save();
@@ -784,6 +787,7 @@ export const problemsDelivery = async (req, res) => {
             const notificationAdmin = new Notification({
                 sender: commande.livreur_id,
                 receiver: admin._id,
+                description: description,
                 type: problem,
             });
             await notificationAdmin.save();
@@ -794,6 +798,7 @@ export const problemsDelivery = async (req, res) => {
         const notificationLivreur = new Notification({
             sender: commande.client_id,
             receiver: commande.livreur_id,
+            description: description,
             type: problem,
         });
         await notificationLivreur.save();
@@ -801,6 +806,7 @@ export const problemsDelivery = async (req, res) => {
         const notificationCommercant = new Notification({
             sender: commande.client_id,
             receiver: commande.commercant_id,
+            description: description,
             type: problem,
         });
         await notificationCommercant.save();
@@ -809,6 +815,7 @@ export const problemsDelivery = async (req, res) => {
             const notificationAdmin = new Notification({
                 sender: commande.client_id,
                 receiver: admin._id,
+                description: description,
                 type: problem,
             });
             await notificationAdmin.save();

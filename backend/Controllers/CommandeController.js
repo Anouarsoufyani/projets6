@@ -18,6 +18,20 @@ export const getCommandeById = async (req, res) => {
     }
 };
 
+export const getCommandeForItineraire = async (req, res) => {
+    try {
+        const commande = await Commande.findById(req.params.id)
+            .populate("client_id")
+            .populate("commercant_id")
+            .populate("livreur_id");
+        return res.status(200).json({ success: true, data: commande });
+    } catch (error) {
+        return res
+            .status(400)
+            .json({ success: false, error: "Commande not found" });
+    }
+};
+
 export const getCommandes = async (req, res) => {
     try {
         // Récupérer le rôle de l'utilisateur connecté

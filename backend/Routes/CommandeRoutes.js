@@ -14,6 +14,7 @@ import {
     requestLivreur,
     updateCommandeItineraire,
     problemsDelivery,
+    getCommandeForItineraire,
 } from "../Controllers/CommandeController.js";
 import { protectRoute } from "../Middleware/protectRoute.js";
 import { protectSuivi } from "../Middleware/protectSuivi.js";
@@ -25,6 +26,7 @@ const router = express.Router();
 router.post("/new", protectRoute, createCommande);
 router.get("/", protectRoute, getCommandes);
 router.get("/:id", protectRoute, protectSuivi, getCommandeById);
+router.get("/itineraire/:id", protectRoute, getCommandeForItineraire);
 router.post("/cancel/:id", protectRoute, cancelCommande);
 router.get("/:id/livreur-info", protectRoute, getLivreurInfo);
 router.get("/code/:id/client", protectRoute, getCodeClient);
@@ -45,6 +47,6 @@ router.post(
     protectLivreur,
     updateCommandeItineraire
 );
-router.post("/problems",protectRoute,problemsDelivery)
+router.post("/problems", protectRoute, problemsDelivery);
 
 export default router;

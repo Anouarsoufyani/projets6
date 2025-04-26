@@ -8,7 +8,7 @@ import {
     useAssignLivreur,
     useGetUserById,
 } from "../../Hooks";
-import { GoogleMap, Marker } from "@react-google-maps/api";
+import { GoogleMap, Marker, DirectionsRenderer } from "@react-google-maps/api";
 import {
     StarRating,
     getAverageRating,
@@ -47,6 +47,8 @@ const getNotifications = async () => {
 };
 
 const DashboardPageLivreur = () => {
+    const [selectedShop, setSelectedShop] = useState(null);
+    const [directions, setDirections] = useState(null);
     const { data: authUser } = useAuthUserQuery();
     const { toggleActive, isToggleActive } = useToggleActive();
     const { data: commandeEnCours, isLoading } = useGetLatestPendingCommande();
@@ -74,7 +76,6 @@ const DashboardPageLivreur = () => {
 
     const [selectedVehicle, setSelectedVehicle] = useState("");
     const [showVehicleSelector, setShowVehicleSelector] = useState(false);
-    let commercant;
 
     const handleToggleActive = async () => {
         if (!authUser?._id) return;
@@ -147,6 +148,161 @@ const DashboardPageLivreur = () => {
         } catch (error) {
             toast.error(error.message || "Une erreur est survenue");
         }
+    };
+
+    const showShopDirections = async (commandeId) => {
+        try {
+            // Get the commande details to extract commercant ID
+            const commandeRes = await fetch(
+                `/api/commandes/itineraire/${commandeId}`,
+                {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
+
+            if (!commandeRes.ok) {
+                throw new Error(
+                    "Erreur lors de la récupération de la commande"
+                );
+            }
+
+            const commande = await commandeRes.json();
+
+            // Get the commercant details using the user ID
+            const commercantRes = await fetch(
+                `/api/user/${commande.data.commercant_id._id}`,
+                {
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                }
+            );
+
+            if (!commercantRes.ok) {
+                throw new Error("Erreur lors de la récupération du commerçant");
+            }
+            console.log("commercantRes", commercantRes);
+
+            const commercantData = await commercantRes.json();
+            const commercant = commercantData.data;
+
+            console.log("commercant", commercant);
+
+            if (!commercant || !commercant.adresse_boutique) {
+                toast.error("Adresse de la boutique non disponible");
+                return;
+            }
+
+            setSelectedShop(commercant);
+
+            // If we have the current position and shop coords, calculate directions
+            if (
+                position &&
+                commercant.adresse_boutique.lat &&
+                commercant.adresse_boutique.lng
+            ) {
+                const shopPosition = {
+                    lat: commercant.adresse_boutique.lat,
+                    lng: commercant.adresse_boutique.lng,
+                };
+
+                // Get directions using the Google Maps Directions Service
+                const directionsService =
+                    new window.google.maps.DirectionsService();
+
+                directionsService.route(
+                    {
+                        origin: position,
+                        destination: shopPosition,
+                        travelMode: window.google.maps.TravelMode.DRIVING,
+                    },
+                    (result, status) => {
+                        if (status === window.google.maps.DirectionsStatus.OK) {
+                            setDirections(result);
+                            toast.success(
+                                "Itinéraire vers la boutique affiché"
+                            );
+                        } else {
+                            toast.error("Impossible de calculer l'itinéraire");
+                        }
+                    }
+                );
+            } else if (
+                !commercant.adresse_boutique.lat ||
+                !commercant.adresse_boutique.lng
+            ) {
+                // If coordinates aren't directly available, try to geocode the address
+                const addressString = `${commercant.adresse_boutique.rue}, ${commercant.adresse_boutique.code_postal} ${commercant.adresse_boutique.ville}`;
+
+                // You mentioned useGetCoords hook, assuming it works like this:
+                try {
+                    const geocodeRes = await fetch(
+                        `/api/geocode?address=${encodeURIComponent(
+                            addressString
+                        )}`,
+                        {
+                            method: "GET",
+                        }
+                    );
+
+                    if (!geocodeRes.ok) {
+                        throw new Error("Erreur de géocodage de l'adresse");
+                    }
+
+                    const coords = await geocodeRes.json();
+
+                    if (coords && coords.lat && coords.lng) {
+                        const shopPosition = {
+                            lat: coords.lat,
+                            lng: coords.lng,
+                        };
+
+                        // Get directions
+                        const directionsService =
+                            new window.google.maps.DirectionsService();
+
+                        directionsService.route(
+                            {
+                                origin: position,
+                                destination: shopPosition,
+                                travelMode:
+                                    window.google.maps.TravelMode.DRIVING,
+                            },
+                            (result, status) => {
+                                if (
+                                    status ===
+                                    window.google.maps.DirectionsStatus.OK
+                                ) {
+                                    setDirections(result);
+                                    toast.success(
+                                        "Itinéraire vers la boutique affiché"
+                                    );
+                                } else {
+                                    toast.error(
+                                        "Impossible de calculer l'itinéraire"
+                                    );
+                                }
+                            }
+                        );
+                    }
+                } catch (error) {
+                    toast.error(
+                        "Erreur lors de la géolocalisation de l'adresse"
+                    );
+                }
+            } else {
+                toast.error("Position actuelle non disponible");
+            }
+        } catch (error) {
+            toast.error(error.message || "Une erreur est survenue");
+            console.error(error);
+        }
+    };
+
+    // Function to clear directions and return to normal map view
+    const clearDirections = () => {
+        setDirections(null);
+        setSelectedShop(null);
     };
 
     const navigate = useNavigate();
@@ -377,7 +533,7 @@ const DashboardPageLivreur = () => {
                         )}
 
                         {authUser.isWorking && (
-                            <div className="w-full h-[500px] mt-4">
+                            <div className="w-full h-[500px] mt-4 relative">
                                 {loading ? (
                                     <p className="text-gray-600">
                                         Chargement de la carte...
@@ -385,24 +541,127 @@ const DashboardPageLivreur = () => {
                                 ) : error ? (
                                     <p className="text-red-500">{error}</p>
                                 ) : position ? (
-                                    <GoogleMap
-                                        mapContainerStyle={containerStyle}
-                                        center={position}
-                                        zoom={13}
-                                        options={{
-                                            mapTypeControl: false,
-                                            streetViewControl: false,
-                                            fullscreenControl: true,
-                                            zoomControl: true,
-                                        }}
-                                    >
-                                        <Marker
-                                            position={position}
-                                            icon={{
-                                                url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                                    <>
+                                        <GoogleMap
+                                            mapContainerStyle={containerStyle}
+                                            center={position}
+                                            zoom={13}
+                                            options={{
+                                                mapTypeControl: false,
+                                                streetViewControl: false,
+                                                fullscreenControl: true,
+                                                zoomControl: true,
                                             }}
-                                        />
-                                    </GoogleMap>
+                                        >
+                                            {/* Current position marker */}
+                                            {/* <Marker
+                                                position={position}
+                                                icon={{
+                                                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                                                }}
+                                            /> */}
+
+                                            {/* Shop marker if we have a selected shop but no directions yet */}
+                                            {selectedShop &&
+                                                !directions &&
+                                                selectedShop.adresse_boutique && (
+                                                    <Marker
+                                                        position={{
+                                                            lat: selectedShop
+                                                                .adresse_boutique
+                                                                .lat,
+                                                            lng: selectedShop
+                                                                .adresse_boutique
+                                                                .lng,
+                                                        }}
+                                                        icon={{
+                                                            url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                                                        }}
+                                                    />
+                                                )}
+
+                                            {/* Display directions if available */}
+                                            {directions && (
+                                                <DirectionsRenderer
+                                                    directions={directions}
+                                                    options={{
+                                                        suppressMarkers: false,
+                                                        polylineOptions: {
+                                                            strokeColor:
+                                                                "#4CAF50",
+                                                            strokeWeight: 6,
+                                                        },
+                                                    }}
+                                                />
+                                            )}
+                                        </GoogleMap>
+
+                                        {/* Shop info and clear button when directions are shown */}
+                                        {selectedShop && (
+                                            <div className="absolute bottom-4 left-4 right-4 bg-white p-3 rounded-lg shadow-lg max-w-md mx-auto">
+                                                <div className="flex justify-between items-center">
+                                                    <h3 className="font-medium text-emerald-700">
+                                                        {selectedShop.nom_etablissement ||
+                                                            "Boutique"}
+                                                    </h3>
+                                                    <button
+                                                        onClick={
+                                                            clearDirections
+                                                        }
+                                                        className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded transition-colors"
+                                                    >
+                                                        Fermer
+                                                    </button>
+                                                </div>
+                                                {selectedShop.adresse_boutique && (
+                                                    <p className="text-sm text-gray-600 mt-1">
+                                                        {
+                                                            selectedShop
+                                                                .adresse_boutique
+                                                                .rue
+                                                        }
+                                                        ,{" "}
+                                                        {
+                                                            selectedShop
+                                                                .adresse_boutique
+                                                                .code_postal
+                                                        }{" "}
+                                                        {
+                                                            selectedShop
+                                                                .adresse_boutique
+                                                                .ville
+                                                        }
+                                                    </p>
+                                                )}
+                                                {directions &&
+                                                    directions.routes[0]
+                                                        ?.legs[0] && (
+                                                        <div className="mt-2 text-sm border-t pt-2 border-gray-100">
+                                                            <p className="text-emerald-600 font-medium">
+                                                                Distance:{" "}
+                                                                {
+                                                                    directions
+                                                                        .routes[0]
+                                                                        .legs[0]
+                                                                        .distance
+                                                                        .text
+                                                                }
+                                                            </p>
+                                                            <p className="text-emerald-600 font-medium">
+                                                                Durée estimée:{" "}
+                                                                {
+                                                                    directions
+                                                                        .routes[0]
+                                                                        .legs[0]
+                                                                        .duration
+                                                                        .text
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                            </div>
+                                        )}
+                                    </>
                                 ) : (
                                     <p className="text-gray-600">
                                         Impossible de récupérer votre position.
@@ -527,6 +786,18 @@ const DashboardPageLivreur = () => {
 
                                                             {/* Action buttons */}
                                                             <div className="flex gap-2 mt-2 sm:mt-0">
+                                                                <button
+                                                                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                                                                    onClick={() =>
+                                                                        showShopDirections(
+                                                                            notification
+                                                                                .commande_id
+                                                                                ._id
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Voir
+                                                                </button>
                                                                 <button
                                                                     className="bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded"
                                                                     onClick={() => {

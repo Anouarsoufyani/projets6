@@ -25,7 +25,6 @@ export const getUserProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
     const userId = req.user?.id; // Vérifie que req.user est défini par un middleware d'auth
-   
 
     if (!userId) {
         return res.status(401).json({ error: "Utilisateur non authentifié" });
@@ -250,10 +249,8 @@ export const getUsersByRole = async (req, res) => {
 export const getLivreurDocuments = async (req, res) => {
     const { id } = req.params;
 
-
     try {
         const livreur = await Livreur.findById(id).select("documents");
-       
 
         if (!livreur) {
             return res.status(404).json({
@@ -418,7 +415,6 @@ export const getUserById = async (req, res) => {
 export const addVehicules = async (req, res) => {
     try {
         const livreur = await Livreur.findById(req.user.id);
-       
 
         if (!livreur) {
             return res.status(404).json({ message: "Livreur non trouvé" });
@@ -428,13 +424,9 @@ export const addVehicules = async (req, res) => {
             type,
         }));
 
-        
-
         livreur.vehicules.push(...vehicules);
-        
 
         const savedLivreur = await livreur.save();
-        
 
         return res.status(200).json({
             message: "Véhicules ajoutés avec succès",
@@ -449,109 +441,100 @@ export const addVehicules = async (req, res) => {
     }
 };
 
-export const updateStatut = async (req , res)=>{
+export const updateStatut = async (req, res) => {
     try {
-        
-        const {userId,statut}=req.body;
+        const { userId, statut } = req.body;
 
-        
-        
         if (!userId) {
-            return res.status(401).json({ error: "Utilisateur non authentifié" });
+            return res
+                .status(401)
+                .json({ error: "Utilisateur non authentifié" });
         }
-        
+
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
 
-        user.statut=statut;
+        user.statut = statut;
         await user.save();
 
-        
-        
         return res.status(200).json({
             success: true,
-            message:"Changement de status effectué avec succès"
+            message: "Changement de status effectué avec succès",
         });
-    }
-    catch (error) {
+    } catch (error) {
         console.error("Erreur updateStatut:", error);
         return res.status(500).json({
-          success: false,
-          error: "Une erreur est survenue lors du changement de statut.",
+            success: false,
+            error: "Une erreur est survenue lors du changement de statut.",
         });
     }
-}
+};
 
+export const updateUserInfo = async (req, res) => {
+    console.log(req.body);
 
+    try {
+        const {
+            userId,
+            nom,
+            email,
+            adresses_favorites,
+            numero,
+            role,
+            nom_boutique,
+            adresse_boutique,
+            distance_max,
+            vehicules,
+        } = req.body;
 
-export const updateUserInfo = async (req , res)=>{
-    try{
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: "Utilisateur non trouvé" });
+        }
+        user.nom = nom;
+        user.email = email;
+        user.numero = numero;
 
-    const {userId,nom,email,adresses_favorites,numero,role,nom_boutique,adresse_boutique,distance_max,vehicules} = req.body;
-    
-    
-    const user = await User.findById(userId);
-    if (!user) {
-        return res.status(404).json({ error: "Utilisateur non trouvé" });
-    }
-    user.nom=nom;
-    user.email=email;
-    user.numero=numero;
+        if (role == "client") {
+            user.adresses_favorites = adresses_favorites;
+        } else if (role == "commercant") {
+            user.nom_boutique = nom_boutique;
+            user.adresse_boutique = adresse_boutique;
+        } else if (role == "livreur") {
+            user.distance_max = distance_max;
+            user.vehicules = vehicules;
 
-    if (role == "client" ){
+            let falseVehicule = 0;
+            const invalidStatuts = ["refusé", "en vérification", "non vérifié"];
 
-        user.adresses_favorites=adresses_favorites;
+            for (const vehicule of user.vehicules) {
+                if (invalidStatuts.includes(vehicule.statut)) {
+                    falseVehicule++;
+                }
+            }
 
+            if (falseVehicule === user.vehicules.length) {
+                user.statut = "non vérifié";
+            }
         }
 
-    else  if (role == "commercant" ){
-
-        user.nom_boutique=nom_boutique;
-        user.adresse_boutique=adresse_boutique;
-
-        }
-
-    else if (role =="livreur"){   
-
-        user.distance_max=distance_max
-        user.vehicules=vehicules;
-
-        let falseVehicule = 0;
-        const invalidStatuts = ["refusé", "en vérification", "non vérifié"];
-        
-        for (const vehicule of user.vehicules) {
-          if (invalidStatuts.includes(vehicule.statut)) {
-            falseVehicule++;
-          }
-        }
-        
-        if (falseVehicule === user.vehicules.length) {
-          user.statut = "non vérifié";
-        }
-        
-
-    }
-
-    await user.save();
-    res.status(200).json({ success: true });
-
-    }
-    catch(error){
+        await user.save();
+        res.status(200).json({ success: true });
+    } catch (error) {
         console.error("Erreur updateUserInfo:", error);
         return res.status(500).json({
             success: false,
             error: "Erreur lors de la mise à jour des infos du user",
         });
     }
-}
+};
 
 export const updateCurrentVehicle = async (req, res) => {
     try {
         const { userId, vehiculeId } = req.body;
-        
-        
+
         if (!userId) {
             return res.status(400).json({
                 success: false,
@@ -567,19 +550,16 @@ export const updateCurrentVehicle = async (req, res) => {
             });
         }
 
-      
         livreur.vehicules = livreur.vehicules.map((v) => ({
             ...v,
             current: false,
         }));
-       
-       
+
         if (vehiculeId) {
             const vehicleIndex = livreur.vehicules.findIndex(
                 (v) => v._id.toString() === vehiculeId
             );
-            
-            
+
             if (vehicleIndex === -1) {
                 return res.status(404).json({
                     success: false,
@@ -587,7 +567,6 @@ export const updateCurrentVehicle = async (req, res) => {
                 });
             }
 
-            
             if (livreur.vehicules[vehicleIndex].statut !== "vérifié") {
                 return res.status(400).json({
                     success: false,
@@ -599,8 +578,6 @@ export const updateCurrentVehicle = async (req, res) => {
         }
 
         await livreur.save();
-       
-        
 
         return res.status(200).json({
             success: true,
@@ -617,5 +594,3 @@ export const updateCurrentVehicle = async (req, res) => {
         });
     }
 };
-
-

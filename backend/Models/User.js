@@ -175,10 +175,6 @@ const Commercant = User.discriminator("commercant", CommercantSchema);
 const ClientSchema = new mongoose.Schema({
     adresses_favorites: [
         {
-            nom: {
-                type: String,
-                required: true,
-            },
             rue: {
                 type: String,
                 required: true,

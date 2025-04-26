@@ -6,7 +6,6 @@ import {
     useGetUserById,
     useGetDocuments,
     useGetUserCommandes,
-    useGetCoords,
 } from "../../Hooks";
 import {
     FaSpinner,
@@ -39,9 +38,11 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { toast } from "react-hot-toast";
-
+import { useQueryClient } from "@tanstack/react-query";
 
 const UserProfileAdmin = () => {
+    const queryClient = useQueryClient();
+
     const { userId } = useParams();
     const navigate = useNavigate();
     const [edit, setEdit] = useState(false);
@@ -63,8 +64,6 @@ const UserProfileAdmin = () => {
     const { data: documents, isLoading: docsLoading } = useGetDocuments(
         userData?.data?.role === "livreur" ? userId : null
     );
-
-
 
     // Initialize form data when user data is available
     useEffect(() => {
@@ -318,55 +317,77 @@ const UserProfileAdmin = () => {
             }));
         }
     };
-    const getCoords = useGetCoords();
+
+    const getCoords = async (adresse) => {
+        if (!adresse) throw new Error("L'adresse ne peut pas être vide");
+
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+            adresse
+        )}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.status !== "OK") {
+            throw new Error(
+                data.error_message || "Impossible de récupérer les coordonnées"
+            );
+        }
+
+        return data.results[0].geometry.location;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
         try {
-            let url = '/api/user/updateUserform'; 
+            let url = "/api/user/updateUserform";
             let requestData = {
                 userId: formData._id,
                 nom: formData.nom,
                 email: formData.email,
                 numero: formData.numero,
-                role: formData.role
+                adresses_favorites: formData.adresses_favorites,
+                role: formData.role,
             };
-            
-            
-            if(formData.role=="client"){
-                
-                const favorite = formData.adresses_favorites?.[0]; 
 
-                if (favorite?.rue && favorite?.ville && favorite?.code_postal) {
-                        
+            if (formData.role == "client" && formData.adresses_favorites) {
+                for (let i = 0; i < formData.adresses_favorites.length; i++) {
+                    const favorite = formData.adresses_favorites[i];
+
+                    if (
+                        favorite?.rue &&
+                        favorite?.ville &&
+                        favorite?.code_postal
+                    ) {
                         const adr = `${favorite.rue} ${favorite.ville} ${favorite.code_postal}`;
-                      
                         try {
-                          const data = getCoords(adr); 
-                          console.log("ici c la data",data);
-                          
-                          formData.adresses_favorites.lat = data.lat;
-                          formData.adresses_favorites.lng = data.lng;
+                            const data = await getCoords(adr);
+                            formData.adresses_favorites[i].lat = data.lat;
+                            formData.adresses_favorites[i].lng = data.lng;
+                            console.log(
+                                "formData",
+                                formData.adresses_favorites
+                            );
                         } catch (error) {
-                          console.error("Erreur récupération coordonnées :", error);
+                            console.error(
+                                "Erreur récupération coordonnées :",
+                                error
+                            );
                         }
-                      }
-
-                
+                    }
+                }
             }
-            
+
             if (formData.role === "commercant") {
                 requestData.adresse_boutique = formData.adresse_boutique;
                 requestData.nom_boutique = formData.nom_boutique;
             }
-            
+
             if (formData.role === "livreur") {
                 requestData.distance_max = formData.distance_max;
                 requestData.vehicules = formData.vehicules;
             }
 
-            
             const res = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -374,23 +395,23 @@ const UserProfileAdmin = () => {
                 },
                 body: JSON.stringify(requestData),
             });
-    
+
             if (!res.ok) {
-                
                 const err = await res.json();
-                throw new Error(err.message || "Échec de la mise à jour de l'utilisateur");
+                throw new Error(
+                    err.message || "Échec de la mise à jour de l'utilisateur"
+                );
             }
-    
+
+            queryClient.invalidateQueries(["getUserById", formData._id]);
+
             setEdit(false);
-            
-            
+
             // window.location.reload();
         } catch (error) {
             console.error("Erreur lors de la mise à jour du profil :", error);
         }
     };
-    
-      
 
     const handleDeleteUser = () => {
         if (confirmDelete) {
@@ -449,8 +470,7 @@ const UserProfileAdmin = () => {
             const response = await fetch(`/api/user/changeStatut`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({userId:userId ,
-                    statut: newStatus }),
+                body: JSON.stringify({ userId: userId, statut: newStatus }),
             });
 
             if (!response.ok) {
@@ -982,11 +1002,9 @@ const UserProfileAdmin = () => {
                                                     className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-2"
                                                 >
                                                     {[
-                                                        "nom",
                                                         "rue",
                                                         "ville",
                                                         "code_postal",
-                                                        
                                                     ].map((field) => (
                                                         <input
                                                             key={field}
@@ -1037,7 +1055,6 @@ const UserProfileAdmin = () => {
                                                         ...(formData.adresses_favorites ||
                                                             []),
                                                         {
-                                                            nom: "",
                                                             rue: "",
                                                             ville: "",
                                                             code_postal: "",
@@ -1215,15 +1232,15 @@ const UserProfileAdmin = () => {
                                                                     className="break-words"
                                                                 >
                                                                     {
-                                                                        adresse.nom
+                                                                        adresse.rue
                                                                     }{" "}
                                                                     -{" "}
                                                                     {
-                                                                        adresse.rue
+                                                                        adresse.ville
                                                                     }
                                                                     ,{" "}
                                                                     {
-                                                                        adresse.ville
+                                                                        adresse.code_postal
                                                                     }
                                                                 </li>
                                                             )

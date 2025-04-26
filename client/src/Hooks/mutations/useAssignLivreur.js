@@ -28,8 +28,8 @@ export const useAssignLivreur = () => {
 
             return res.json();
         },
-        onSuccess: () => {
-            toast.success("Livreur assigné avec succès!");
+        onSuccess: (res) => {
+            toast.success(res.message);
             queryClient.invalidateQueries([
                 "getUserCommandes",
                 "notifications",

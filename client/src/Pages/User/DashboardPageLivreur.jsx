@@ -5,13 +5,15 @@ import {
     useToggleActive,
     useDeliveryPosition,
     useGetLatestPendingCommande,
+    useAssignLivreur,
+    useGetUserById,
 } from "../../Hooks";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import {
     StarRating,
     getAverageRating,
 } from "../../Components/Reviews/ReviewDisplay";
-import { FaStar } from "react-icons/fa";
+import { FaStar, FaBell } from "react-icons/fa";
 import { useGetReviewsForUser } from "../../Hooks";
 import { useNavigate } from "react-router";
 const containerStyle = {
@@ -57,6 +59,9 @@ const DashboardPageLivreur = () => {
         }
     );
 
+    const assignLivreur = useAssignLivreur();
+    const getUserById = useGetUserById();
+
     const { position, loading, error } = useDeliveryPosition(
         authUser?.isWorking,
         authUser?._id,
@@ -69,41 +74,7 @@ const DashboardPageLivreur = () => {
 
     const [selectedVehicle, setSelectedVehicle] = useState("");
     const [showVehicleSelector, setShowVehicleSelector] = useState(false);
-
-    const assignLivreur = async (
-        commandeId,
-        livreurId,
-        notificationId,
-        action
-    ) => {
-        try {
-            const res = await fetch(`/api/commandes/${commandeId}/assign`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    livreurId: livreurId,
-                    notificationId: notificationId,
-                    action: action,
-                }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(
-                    data.error || "Erreur lors de l'assignation du livreur"
-                );
-            }
-
-            toast.success(data.message || "Livreur assigné avec succès");
-        } catch (error) {
-            toast.error(
-                error.message || "Erreur lors de l'assignation du livreur"
-            );
-        } finally {
-            window.location.reload();
-        }
-    };
+    let commercant;
 
     const handleToggleActive = async () => {
         if (!authUser?._id) return;
@@ -144,23 +115,23 @@ const DashboardPageLivreur = () => {
     };
 
     const handleVehicleSelect = async () => {
-       
         if (!selectedVehicle) {
             toast.error("Veuillez sélectionner un véhicule");
             return;
         }
 
-
         try {
-            
-            const updateVehicleRes = await fetch(`/api/user/vehicules/current`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    userId: authUser._id,
-                   vehiculeId : selectedVehicle,
-                }),
-            });
+            const updateVehicleRes = await fetch(
+                `/api/user/vehicules/current`,
+                {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        userId: authUser._id,
+                        vehiculeId: selectedVehicle,
+                    }),
+                }
+            );
 
             if (!updateVehicleRes.ok) {
                 const errorData = await updateVehicleRes.json();
@@ -511,33 +482,78 @@ const DashboardPageLivreur = () => {
                                                             un livreur assigné
                                                         </span>
                                                     ) : (
-                                                        <div className="mt-2 flex gap-2">
-                                                            <button
-                                                                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                                                                onClick={() => {
-                                                                    assignLivreur(
-                                                                        notification.commande_id,
-                                                                        authUser._id,
-                                                                        notification._id,
-                                                                        "accepter"
-                                                                    );
-                                                                }}
-                                                            >
-                                                                Accepter
-                                                            </button>
-                                                            <button
-                                                                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                                                                onClick={() => {
-                                                                    assignLivreur(
-                                                                        notification.commande_id,
-                                                                        authUser._id,
-                                                                        notification._id,
-                                                                        "refuser"
-                                                                    );
-                                                                }}
-                                                            >
-                                                                Refuser
-                                                            </button>
+                                                        <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full transition-all duration-200">
+                                                            {/* Notification content */}
+                                                            <div className="flex-1">
+                                                                <span className="block text-gray-700 mb-1">
+                                                                    {notification.message ? (
+                                                                        notification.message
+                                                                    ) : (
+                                                                        <div className="flex items-center">
+                                                                            <FaBell />
+
+                                                                            <span className="ml-2">
+                                                                                Demande
+                                                                                de
+                                                                                livraison
+                                                                                de{" "}
+                                                                                <span className="font-medium text-gray-900">
+                                                                                    {notification
+                                                                                        .sender
+                                                                                        ?.nom ??
+                                                                                        "Système"}
+                                                                                </span>
+                                                                            </span>
+                                                                        </div>
+                                                                    )}
+                                                                </span>
+
+                                                                {/* Order details - can be expanded with more info */}
+                                                                <div className="mt-1 text-sm text-gray-500">
+                                                                    {notification
+                                                                        .commande_id
+                                                                        ?.details && (
+                                                                        <p>
+                                                                            Adresse:{" "}
+                                                                            {notification
+                                                                                .commande_id
+                                                                                .details
+                                                                                .address ||
+                                                                                "Non spécifiée"}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Action buttons */}
+                                                            <div className="flex gap-2 mt-2 sm:mt-0">
+                                                                <button
+                                                                    className="bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded"
+                                                                    onClick={() => {
+                                                                        assignLivreur(
+                                                                            notification.commande_id,
+                                                                            authUser._id,
+                                                                            notification._id,
+                                                                            "accepter"
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Accepter
+                                                                </button>
+                                                                <button
+                                                                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                                                                    onClick={() => {
+                                                                        assignLivreur(
+                                                                            notification.commande_id,
+                                                                            authUser._id,
+                                                                            notification._id,
+                                                                            "refuser"
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Refuser
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     ))}
                                             </li>

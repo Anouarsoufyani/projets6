@@ -502,19 +502,32 @@ export const assignLivreur = async (req, res) => {
                     ),
                 }))
                 .sort((a, b) => a.distance - b.distance);
-            const livreurChoisi = livreursDisponibles[0].livreur;
-            console.log("livreur choisi", livreurChoisi);
 
-            if (livreurChoisi) {
-                const newNotification = new Notification({
-                    sender: commande.commercant_id,
-                    receiver: livreurChoisi._id,
-                    isRequest: true,
-                    commande_id: commandeId,
-                    type: "nouvelle demande de livraison",
-                });
-                await newNotification.save();
+            try {
+                const livreurChoisi = livreursDisponibles[0].livreur;
+                console.log("livreur choisi", livreurChoisi);
+
+                if (livreurChoisi) {
+                    const newNotification = new Notification({
+                        sender: commande.commercant_id,
+                        receiver: livreurChoisi._id,
+                        isRequest: true,
+                        commande_id: commandeId,
+                        type: "nouvelle demande de livraison",
+                    });
+                    await newNotification.save();
+                }
+            } catch (error) {
+                console.error(
+                    "Erreur lors de l'assignation du livreur à la commande:",
+                    error
+                );
             }
+
+            return res.status(200).json({
+                success: true,
+                message: "Livraison refusée",
+            });
         }
 
         return res.status(200).json({
@@ -526,10 +539,6 @@ export const assignLivreur = async (req, res) => {
             "Erreur lors de l'assignation du livreur à la commande:",
             error
         );
-        return res.status(500).json({
-            success: false,
-            error: "Erreur serveur",
-        });
     }
 };
 

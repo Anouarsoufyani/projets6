@@ -473,8 +473,6 @@ export const updateStatut = async (req, res) => {
 };
 
 export const updateUserInfo = async (req, res) => {
-    console.log(req.body);
-
     try {
         const {
             userId,

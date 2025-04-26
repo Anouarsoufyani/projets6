@@ -19,7 +19,7 @@ const initialForm = {
     disponibilite: false,
     distance_max: "",
     adresses_favorites: [
-        { nom: "", rue: "", ville: "", code_postal: "", lat: "", lng: "" },
+        { rue: "", ville: "", code_postal: "", lat: "", lng: "" },
     ],
 };
 
@@ -69,16 +69,106 @@ const ProfilePage = () => {
         }
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (formData.newPassword && !formData.currentPassword) {
-            toast.error(
-                "Veuillez entrer votre mot de passe actuel pour en définir un nouveau"
+    const getCoords = async (adresse) => {
+        if (!adresse) throw new Error("L'adresse ne peut pas être vide");
+
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+            adresse
+        )}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.status !== "OK") {
+            throw new Error(
+                data.error_message || "Impossible de récupérer les coordonnées"
             );
-            return;
         }
-        updateProfile(formData);
-        setEdit(false);
+
+        return data.results[0].geometry.location;
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        try {
+            if (formData.newPassword && !formData.currentPassword) {
+                toast.error(
+                    "Veuillez entrer votre mot de passe actuel pour en définir un nouveau"
+                );
+                return;
+            }
+
+            // Copier les données du formulaire pour les modifier
+            const updatedFormData = { ...formData };
+
+            // Mettre à jour les coordonnées pour les adresses favorites si le rôle est client
+            if (
+                authUser.role === "client" &&
+                updatedFormData.adresses_favorites
+            ) {
+                for (
+                    let i = 0;
+                    i < updatedFormData.adresses_favorites.length;
+                    i++
+                ) {
+                    const favorite = updatedFormData.adresses_favorites[i];
+
+                    if (
+                        favorite?.rue &&
+                        favorite?.ville &&
+                        favorite?.code_postal
+                    ) {
+                        const adr = `${favorite.rue} ${favorite.ville} ${favorite.code_postal}`;
+                        try {
+                            const data = await getCoords(adr);
+                            updatedFormData.adresses_favorites[i].lat =
+                                data.lat;
+                            updatedFormData.adresses_favorites[i].lng =
+                                data.lng;
+                        } catch (error) {
+                            console.error(
+                                "Erreur récupération coordonnées :",
+                                error
+                            );
+                            toast.error(
+                                `Erreur pour l'adresse "${
+                                    favorite.nom || i + 1
+                                }": ${error.message}`
+                            );
+                        }
+                    }
+                }
+            }
+
+            // Mettre à jour les coordonnées pour l'adresse de la boutique si le rôle est commerçant
+            if (
+                authUser.role === "commercant" &&
+                updatedFormData.adresse_boutique?.rue &&
+                updatedFormData.adresse_boutique?.ville &&
+                updatedFormData.adresse_boutique?.code_postal
+            ) {
+                const adr = `${updatedFormData.adresse_boutique.rue} ${updatedFormData.adresse_boutique.ville} ${updatedFormData.adresse_boutique.code_postal}`;
+                try {
+                    const data = await getCoords(adr);
+                    updatedFormData.adresse_boutique.lat = data.lat;
+                    updatedFormData.adresse_boutique.lng = data.lng;
+                } catch (error) {
+                    console.error(
+                        "Erreur récupération coordonnées boutique:",
+                        error
+                    );
+                    toast.error(
+                        `Erreur pour l'adresse de la boutique: ${error.message}`
+                    );
+                }
+            }
+
+            // Soumettre les données mises à jour
+            updateProfile(updatedFormData);
+            setEdit(false);
+        } catch (error) {
+            toast.error(`Une erreur est survenue: ${error.message}`);
+        }
     };
 
     if (isLoading) {
@@ -171,46 +261,43 @@ const ProfilePage = () => {
                                         Adresse de la boutique
                                     </label>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {[
-                                            "rue",
-                                            "ville",
-                                            "code_postal",
-                                            "lat",
-                                            "lng",
-                                        ].map((field) => (
-                                            <input
-                                                key={field}
-                                                type={
-                                                    field === "lat" ||
-                                                    field === "lng"
-                                                        ? "number"
-                                                        : "text"
-                                                }
-                                                name={field}
-                                                placeholder={
-                                                    field
-                                                        .charAt(0)
-                                                        .toUpperCase() +
-                                                    field
-                                                        .slice(1)
-                                                        .replace("_", " ")
-                                                }
-                                                value={
-                                                    formData.adresse_boutique[
+                                        {["rue", "ville", "code_postal"].map(
+                                            (field) => (
+                                                <input
+                                                    key={field}
+                                                    type="text"
+                                                    name={field}
+                                                    placeholder={
                                                         field
-                                                    ]
-                                                }
-                                                onChange={(e) =>
-                                                    handleChange(
-                                                        e,
-                                                        "adresse_boutique",
+                                                            .charAt(0)
+                                                            .toUpperCase() +
                                                         field
-                                                    )
-                                                }
-                                                className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                            />
-                                        ))}
+                                                            .slice(1)
+                                                            .replace("_", " ")
+                                                    }
+                                                    value={
+                                                        formData
+                                                            .adresse_boutique[
+                                                            field
+                                                        ]
+                                                    }
+                                                    onChange={(e) =>
+                                                        handleChange(
+                                                            e,
+                                                            "adresse_boutique",
+                                                            field
+                                                        )
+                                                    }
+                                                    className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                                                />
+                                            )
+                                        )}
                                     </div>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Les coordonnées GPS seront
+                                        automatiquement calculées lors de la
+                                        sauvegarde.
+                                    </p>
                                 </div>
                             </>
                         )}
@@ -296,52 +383,79 @@ const ProfilePage = () => {
                                 <label className="block mb-1 text-sm font-medium text-gray-700">
                                     Adresses favorites
                                 </label>
-                                {formData.adresses_favorites.map(
-                                    (adresse, index) => (
-                                        <div
-                                            key={index}
-                                            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-2"
-                                        >
-                                            {[
-                                                "nom",
-                                                "rue",
-                                                "ville",
-                                                "code_postal",
-                                                "lat",
-                                                "lng",
-                                            ].map((field) => (
-                                                <input
-                                                    key={field}
-                                                    type={
-                                                        field === "lat" ||
-                                                        field === "lng"
-                                                            ? "number"
-                                                            : "text"
-                                                    }
-                                                    placeholder={
-                                                        field
-                                                            .charAt(0)
-                                                            .toUpperCase() +
-                                                        field
-                                                            .slice(1)
-                                                            .replace("_", " ")
-                                                    }
-                                                    value={adresse[field]}
-                                                    name={field}
-                                                    onChange={(e) =>
-                                                        handleChange(
-                                                            e,
-                                                            "adresses_favorites",
-                                                            null,
-                                                            index
-                                                        )
-                                                    }
-                                                    className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                                />
-                                            ))}
-                                        </div>
+                                {formData.adresses_favorites.length > 0 ? (
+                                    formData.adresses_favorites.map(
+                                        (adresse, index) => (
+                                            <div
+                                                key={index}
+                                                className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 p-3 border border-gray-100 rounded-lg bg-gray-50"
+                                            >
+                                                {[
+                                                    "rue",
+                                                    "ville",
+                                                    "code_postal",
+                                                ].map((field) => (
+                                                    <input
+                                                        key={field}
+                                                        type="text"
+                                                        placeholder={
+                                                            field
+                                                                .charAt(0)
+                                                                .toUpperCase() +
+                                                            field
+                                                                .slice(1)
+                                                                .replace(
+                                                                    "_",
+                                                                    " "
+                                                                )
+                                                        }
+                                                        value={
+                                                            adresse[field] || ""
+                                                        }
+                                                        name={field}
+                                                        onChange={(e) =>
+                                                            handleChange(
+                                                                e,
+                                                                "adresses_favorites",
+                                                                null,
+                                                                index
+                                                            )
+                                                        }
+                                                        className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                                                    />
+                                                ))}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newAddresses = [
+                                                            ...formData.adresses_favorites,
+                                                        ];
+                                                        newAddresses.splice(
+                                                            index,
+                                                            1
+                                                        );
+                                                        setFormData({
+                                                            ...formData,
+                                                            adresses_favorites:
+                                                                newAddresses,
+                                                        });
+                                                    }}
+                                                    className="text-red-500 hover:text-red-700 text-sm mt-2"
+                                                >
+                                                    Supprimer cette adresse
+                                                </button>
+                                            </div>
+                                        )
                                     )
+                                ) : (
+                                    <p className="text-gray-500 italic mb-2">
+                                        Aucune adresse favorite
+                                    </p>
                                 )}
+                                <p className="text-xs text-gray-500 mb-2">
+                                    Les coordonnées GPS seront automatiquement
+                                    calculées lors de la sauvegarde.
+                                </p>
                                 <button
                                     type="button"
                                     onClick={() =>
@@ -350,7 +464,6 @@ const ProfilePage = () => {
                                             adresses_favorites: [
                                                 ...formData.adresses_favorites,
                                                 {
-                                                    nom: "",
                                                     rue: "",
                                                     ville: "",
                                                     code_postal: "",
@@ -465,9 +578,11 @@ const ProfilePage = () => {
                                                             key={index}
                                                             className="break-words"
                                                         >
-                                                            {adresse.nom} -{" "}
                                                             {adresse.rue},{" "}
-                                                            {adresse.ville}
+                                                            {adresse.ville}{" "}
+                                                            {
+                                                                adresse.code_postal
+                                                            }
                                                         </li>
                                                     )
                                                 )}

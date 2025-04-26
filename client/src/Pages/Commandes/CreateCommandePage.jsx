@@ -204,6 +204,69 @@ const CreateCommandePage = () => {
                         <label className="text-sm font-medium text-gray-700">
                             Adresse de livraison
                         </label>
+
+                        {/* Sélecteur d'adresses favorites */}
+                        {authUser?.adresses_favorites &&
+                            authUser.adresses_favorites.length > 0 && (
+                                <div className="mb-2">
+                                    <select
+                                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                const selectedAddress =
+                                                    authUser.adresses_favorites[
+                                                        Number.parseInt(
+                                                            e.target.value
+                                                        )
+                                                    ];
+                                                setFormData({
+                                                    ...formData,
+                                                    adresse_livraison: {
+                                                        rue:
+                                                            selectedAddress.rue ||
+                                                            "",
+                                                        ville:
+                                                            selectedAddress.ville ||
+                                                            "",
+                                                        code_postal:
+                                                            selectedAddress.code_postal ||
+                                                            "",
+                                                        lat:
+                                                            selectedAddress.lat ||
+                                                            "",
+                                                        lng:
+                                                            selectedAddress.lng ||
+                                                            "",
+                                                    },
+                                                });
+                                            }
+                                        }}
+                                        defaultValue=""
+                                    >
+                                        <option value="">
+                                            -- Sélectionner une adresse favorite
+                                            --
+                                        </option>
+                                        {authUser.adresses_favorites.map(
+                                            (adresse, index) => (
+                                                <option
+                                                    key={index}
+                                                    value={index}
+                                                >
+                                                    {adresse.nom
+                                                        ? `${adresse.nom}: `
+                                                        : ""}
+                                                    {adresse.rue},{" "}
+                                                    {adresse.ville},{" "}
+                                                    {adresse.code_postal}
+                                                </option>
+                                            )
+                                        )}
+                                    </select>
+                                </div>
+                            )}
+
+                        {/* Champs d'adresse */}
                         <div className="relative">
                             <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
                             <input

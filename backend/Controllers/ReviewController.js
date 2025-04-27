@@ -9,7 +9,7 @@ export const createReview = async (req, res) => {
         const { targetId, targetType, rating, comment, commandeId } = req.body;
         const userId = req.user._id;
 
-        console.log("Creating review:", req.body);
+        
 
         // Vérifier si l'utilisateur a déjà laissé un avis pour cette commande et ce destinataire
         const existingReview = await Review.findOne({

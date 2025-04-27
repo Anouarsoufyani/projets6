@@ -21,8 +21,7 @@ export const deleteUser = async (userId) => {
 
 // Function to update user profile as admin
 export const updateUserProfile = async (userData) => {
-    console.log("userData", userData);
-
+    
     const user = await User.findById(userData._id);
     if (!user) throw new Error("User not found");
 

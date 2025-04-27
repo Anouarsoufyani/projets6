@@ -1,49 +1,43 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import toast from "react-hot-toast"
 
 export const useAssignLivreur = () => {
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
-    const mutation = useMutation({
-        mutationFn: async ({ commandeId, livreurId, requestId, response }) => {
-            const res = await fetch(`/api/commandes/assign-livreur`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    commandeId,
-                    livreurId,
-                    requestId,
-                    response,
-                }),
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(
-                    errorData.error || "Erreur lors de l'assignation du livreur"
-                );
-            }
-
-            return res.json();
+  const mutation = useMutation({
+    mutationFn: async ({ commandeId, livreurId, mode, vehicleTypes, criteria }) => {
+      const res = await fetch(`/api/commandes/assign-livreur`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        onSuccess: (res) => {
-            toast.success(res.message);
-            queryClient.invalidateQueries([
-                "getUserCommandes",
-                "notifications",
-            ]);
-        },
-        onError: (error) => {
-            toast.error(
-                error.message || "Erreur lors de l'assignation du livreur"
-            );
-        },
-    });
+        body: JSON.stringify({
+          commandeId,
+          livreurId,
+          mode, // 'manual' ou 'auto'
+          vehicleTypes,
+          criteria,
+        }),
+      })
 
-    // Retourner une fonction directement exécutable
-    return (commandeId, livreurId, requestId, response) => {
-        mutation.mutate({ commandeId, livreurId, requestId, response });
-    };
-};
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || "Erreur lors de l'assignation du livreur")
+      }
+
+      return res.json()
+    },
+    onSuccess: (res) => {
+      toast.success(res.message)
+      queryClient.invalidateQueries(["getUserCommandes", "notifications"])
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erreur lors de l'assignation du livreur")
+    },
+  })
+
+  // Retourner une fonction directement exécutable
+  return (params) => {
+    mutation.mutate(params)
+  }
+}

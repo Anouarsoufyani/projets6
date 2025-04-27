@@ -2,6 +2,7 @@
 import userModels from "../Models/User.js";
 import Commande from "../Models/Commandes.js";
 import Notification from "../Models/Notification.js";
+
 const { User, Livreur } = userModels;
 
 export const getCommandeById = async (req, res) => {
@@ -73,8 +74,6 @@ export const getCommandes = async (req, res) => {
 };
 
 export const createCommande = async (req, res) => {
-    console.log("test");
-    console.log(req.body);
 
     const { client_id, commercant_id, total, adresse_livraison } = req.body;
     const commande = new Commande({
@@ -132,7 +131,7 @@ export const createCommande = async (req, res) => {
             await newNotification.save();
         }
         await commande.save();
-        console.log("Commande fictive sauvegardée :", commande);
+        
 
         return res.status(201).json(commande);
     } catch (err) {
@@ -224,7 +223,7 @@ export const getCodeClient = async (req, res) => {
         const { id } = req.params;
 
         const commande = await Commande.findById(id).populate("livreur_id");
-        console.log("commande", commande);
+        
 
         if (!commande) {
             return res.status(404).json({
@@ -265,7 +264,7 @@ export const getCodeCommercant = async (req, res) => {
         const { id } = req.params;
 
         const commande = await Commande.findById(id).populate("livreur_id");
-        console.log("commande", commande);
+       
         if (!commande) {
             return res.status(404).json({
                 success: false,
@@ -305,8 +304,7 @@ export const validation_codeCL = async (req, res) => {
         const { code, id } = req.body;
 
         const commande = await Commande.findById(id).populate("livreur_id");
-        console.log("ID", id, code, commande.code_Client);
-
+        
         const livreur = await User.findById(commande.livreur_id);
 
         if (!commande) {
@@ -415,19 +413,30 @@ export const validation_codeCom = async (req, res) => {
 
 export const assignLivreur = async (req, res) => {
     try {
-        const { commandeId, livreurId, requestId, response } = req.body;
-
+        const { commandeId,
+            livreurId,
+            mode,
+            vehicleTypes,
+            criteria } = req.body;
+        
+        console.log("nkdndje",commandeId,
+            livreurId,
+            mode,
+            vehicleTypes,
+            criteria);
+        
         const commande = await Commande.findById(commandeId);
 
-        const notification = await Notification.findById(requestId);
-        console.log(commande, notification);
+        // const notification = await Notification.findById(requestId);
+        
 
-        if (!notification) {
-            return res.status(404).json({
-                success: false,
-                error: "Notification non trouvée",
-            });
-        }
+        // if (!notification) {
+        //     return res.status(404).json({
+        //         success: false,
+        //         error: "Notification non trouvée",
+        //     });
+        // }
+       
 
         if (!commande) {
             return res.status(404).json({
@@ -447,103 +456,275 @@ export const assignLivreur = async (req, res) => {
             commande.commercant_id
         ).select("-password");
 
-        const livreur = await User.findById(livreurId).select("-password");
+       
 
-        if (response === "accepter") {
-            const clientToNotify = await User.findById(
-                commande.client_id
-            ).select("-password");
+        if(mode =="manual"){
+            
+            const livreur = await User.findById(livreurId).select("-password");
 
-            commande.livreur_id = livreurId;
-            livreur.disponibilite = false;
-            commande.statut = "prete_a_etre_recuperee";
-            notification.isAccepted = true;
-            notification.save();
-            await livreur.save();
-            await commande.save();
-            if (commercantToNotify) {
-                const notification = new Notification({
-                    sender: req.user._id,
-                    receiver: commande.commercant_id,
-                    commande_id: commandeId,
-                    type: "nouvelle acceptation de livraison",
-                });
-                await notification.save();
-            }
-            if (clientToNotify) {
-                const notification = new Notification({
-                    sender: req.user._id,
-                    receiver: clientToNotify,
-                    commande_id: commandeId,
-                    type: "nouveau livreur assigné",
-                });
-                await notification.save();
-            }
-        } else if (response === "refuser") {
-            commande.livreur_id = null;
-            commande.statut = "en_preparation";
-            notification.isRefused = true;
-            notification.save();
-            await commande.save();
-            if (commercantToNotify) {
-                const notification = new Notification({
-                    sender: req.user._id,
-                    receiver: commercantToNotify,
-                    commande_id: commandeId,
-                    type: "refus de livraison",
-                });
-                await notification.save();
-            }
-            const livreurs = await Livreur.find({
-                disponibilite: true,
-                isWorking: true,
-            }).select("-password");
-            const livreursDisponibles = livreurs
-                .filter((livreur) => !livreur._id.equals(req.user._id))
-                .map((livreur) => ({
-                    livreur,
-                    distance: Math.sqrt(
-                        Math.pow(
-                            commande.adresse_livraison.lat -
-                                livreur.position.lat,
-                            2
-                        ) +
-                            Math.pow(
-                                commande.adresse_livraison.lng -
-                                    livreur.position.lng,
-                                2
-                            )
-                    ),
-                }))
-                .sort((a, b) => a.distance - b.distance);
-
-            try {
-                const livreurChoisi = livreursDisponibles[0].livreur;
-                console.log("livreur choisi", livreurChoisi);
-
-                if (livreurChoisi) {
-                    const newNotification = new Notification({
-                        sender: commande.commercant_id,
-                        receiver: livreurChoisi._id,
-                        isRequest: true,
-                        commande_id: commandeId,
-                        type: "nouvelle demande de livraison",
-                    });
-                    await newNotification.save();
-                }
-            } catch (error) {
-                console.error(
-                    "Erreur lors de l'assignation du livreur à la commande:",
-                    error
-                );
-            }
-
-            return res.status(200).json({
-                success: true,
-                message: "Livraison refusée",
+            const notification = new Notification({
+                sender: commande.commercant_id,
+                receiver: livreurId,
+                isRequest: true,
+                commande_id: commandeId,
+                type: "nouvelle demande de livraison",
             });
-        }
+            console.log("notification",notification);
+            
+            await notification.save();
 
+            if (notification.isAccepted==true) {
+                console.log("salut");
+                
+                const clientToNotify = await User.findById(
+                    commande.client_id
+                ).select("-password");
+
+                commande.livreur_id = livreurId;
+                livreur.disponibilite = false;
+                commande.statut = "prete_a_etre_recuperee";
+                notification.isAccepted = true;
+                notification.save();
+                await livreur.save();
+                await commande.save();
+                if (commercantToNotify) {
+                    const notification = new Notification({
+                        sender: req.user._id,
+                        receiver: commande.commercant_id,
+                        commande_id: commandeId,
+                        type: "nouvelle acceptation de livraison",
+                    });
+                    await notification.save();
+                }
+                if (clientToNotify) {
+                    const notification = new Notification({
+                        sender: req.user._id,
+                        receiver: clientToNotify,
+                        commande_id: commandeId,
+                        type: "nouveau livreur assigné",
+                    });
+                    await notification.save();
+                }
+            } else if (notification.isRefused==true) {
+                
+                console.log("salut");
+                
+                commande.livreur_id = null;
+                commande.statut = "en_preparation";
+                notification.isRefused = true;
+                notification.save();
+                await commande.save();
+                if (commercantToNotify) {
+                    const notification = new Notification({
+                        sender: req.user._id,
+                        receiver: commercantToNotify,
+                        commande_id: commandeId,
+                        type: "refus de livraison",
+                    });
+                    await notification.save();
+                }
+                const livreurs = await Livreur.find({
+                    disponibilite: true,
+                    isWorking: true,
+                }).select("-password");
+                const livreursDisponibles = livreurs
+                    .filter((livreur) => !livreur._id.equals(req.user._id))
+                    .map((livreur) => ({
+                        livreur,
+                        distance: Math.sqrt(
+                            Math.pow(
+                                commande.adresse_livraison.lat -
+                                    livreur.position.lat,
+                                2
+                            ) +
+                                Math.pow(
+                                    commande.adresse_livraison.lng -
+                                        livreur.position.lng,
+                                    2
+                                )
+                        ),
+                    }))
+                    .sort((a, b) => a.distance - b.distance);
+
+                try {
+                    const livreurChoisi = livreursDisponibles[0].livreur;
+                    
+
+                    if (livreurChoisi) {
+                        const newNotification = new Notification({
+                            sender: commande.commercant_id,
+                            receiver: livreurChoisi._id,
+                            isRequest: true,
+                            commande_id: commandeId,
+                            type: "nouvelle demande de livraison",
+                        });
+                        await newNotification.save();
+                    }
+                } catch (error) {
+                    console.error(
+                        "Erreur lors de l'assignation du livreur à la commande:",
+                        error
+                    );
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    message: "Livraison refusée",
+                });
+            }
+        }
+        else{
+            const livreurs = await Livreur.find({ disponibilite: true, isWorking: true }).select("-password");
+            const filtredLivreur = [];
+
+            for (const livreur of livreurs) {
+                const vehiculeActuel = livreur.vehicules.find(v => v.current && vehicleTypes.includes(v.type));
+                if (vehiculeActuel) {
+                    livreur.vehiculeActuel = vehiculeActuel; // stocke pour plus tard
+                    filtredLivreur.push(livreur);
+                }
+            }
+    
+            if (filtredLivreur.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: "Aucun livreur disponible avec le bon type de véhicule",
+                });
+            }
+    
+            // Construire les données enrichies
+            const livreursAvecInfos = filtredLivreur.map(livreur => {
+                const vehicule = livreur.vehiculeActuel;
+                const distance = calculateDistance(
+                    livreur.position.lat, livreur.position.lng,
+                    commande.adresse_livraison.lat, commande.adresse_livraison.lng
+                );
+                const duree = distance / 1000 / 60;
+    
+                return {
+                    livreur,
+                    note: livreur.note_moyenne || 0,
+                    distance,
+                    duree,
+                    capacite: vehicule.capacite || 0,
+                };
+            });
+    
+            // Filtrage hard selon les contraintes
+            const filtered = livreursAvecInfos.filter(({ capacite, duree, distance, note }) => {
+                const poidsLimit = criteria.find(c => c.type === "poids");
+                const dureeLimit = criteria.find(c => c.type === "duree");
+                const distLimit = criteria.find(c => c.type === "distanceMax");
+                const noteLimit = criteria.find(c => c.type === "note");
+    
+                if (poidsLimit && capacite < poidsLimit.value) return false;
+                if (dureeLimit && duree > dureeLimit.value) return false;
+                if (distLimit && distance > distLimit.value * 1000) return false;
+                if (noteLimit && note < noteLimit.value) return false;
+    
+                return true;
+            });
+    
+            if (filtered.length === 0) {
+                return res.status(404).json({ success: false, error: "Aucun livreur valide selon les critères" });
+            }
+    
+            // trier selon l’ordre de priorité
+            const orderedCriteria = criteria
+                .filter(c => c.order !== undefined)
+                .sort((a, b) => a.order - b.order);
+    
+            const sorted = filtered.sort((a, b) => {
+                for (const { type } of orderedCriteria) {
+                    if (type === "distance") {
+                        if (a.distance !== b.distance) return a.distance - b.distance;
+                    } else if (type === "rating" || type === "note") {
+                        if (b.note !== a.note) return b.note - a.note;
+                    } else if (type === "duree") {
+                        if (a.duree !== b.duree) return a.duree - b.duree;
+                    } else if (type === "poids") {
+                        if (b.capacite !== a.capacite) return b.capacite - a.capacite;
+                    }
+                }
+                return 0;
+            });
+            
+            console.log("livraison sort",sorted);
+            for (let i = 0; i < sorted.length; i++) {
+    
+                const livreurAssigne = sorted[i].livreur;
+                
+                const newNotification = new Notification({
+                    sender: commande.commercant_id,
+                    receiver: livreurAssigne._id,
+                    isRequest: true,
+                    commande_id: commandeId,
+                    type: "nouvelle demande de livraison",
+                });
+                await newNotification.save();
+                console.log("i:",i,newNotification);
+                
+                
+                await delay(45000);
+                
+                
+                if (newNotification.isAccepted==true){
+                    
+                    console.log("accepted");
+                    
+                    const clientToNotify = await User.findById(
+                        commande.client_id
+                    ).select("-password");
+                    const commercantToNotify = await User.findById(
+                        commande.commercant_id
+                    ).select("-password");
+            
+        
+                    commande.livreur_id = livreurAssigne._id;
+                    livreurAssigne.disponibilite = false;
+                    commande.statut = "prete_a_etre_recuperee";
+                    
+                    await livreurAssigne.save();
+                    await commande.save();
+                    if (commercantToNotify) {
+                        const notification = new Notification({
+                            sender: req.user._id,
+                            receiver: commande.commercant_id,
+                            commande_id: commandeId,
+                            type: "nouvelle acceptation de livraison",
+                        });
+                        await notification.save();
+                    }
+                    if (clientToNotify) {
+                        const notification = new Notification({
+                            sender: req.user._id,
+                            receiver: clientToNotify,
+                            commande_id: commandeId,
+                            type: "nouveau livreur assigné",
+                        });
+                        await notification.save();
+                    }
+                }
+                else if(newNotification.isRefused==true){
+                    console.log("refusey");
+                    
+                    const notification = new Notification({
+                        sender: req.user._id,
+                        receiver: commercantToNotify,
+                        commande_id: commandeId,
+                        type: "refus de livraison",
+                    });
+    
+                    await notification.save(); 
+    
+                    return res.status(200).json({
+                        success: true,
+                        message: "Livraison refusée",
+                    });
+                }
+                    
+            }
+        }
         return res.status(200).json({
             success: true,
             message: "Livreur assigné à la commande",
@@ -555,6 +736,198 @@ export const assignLivreur = async (req, res) => {
         );
     }
 };
+
+
+
+// Fonction de distance Euclidienne simple
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    return Math.sqrt(
+        Math.pow(lat1 - lat2, 2) + Math.pow(lon1 - lon2, 2)
+    );
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// export const assignLivreurAuto = async (req, res) => {
+//     try {
+//         const { commandeId, vehicleTypes, criteria } = req.body;
+
+//         const commande = await Commande.findById(commandeId).populate("livreur_id");
+
+//         if (!commande) {
+//             return res.status(404).json({ success: false, error: "Commande non trouvée" });
+//         }
+
+//         if (commande.livreur_id) {
+//             return res.status(400).json({ success: false, error: "La commande a déjà un livreur assigné" });
+//         }
+
+//         const livreurs = await Livreur.find({ disponibilite: true, isWorking: true }).select("-password");
+
+//         const filtredLivreur = [];
+
+//         for (const livreur of livreurs) {
+//             const vehiculeActuel = livreur.vehicules.find(v => v.current && vehicleTypes.includes(v.type));
+//             if (vehiculeActuel) {
+//                 livreur.vehiculeActuel = vehiculeActuel; // stocke pour plus tard
+//                 filtredLivreur.push(livreur);
+//             }
+//         }
+
+//         if (filtredLivreur.length === 0) {
+//             return res.status(404).json({
+//                 success: false,
+//                 error: "Aucun livreur disponible avec le bon type de véhicule",
+//             });
+//         }
+
+//         // Construire les données enrichies
+//         const livreursAvecInfos = filtredLivreur.map(livreur => {
+//             const vehicule = livreur.vehiculeActuel;
+//             const distance = calculateDistance(
+//                 livreur.position.lat, livreur.position.lng,
+//                 commande.adresse_livraison.lat, commande.adresse_livraison.lng
+//             );
+//             const duree = distance / 1000 / 60;
+
+//             return {
+//                 livreur,
+//                 note: livreur.note_moyenne || 0,
+//                 distance,
+//                 duree,
+//                 capacite: vehicule.capacite || 0,
+//             };
+//         });
+
+//         // Filtrage hard selon les contraintes
+//         const filtered = livreursAvecInfos.filter(({ capacite, duree, distance, note }) => {
+//             const poidsLimit = criteria.find(c => c.type === "poids");
+//             const dureeLimit = criteria.find(c => c.type === "duree");
+//             const distLimit = criteria.find(c => c.type === "distanceMax");
+//             const noteLimit = criteria.find(c => c.type === "note");
+
+//             if (poidsLimit && capacite < poidsLimit.value) return false;
+//             if (dureeLimit && duree > dureeLimit.value) return false;
+//             if (distLimit && distance > distLimit.value * 1000) return false;
+//             if (noteLimit && note < noteLimit.value) return false;
+
+//             return true;
+//         });
+
+//         if (filtered.length === 0) {
+//             return res.status(404).json({ success: false, error: "Aucun livreur valide selon les critères" });
+//         }
+
+//         // trier selon l’ordre de priorité
+//         const orderedCriteria = criteria
+//             .filter(c => c.order !== undefined)
+//             .sort((a, b) => a.order - b.order);
+
+//         const sorted = filtered.sort((a, b) => {
+//             for (const { type } of orderedCriteria) {
+//                 if (type === "distance") {
+//                     if (a.distance !== b.distance) return a.distance - b.distance;
+//                 } else if (type === "rating" || type === "note") {
+//                     if (b.note !== a.note) return b.note - a.note;
+//                 } else if (type === "duree") {
+//                     if (a.duree !== b.duree) return a.duree - b.duree;
+//                 } else if (type === "poids") {
+//                     if (b.capacite !== a.capacite) return b.capacite - a.capacite;
+//                 }
+//             }
+//             return 0;
+//         });
+        
+//         console.log("livraison sort",sorted);
+//         for (let i = 0; i < sorted.length; i++) {
+
+//             const livreurAssigne = sorted[i].livreur;
+            
+//             const newNotification = new Notification({
+//                 sender: commande.commercant_id,
+//                 receiver: livreurAssigne._id,
+//                 isRequest: true,
+//                 commande_id: commandeId,
+//                 type: "nouvelle demande de livraison",
+//             });
+//             await newNotification.save();
+//             console.log("i:",i,newNotification);
+            
+            
+//             await delay(45000);
+            
+            
+//             if (newNotification.isAccepted==true){
+                
+//                 console.log("accepted");
+                
+//                 const clientToNotify = await User.findById(
+//                     commande.client_id
+//                 ).select("-password");
+//                 const commercantToNotify = await User.findById(
+//                     commande.commercant_id
+//                 ).select("-password");
+        
+    
+//                 commande.livreur_id = livreurAssigne._id;
+//                 livreurAssigne.disponibilite = false;
+//                 commande.statut = "prete_a_etre_recuperee";
+                
+//                 await livreurAssigne.save();
+//                 await commande.save();
+//                 if (commercantToNotify) {
+//                     const notification = new Notification({
+//                         sender: req.user._id,
+//                         receiver: commande.commercant_id,
+//                         commande_id: commandeId,
+//                         type: "nouvelle acceptation de livraison",
+//                     });
+//                     await notification.save();
+//                 }
+//                 if (clientToNotify) {
+//                     const notification = new Notification({
+//                         sender: req.user._id,
+//                         receiver: clientToNotify,
+//                         commande_id: commandeId,
+//                         type: "nouveau livreur assigné",
+//                     });
+//                     await notification.save();
+//                 }
+//             }
+//             else if(newNotification.isRefused==true){
+//                 console.log("refusey");
+                
+//                 const notification = new Notification({
+//                     sender: req.user._id,
+//                     receiver: commercantToNotify,
+//                     commande_id: commandeId,
+//                     type: "refus de livraison",
+//                 });
+
+//                 await notification.save(); 
+
+//                 return res.status(200).json({
+//                     success: true,
+//                     message: "Livraison refusée",
+//                 });
+//             }
+                
+//         }
+        
+        
+
+//     } catch (error) {
+//         console.error(error);
+//         return res.status(500).json({ success: false, error: "Erreur lors de l'assignation du livreur." });
+//     }
+// };
+
+
+
+
+
 
 export const requestLivreur = async (req, res) => {
     try {
@@ -608,7 +981,7 @@ export const requestLivreur = async (req, res) => {
 export const updateCommandeStatus = async (req, res) => {
     try {
         const { commandeId, statut } = req.body;
-        console.log(commandeId, statut);
+        
 
         const commande = await Commande.findById(commandeId);
 
@@ -627,7 +1000,7 @@ export const updateCommandeStatus = async (req, res) => {
         );
 
         commande.statut = statut;
-        console.log(commande);
+        
 
         if (!userToNotify || !currentUser) {
             return res

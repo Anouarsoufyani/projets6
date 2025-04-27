@@ -99,7 +99,7 @@ export const signup = async (req, res) => {
             });
         }
 
-        console.log(newUser);
+        
 
         if (newUser) {
             await newUser.save();
@@ -117,7 +117,7 @@ export const signup = async (req, res) => {
                 role: newUser.role,
             });
         } else {
-            console.log("error", error.message);
+            
             return res
                 .status(400)
                 .json({ success: false, error: "Invalid user data" });
@@ -157,14 +157,14 @@ export const login = async (req, res) => {
                 role: user.role,
             });
         } else {
-            console.log("error", error.message);
+            
             return res.status(400).json({
                 success: false,
                 error: "Invalid username or password",
             });
         }
     } catch (error) {
-        console.log("Error logging in", error.message);
+        
         return res
             .status(400)
             .json({ success: false, error: "Invalid username or password" });
@@ -185,7 +185,7 @@ export const logout = async (req, res) => {
             .status(200)
             .json({ success: true, message: "Logged out successfully" });
     } catch (error) {
-        console.log("Error logging out", error.message);
+        
         return res.status(400).json({ success: false, error: "Logout failed" });
     }
 };

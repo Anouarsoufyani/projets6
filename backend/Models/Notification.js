@@ -35,7 +35,34 @@ const notificationSchema = new mongoose.Schema(
                 return this.isRequest ? false : undefined;
             },
         },
-
+        priority: {
+            type: Number,
+            default: 0,
+        },
+        score: {
+            type: Number,
+            default: 0,
+        },
+        isActive: {
+            type: Boolean,
+            default: false,
+        },
+        expiresAt: {
+            type: Date,
+            default: null,
+        },
+        responseTime: {
+            type: Date,
+            default: null,
+        },
+        refusalReason: {
+            type: String,
+            default: null,
+        },
+        metadata: {
+            type: Object,
+            default: {},
+        },
         type: {
             type: String,
             required: true,

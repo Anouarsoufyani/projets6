@@ -43,11 +43,11 @@ const NotificationsPage = () => {
         queryKey: ["notifications"],
         queryFn: getNotifications,
         retry: false,
-        refetchInterval: 5000,
+        refetchInterval: 3000, // Reduced from 5000ms to 3000ms for more responsive updates
     });
 
-    const assignLivreur = useAssignLivreur();
     const { data: authUser } = useAuthUserQuery();
+    const assignLivreur = useAssignLivreur(); // Move hook call outside conditional block
 
     // Mutation pour marquer comme lu
     const markAsReadMutation = useMutation({
@@ -295,7 +295,12 @@ const NotificationsPage = () => {
                         <div
                             key={notification._id}
                             className={`p-4 bg-white rounded-lg shadow-sm border-l-4 ${
-                                notification.read
+                                notification.isActive &&
+                                notification.isRequest &&
+                                !notification.isAccepted &&
+                                !notification.isRefused
+                                    ? "border-amber-500 animate-pulse"
+                                    : notification.read
                                     ? "border-gray-200"
                                     : "border-emerald-500"
                             } transition-all hover:shadow-md transform hover:-translate-y-1 duration-200`}
@@ -341,7 +346,8 @@ const NotificationsPage = () => {
                                         {notification.isRequest &&
                                             (notification.isAccepted &&
                                             notification.commande_id
-                                                .livreur_id == authUser._id ? (
+                                                ?.livreur_id ===
+                                                authUser._id ? (
                                                 <>
                                                     <span className="mt-2 text-green-600">
                                                         Vous avez accepté la
@@ -357,12 +363,12 @@ const NotificationsPage = () => {
                                                 </>
                                             ) : notification.isRefused ? (
                                                 <span className="mt-2 text-red-600">
-                                                    Vous avez refusé la commande
+                                                    {notification.refusalReason ||
+                                                        "Vous avez refusé la commande"}
                                                 </span>
-                                            ) : notification.commande_id &&
-                                              notification.commande_id
-                                                  .livreur_id ==
-                                                  authUser._id ? (
+                                            ) : notification.commande_id
+                                                  ?.livreur_id ===
+                                              authUser._id ? (
                                                 <>
                                                     <span className="mt-2 text-green-600">
                                                         Vous avez accepté la
@@ -376,41 +382,79 @@ const NotificationsPage = () => {
                                                         Suivi de la commande
                                                     </Link>
                                                 </>
-                                            ) : notification.commande_id &&
-                                              notification.commande_id
-                                                  .livreur_id ? (
+                                            ) : notification.commande_id
+                                                  ?.livreur_id ? (
                                                 <span className="mt-2 text-gray-600">
                                                     La commande a déjà un
                                                     livreur assigné
                                                 </span>
+                                            ) : !notification.isActive ? (
+                                                <div className="mt-2">
+                                                    <span className="text-gray-500">
+                                                        En attente de votre
+                                                        tour...
+                                                    </span>
+                                                    <div className="mt-1 text-xs text-gray-400">
+                                                        {notification.priority >
+                                                        1
+                                                            ? `Vous êtes en position ${notification.priority} dans la file d'attente`
+                                                            : "Vous serez notifié si le livreur précédent refuse ou ne répond pas"}
+                                                    </div>
+                                                </div>
                                             ) : (
-                                                <div className="mt-2 flex gap-2">
-                                                    <button
-                                                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                                                        onClick={() => {
-                                                            assignLivreur(
-                                                                notification.commande_id,
-                                                                authUser._id,
-                                                                notification._id,
-                                                                "accepter"
-                                                            );
-                                                        }}
-                                                    >
-                                                        Accepter
-                                                    </button>
-                                                    <button
-                                                        className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                                                        onClick={() => {
-                                                            assignLivreur(
-                                                                notification.commande_id,
-                                                                authUser._id,
-                                                                notification._id,
-                                                                "refuser"
-                                                            );
-                                                        }}
-                                                    >
-                                                        Refuser
-                                                    </button>
+                                                <div className="mt-2">
+                                                    <div className="mb-2 text-sm font-medium text-emerald-700">
+                                                        Nouvelle demande de
+                                                        livraison ! Veuillez
+                                                        répondre dans les 60
+                                                        secondes.
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                                                            disabled={
+                                                                assignLivreur.isResponding
+                                                            }
+                                                            onClick={() => {
+                                                                assignLivreur.handleLivreurResponse(
+                                                                    {
+                                                                        notificationId:
+                                                                            notification._id,
+                                                                        response:
+                                                                            "accept",
+                                                                    }
+                                                                );
+                                                            }}
+                                                        >
+                                                            Accepter
+                                                        </button>
+                                                        <button
+                                                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-400"
+                                                            disabled={
+                                                                assignLivreur.isResponding
+                                                            }
+                                                            onClick={() => {
+                                                                assignLivreur.handleLivreurResponse(
+                                                                    {
+                                                                        notificationId:
+                                                                            notification._id,
+                                                                        response:
+                                                                            "refuse",
+                                                                    }
+                                                                );
+                                                            }}
+                                                        >
+                                                            Refuser
+                                                        </button>
+                                                    </div>
+                                                    {notification.expiresAt && (
+                                                        <div className="mt-2 text-xs text-amber-600">
+                                                            Expire le:{" "}
+                                                            {new Date(
+                                                                notification.expiresAt
+                                                            ).toLocaleTimeString()}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ))}
                                     </p>

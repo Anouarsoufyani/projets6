@@ -13,8 +13,24 @@ import {
     StarRating,
     getAverageRating,
 } from "../../Components/Reviews/ReviewDisplay";
-import { FaStar, FaBell } from "react-icons/fa";
+import {
+    FaStar,
+    FaBell,
+    FaRegClock,
+    FaRegEnvelope,
+    FaEye,
+    FaThumbsUp,
+    FaThumbsDown,
+    FaSpinner,
+    FaExclamationTriangle,
+    FaArrowRight,
+    FaLocationArrow,
+    FaStopwatch,
+    FaStore,
+    FaBox,
+} from "react-icons/fa";
 import { useGetReviewsForUser } from "../../Hooks";
+import { useCheckNotificationTimeouts } from "../../Hooks/mutations/useCheckNotificationTimeouts";
 import { useNavigate } from "react-router";
 const containerStyle = {
     width: "100%",
@@ -23,14 +39,16 @@ const containerStyle = {
 import toast from "react-hot-toast";
 import { Link } from "react-router";
 
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useCallback, useRef } from "react";
 
+// Fetch notifications function
 const getNotifications = async () => {
     try {
         const res = await fetch(`/api/notifications`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
+            cache: "no-cache",
         });
 
         const data = await res.json();
@@ -41,8 +59,73 @@ const getNotifications = async () => {
 
         return data;
     } catch (error) {
-        toast.error(error.message);
+        console.error("Error fetching notifications:", error);
         throw error;
+    }
+};
+
+// Format date helper function
+const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return "À l'instant";
+    if (diffMins < 60)
+        return `Il y a ${diffMins} minute${diffMins > 1 ? "s" : ""}`;
+    if (diffHours < 24)
+        return `Il y a ${diffHours} heure${diffHours > 1 ? "s" : ""}`;
+    if (diffDays < 7)
+        return `Il y a ${diffDays} jour${diffDays > 1 ? "s" : ""}`;
+
+    return date.toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+};
+
+// Function to check if a notification is active (can be acted upon)
+const isNotificationActive = (notification) => {
+    if (!notification) return false;
+
+    // Check if notification has expired
+    const expiresAt = notification.expiresAt
+        ? new Date(notification.expiresAt)
+        : null;
+    const hasExpired = expiresAt && new Date() > expiresAt;
+
+    return (
+        notification.isRequest &&
+        notification.isActive &&
+        !notification.isAccepted &&
+        !notification.isRefused &&
+        notification.commande_id &&
+        !notification.commande_id.livreur_id &&
+        !hasExpired
+    );
+};
+
+// Calculate time remaining for a notification
+const getTimeRemaining = (expiresAt) => {
+    if (!expiresAt) return null;
+
+    const now = new Date();
+    const expiry = new Date(expiresAt);
+    const diffMs = expiry - now;
+
+    if (diffMs <= 0) return "Expirée";
+
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffSecs = Math.floor((diffMs % 60000) / 1000);
+
+    if (diffMins > 0) {
+        return `${diffMins}m ${diffSecs}s`;
+    } else {
+        return `${diffSecs}s`;
     }
 };
 
@@ -52,16 +135,40 @@ const DashboardPageLivreur = () => {
     const { data: authUser } = useAuthUserQuery();
     const { toggleActive, isToggleActive } = useToggleActive();
     const { data: commandeEnCours, isLoading } = useGetLatestPendingCommande();
-    const { data: notifications, isLoading: isLoadingNotifications } = useQuery(
-        {
-            queryKey: ["notifications"],
-            queryFn: getNotifications,
-            retry: false,
-            refetchInterval: 5000,
-        }
-    );
+    const queryClient = useQueryClient();
+    const checkingTimeoutsRef = useRef(false);
+    const checkTimeoutsMutation = useCheckNotificationTimeouts();
 
-    const assignLivreur = useAssignLivreur();
+    // Track notifications being processed
+    const [processingNotifications, setProcessingNotifications] = useState([]);
+
+    // State for time remaining counters
+    const [timeRemainingState, setTimeRemainingState] = useState({});
+
+    // Reference to store the original notification data with expiry times
+    const notificationsRef = useRef([]);
+
+    // Fetch notifications with improved error handling and caching
+    const {
+        data: notificationsData,
+        isLoading: isLoadingNotifications,
+        error: notificationsError,
+    } = useQuery({
+        queryKey: ["notifications"],
+        queryFn: getNotifications,
+        retry: 3,
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+        refetchInterval: 10000,
+        refetchOnWindowFocus: true,
+        staleTime: 5000,
+        onError: (error) => {
+            console.error("Error fetching notifications:", error);
+        },
+    });
+
+    // Use the existing useAssignLivreur hook that contains handleLivreurResponse
+    const { handleLivreurResponse, isResponding } = useAssignLivreur();
+
     const getUserById = useGetUserById();
 
     const { position, loading, error } = useDeliveryPosition(
@@ -70,12 +177,210 @@ const DashboardPageLivreur = () => {
         commandeEnCours?._id
     );
 
-    // Récupérer les avis pour le livreur
-    const { data: reviews } = useGetReviewsForUser(authUser?._id);
+    // Récupérer les avis pour le livreur avec une limite de 5
+    const { data: reviews, isLoading: isLoadingReviews } = useGetReviewsForUser(
+        authUser?._id
+    );
     const averageRating = getAverageRating(reviews);
 
     const [selectedVehicle, setSelectedVehicle] = useState("");
     const [showVehicleSelector, setShowVehicleSelector] = useState(false);
+
+    // Process notifications to get only active ones
+    const notifications = notificationsData?.notifications || [];
+
+    // Update notifications reference when data changes
+    useEffect(() => {
+        if (notifications && notifications.length > 0) {
+            notificationsRef.current = notifications;
+        }
+    }, [notifications]);
+
+    // Filter active delivery requests (not expired, not accepted, not refused)
+    const activeDeliveryRequests = notifications
+        .filter((notification) => isNotificationActive(notification))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+
+    // Count of active delivery requests
+    const activeRequestCount = activeDeliveryRequests.length;
+
+    // Function to check for expired notifications
+    const checkExpiredNotifications = useCallback(async () => {
+        if (authUser && !checkingTimeoutsRef.current) {
+            checkingTimeoutsRef.current = true;
+            try {
+                await checkTimeoutsMutation.mutateAsync();
+            } finally {
+                checkingTimeoutsRef.current = false;
+            }
+        }
+    }, [authUser, checkTimeoutsMutation]);
+
+    // Set up interval to check for expired notifications
+    useEffect(() => {
+        // Check immediately on component mount
+        checkExpiredNotifications();
+
+        // Set up interval to check every 15 seconds
+        const intervalId = setInterval(checkExpiredNotifications, 15000);
+
+        // Clean up interval on component unmount
+        return () => clearInterval(intervalId);
+    }, [checkExpiredNotifications]);
+
+    // Check for active notifications that are about to expire
+    useEffect(() => {
+        if (!notifications) return;
+
+        const activeNotifications = notifications.filter(
+            (n) =>
+                n.isActive &&
+                n.isRequest &&
+                !n.isAccepted &&
+                !n.isRefused &&
+                n.expiresAt
+        );
+
+        // Clear any existing timeouts
+        const timeoutIds = [];
+
+        // For each active notification, set up a timeout to check expiration
+        activeNotifications.forEach((notification) => {
+            const expiresAt = new Date(notification.expiresAt).getTime();
+            const now = Date.now();
+
+            if (expiresAt > now) {
+                const timeUntilExpiry = expiresAt - now;
+
+                // Set timeout to check expiration when the notification is about to expire
+                const timeoutId = setTimeout(() => {
+                    checkExpiredNotifications();
+                }, timeUntilExpiry + 1000); // Add 1 second buffer
+
+                timeoutIds.push(timeoutId);
+            }
+        });
+
+        // Clean up timeouts
+        return () => {
+            timeoutIds.forEach((id) => clearTimeout(id));
+        };
+    }, [notifications, checkExpiredNotifications]);
+
+    // Get the 5 most recent reviews
+    const recentReviews = reviews
+        ? [...reviews]
+              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+              .slice(0, 5)
+        : [];
+
+    // Handle notification response (accept/refuse)
+    const handleNotificationResponse = useCallback(
+        (notification, action) => {
+            if (!notification || !notification._id) {
+                toast.error("Données de notification invalides");
+                return;
+            }
+
+            // Add notification to processing list
+            setProcessingNotifications((prev) => [...prev, notification._id]);
+
+            // Use the handleLivreurResponse function from useAssignLivreur hook
+            handleLivreurResponse({
+                notificationId: notification._id,
+                response: action === "accepter" ? "accept" : "refuse",
+            })
+                .then(() => {
+                    // Success handling is done in the hook
+                    queryClient.invalidateQueries(["notifications"]);
+                })
+                .catch((error) => {
+                    // Error handling
+                    toast.error(
+                        `Erreur: ${error.message || "Une erreur est survenue"}`
+                    );
+                    console.error("Error processing notification:", error);
+                })
+                .finally(() => {
+                    // Remove notification from processing list
+                    setProcessingNotifications((prev) =>
+                        prev.filter((id) => id !== notification._id)
+                    );
+                });
+        },
+        [handleLivreurResponse, queryClient]
+    );
+
+    // Force refresh notifications when component mounts and periodically
+    useEffect(() => {
+        // Initial refresh
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+
+        // Set up periodic refresh
+        const intervalId = setInterval(() => {
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        }, 30000); // Every 30 seconds
+
+        return () => clearInterval(intervalId);
+    }, [queryClient]);
+
+    // Update time remaining counters every second
+    useEffect(() => {
+        const updateTimeRemaining = () => {
+            const updatedTimeRemaining = {};
+
+            notificationsRef.current.forEach((notification) => {
+                if (notification.expiresAt) {
+                    updatedTimeRemaining[notification._id] = getTimeRemaining(
+                        notification.expiresAt
+                    );
+                }
+            });
+
+            setTimeRemainingState(updatedTimeRemaining);
+        };
+
+        // Initial update
+        updateTimeRemaining();
+
+        // Set up interval to update every second
+        const intervalId = setInterval(updateTimeRemaining, 1000);
+
+        return () => clearInterval(intervalId);
+    }, [notifications]);
+
+    // Set up timers for notifications that have expiration times
+    useEffect(() => {
+        if (!notifications || notifications.length === 0) return;
+
+        // Create timers for notifications with expiration times
+        const timers = notifications
+            .filter(
+                (notification) =>
+                    notification.expiresAt && isNotificationActive(notification)
+            )
+            .map((notification) => {
+                const now = new Date();
+                const expiry = new Date(notification.expiresAt);
+                const timeUntilExpiry = expiry - now;
+
+                if (timeUntilExpiry <= 0) return null;
+
+                return setTimeout(() => {
+                    // Refresh notifications when one expires
+                    queryClient.invalidateQueries({
+                        queryKey: ["notifications"],
+                    });
+                }, timeUntilExpiry + 1000); // Add 1 second buffer
+            })
+            .filter(Boolean);
+
+        // Cleanup function
+        return () => {
+            timers.forEach((timer) => clearTimeout(timer));
+        };
+    }, [notifications, queryClient]);
 
     const handleToggleActive = async () => {
         if (!authUser?._id) return;
@@ -181,12 +486,9 @@ const DashboardPageLivreur = () => {
             if (!commercantRes.ok) {
                 throw new Error("Erreur lors de la récupération du commerçant");
             }
-            console.log("commercantRes", commercantRes);
 
             const commercantData = await commercantRes.json();
             const commercant = commercantData.data;
-
-            console.log("commercant", commercant);
 
             if (!commercant || !commercant.adresse_boutique) {
                 toast.error("Adresse de la boutique non disponible");
@@ -234,7 +536,6 @@ const DashboardPageLivreur = () => {
                 // If coordinates aren't directly available, try to geocode the address
                 const addressString = `${commercant.adresse_boutique.rue}, ${commercant.adresse_boutique.code_postal} ${commercant.adresse_boutique.ville}`;
 
-                // You mentioned useGetCoords hook, assuming it works like this:
                 try {
                     const geocodeRes = await fetch(
                         `/api/geocode?address=${encodeURIComponent(
@@ -311,12 +612,13 @@ const DashboardPageLivreur = () => {
         navigate(`/livraison/${commandeEnCours._id}`);
     }
 
-    if (isLoadingNotifications) {
+    // Loading state for the entire dashboard
+    if (isLoadingNotifications && isLoadingReviews) {
         return (
-            <div className="w-full h-full p-6 flex flex-col">
+            <div className="w-full h-full p-4 sm:p-6 flex flex-col">
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-emerald-700">
-                        Notifications
+                    <h1 className="text-xl sm:text-2xl font-bold text-emerald-700">
+                        Tableau de bord
                     </h1>
                 </div>
                 <div className="flex justify-center items-center h-64">
@@ -327,10 +629,10 @@ const DashboardPageLivreur = () => {
     }
 
     return (
-        <div className="w-full h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-6">
+        <div className="w-full h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-4 sm:p-6">
             {authUser?.statut !== "vérifié" ? (
-                <div className="flex flex-col gap-4 bg-white p-6 rounded-lg shadow-lg mb-6 text-center">
-                    <h1 className="text-2xl font-bold text-red-600 mb-6">
+                <div className="flex flex-col gap-4 bg-white p-4 sm:p-6 rounded-lg shadow-lg mb-6 text-center">
+                    <h1 className="text-xl sm:text-2xl font-bold text-red-600 mb-4 sm:mb-6">
                         Compte non vérifié
                     </h1>
                     <p className="text-gray-700">
@@ -351,16 +653,16 @@ const DashboardPageLivreur = () => {
             ) : (
                 <>
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-                        <h1 className="text-2xl font-bold text-emerald-700">
+                        <h1 className="text-xl sm:text-2xl font-bold text-emerald-700">
                             Bienvenue {authUser.nom}
                         </h1>
 
                         {/* Affichage de la note moyenne */}
                         <div className="bg-white px-4 py-2 rounded-lg shadow-md flex items-center gap-3 mt-2 md:mt-0">
-                            <FaStar className="text-yellow-500 h-6 w-6" />
+                            <FaStar className="text-yellow-500 h-5 w-5 sm:h-6 sm:w-6" />
                             <div>
                                 <div className="flex items-center">
-                                    <span className="text-xl font-bold text-gray-800 mr-2">
+                                    <span className="text-lg sm:text-xl font-bold text-gray-800 mr-2">
                                         {authUser.note_moyenne}
                                     </span>
                                     <StarRating
@@ -376,13 +678,11 @@ const DashboardPageLivreur = () => {
                     </div>
 
                     <div
-                        className={`flex flex-col gap-4 bg-white p-6 rounded-lg shadow-lg mb-6`}
+                        className={`flex flex-col gap-4 bg-white p-4 sm:p-6 rounded-lg shadow-lg mb-6`}
                     >
                         <div className="flex justify-center items-center">
                             <button
-                                onClick={() => {
-                                    handleToggleActive();
-                                }}
+                                onClick={handleToggleActive}
                                 disabled={isToggleActive || commandeEnCours}
                                 className={`${
                                     isToggleActive || commandeEnCours
@@ -533,7 +833,7 @@ const DashboardPageLivreur = () => {
                         )}
 
                         {authUser.isWorking && (
-                            <div className="w-full h-[500px] mt-4 relative">
+                            <div className="w-full h-[300px] sm:h-[400px] md:h-[500px] mt-4 relative">
                                 {loading ? (
                                     <p className="text-gray-600">
                                         Chargement de la carte...
@@ -554,12 +854,12 @@ const DashboardPageLivreur = () => {
                                             }}
                                         >
                                             {/* Current position marker */}
-                                            {/* <Marker
+                                            <Marker
                                                 position={position}
                                                 icon={{
                                                     url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
                                                 }}
-                                            /> */}
+                                            />
 
                                             {/* Shop marker if we have a selected shop but no directions yet */}
                                             {selectedShop &&
@@ -672,213 +972,357 @@ const DashboardPageLivreur = () => {
                     </div>
 
                     {/* Affichage des notifications de demande de livraison */}
-                    {notifications &&
-                        notifications.notifications.length > 0 && (
-                            <div className="bg-white p-6 rounded-lg shadow-lg">
-                                <h2 className="text-xl font-semibold text-emerald-700 mb-4 border-b border-emerald-100 pb-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+                        {/* Demandes de livraison - Enhanced UI */}
+                        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+                            {/* Header with notification count badge */}
+                            <div className="bg-gradient-to-r from-emerald-600 to-teal-500 p-4 flex items-center justify-between">
+                                <h2 className="text-lg sm:text-xl font-semibold text-white flex items-center">
+                                    <FaBell className="mr-2" />
                                     Demandes de livraison
                                 </h2>
-                                <ul className="space-y-4">
-                                    {notifications.notifications
-                                        .filter(
-                                            (notification) =>
-                                                notification.isRequest
-                                        )
-                                        .map((notification) => (
-                                            <li
-                                                key={notification._id}
-                                                className="flex items-center justify-between p-4 bg-gray-100 rounded-lg shadow-md"
-                                            >
-                                                {notification.isRequest &&
-                                                    (notification.isAccepted &&
-                                                    notification.commande_id
-                                                        .livreur_id ==
-                                                        authUser._id ? (
-                                                        <>
-                                                            <span className="mt-2 text-green-600">
-                                                                Vous avez
-                                                                accepté la
-                                                                commande
-                                                            </span>
-                                                            <br />
-                                                            <Link
-                                                                to={`/livraison/${notification.commande_id._id}`}
-                                                                className="text-emerald-600 underline hover:text-emerald-400 transition-all mt-2"
-                                                            >
-                                                                Suivi de la
-                                                                commande
-                                                            </Link>
-                                                        </>
-                                                    ) : notification.isRefused ? (
-                                                        <span className="mt-2 text-red-600">
-                                                            Vous avez refusé la
-                                                            commande
-                                                        </span>
-                                                    ) : notification.commande_id &&
-                                                      notification.commande_id
-                                                          .livreur_id ==
-                                                          authUser._id ? (
-                                                        <>
-                                                            <span className="mt-2 text-green-600">
-                                                                Vous avez
-                                                                accepté la
-                                                                commande
-                                                            </span>
-                                                            <br />
-                                                            <Link
-                                                                to={`/livraison/${notification.commande_id._id}`}
-                                                                className="text-emerald-600 underline hover:text-emerald-400 transition-all mt-2"
-                                                            >
-                                                                Suivi de la
-                                                                commande
-                                                            </Link>
-                                                        </>
-                                                    ) : notification.commande_id &&
-                                                      notification.commande_id
-                                                          .livreur_id ? (
-                                                        <span className="mt-2 text-gray-600">
-                                                            La commande a déjà
-                                                            un livreur assigné
-                                                        </span>
-                                                    ) : (
-                                                        <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full transition-all duration-200">
-                                                            {/* Notification content */}
-                                                            <div className="flex-1">
-                                                                <span className="block text-gray-700 mb-1">
-                                                                    {notification.message ? (
-                                                                        notification.message
-                                                                    ) : (
-                                                                        <div className="flex items-center">
-                                                                            <FaBell />
+                                {activeRequestCount > 0 && (
+                                    <span className="bg-white text-emerald-600 font-bold text-sm px-3 py-1 rounded-full shadow-sm animate-pulse">
+                                        {activeRequestCount} nouvelle
+                                        {activeRequestCount > 1 ? "s" : ""}
+                                    </span>
+                                )}
+                            </div>
 
-                                                                            <span className="ml-2">
-                                                                                Demande
-                                                                                de
-                                                                                livraison
-                                                                                de{" "}
-                                                                                <span className="font-medium text-gray-900">
+                            {/* Notification content */}
+                            <div className="p-4">
+                                {isLoadingNotifications ? (
+                                    <div className="flex justify-center items-center h-32">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-600"></div>
+                                    </div>
+                                ) : notificationsError ? (
+                                    <div className="flex flex-col items-center justify-center py-6 text-red-500">
+                                        <FaExclamationTriangle className="text-3xl mb-2" />
+                                        <p>
+                                            Erreur lors du chargement des
+                                            notifications
+                                        </p>
+                                        <button
+                                            onClick={() =>
+                                                queryClient.invalidateQueries({
+                                                    queryKey: ["notifications"],
+                                                })
+                                            }
+                                            className="mt-2 text-sm bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded-md transition-colors"
+                                        >
+                                            Réessayer
+                                        </button>
+                                    </div>
+                                ) : activeDeliveryRequests.length > 0 ? (
+                                    <ul className="space-y-3">
+                                        {activeDeliveryRequests.map(
+                                            (notification) => {
+                                                const isProcessing =
+                                                    processingNotifications.includes(
+                                                        notification._id
+                                                    );
+                                                // Use the real-time updated time remaining from state
+                                                const timeRemaining =
+                                                    timeRemainingState[
+                                                        notification._id
+                                                    ] ||
+                                                    (notification.expiresAt
+                                                        ? getTimeRemaining(
+                                                              notification.expiresAt
+                                                          )
+                                                        : null);
+
+                                                return (
+                                                    <li
+                                                        key={notification._id}
+                                                        className="relative bg-white border border-emerald-100 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                                                    >
+                                                        {/* Colored status bar */}
+                                                        <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+
+                                                        <div className="p-4 pl-5">
+                                                            <div className="flex flex-col sm:flex-row items-start justify-between gap-3 w-full">
+                                                                {/* Notification content with improved layout */}
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center mb-2">
+                                                                        <div className="p-2 rounded-full bg-emerald-100 text-emerald-600 mr-3">
+                                                                            <FaStore className="h-4 w-4" />
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="flex items-center">
+                                                                                <span className="font-medium text-gray-800">
                                                                                     {notification
                                                                                         .sender
-                                                                                        ?.nom ??
+                                                                                        ?.nom_etablissement ??
+                                                                                        notification
+                                                                                            .sender
+                                                                                            ?.nom ??
                                                                                         "Système"}
                                                                                 </span>
+                                                                                <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                                                                                    En
+                                                                                    attente
+                                                                                </span>
+                                                                            </div>
+                                                                            <div className="flex items-center text-xs text-gray-500 mt-1">
+                                                                                <FaRegClock className="mr-1 flex-shrink-0" />
+                                                                                <span>
+                                                                                    {formatDate(
+                                                                                        notification.createdAt
+                                                                                    )}
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Order details with icons */}
+                                                                    <div className="ml-11 text-sm text-gray-600">
+                                                                        {notification
+                                                                            .commande_id
+                                                                            ?.details && (
+                                                                            <div className="flex items-start mb-1">
+                                                                                <FaLocationArrow className="mr-2 mt-1 text-emerald-500 flex-shrink-0" />
+                                                                                <span>
+                                                                                    <span className="font-medium">
+                                                                                        Adresse:
+                                                                                    </span>{" "}
+                                                                                    {notification
+                                                                                        .commande_id
+                                                                                        .details
+                                                                                        .address ||
+                                                                                        "Non spécifiée"}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+
+                                                                        {notification
+                                                                            .commande_id
+                                                                            ?.details
+                                                                            ?.items && (
+                                                                            <div className="flex items-start mb-1">
+                                                                                <FaBox className="mr-2 mt-1 text-emerald-500 flex-shrink-0" />
+                                                                                <span>
+                                                                                    <span className="font-medium">
+                                                                                        Articles:
+                                                                                    </span>{" "}
+                                                                                    {
+                                                                                        notification
+                                                                                            .commande_id
+                                                                                            .details
+                                                                                            .items
+                                                                                            .length
+                                                                                    }{" "}
+                                                                                    article(s)
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Time remaining and action buttons */}
+                                                                <div className="flex flex-col items-end gap-2 min-w-[120px]">
+                                                                    {/* Time remaining with animated countdown */}
+                                                                    {timeRemaining && (
+                                                                        <div className="flex items-center bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                                                                            <FaStopwatch className="text-amber-500 mr-1.5" />
+                                                                            <span
+                                                                                className={`text-sm font-medium ${
+                                                                                    timeRemaining ===
+                                                                                    "Expirée"
+                                                                                        ? "text-red-600"
+                                                                                        : timeRemaining.startsWith(
+                                                                                              "0"
+                                                                                          )
+                                                                                        ? "text-red-500 animate-pulse"
+                                                                                        : "text-amber-700"
+                                                                                }`}
+                                                                            >
+                                                                                {
+                                                                                    timeRemaining
+                                                                                }
                                                                             </span>
                                                                         </div>
                                                                     )}
-                                                                </span>
 
-                                                                {/* Order details - can be expanded with more info */}
-                                                                <div className="mt-1 text-sm text-gray-500">
-                                                                    {notification
-                                                                        .commande_id
-                                                                        ?.details && (
-                                                                        <p>
-                                                                            Adresse:{" "}
-                                                                            {notification
-                                                                                .commande_id
-                                                                                .details
-                                                                                .address ||
-                                                                                "Non spécifiée"}
-                                                                        </p>
-                                                                    )}
+                                                                    {/* Action buttons with improved styling */}
+                                                                    <div className="flex gap-2 mt-1">
+                                                                        <button
+                                                                            className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-md transition-colors flex items-center justify-center"
+                                                                            onClick={() =>
+                                                                                showShopDirections(
+                                                                                    notification
+                                                                                        .commande_id
+                                                                                        ._id
+                                                                                )
+                                                                            }
+                                                                            disabled={
+                                                                                isProcessing ||
+                                                                                isResponding
+                                                                            }
+                                                                        >
+                                                                            <FaEye className="mr-1 flex-shrink-0" />
+                                                                            Voir
+                                                                        </button>
+
+                                                                        <button
+                                                                            className={`bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium py-1.5 px-3 rounded-md transition-colors flex items-center justify-center ${
+                                                                                isProcessing ||
+                                                                                isResponding
+                                                                                    ? "opacity-70 cursor-not-allowed"
+                                                                                    : ""
+                                                                            }`}
+                                                                            onClick={() =>
+                                                                                handleNotificationResponse(
+                                                                                    notification,
+                                                                                    "accepter"
+                                                                                )
+                                                                            }
+                                                                            disabled={
+                                                                                isProcessing ||
+                                                                                isResponding
+                                                                            }
+                                                                        >
+                                                                            {isProcessing ||
+                                                                            isResponding ? (
+                                                                                <FaSpinner className="animate-spin mr-1 flex-shrink-0" />
+                                                                            ) : (
+                                                                                <FaThumbsUp className="mr-1 flex-shrink-0" />
+                                                                            )}
+                                                                            Accepter
+                                                                        </button>
+
+                                                                        <button
+                                                                            className={`bg-red-500 hover:bg-red-600 text-white text-xs font-medium py-1.5 px-3 rounded-md transition-colors flex items-center justify-center ${
+                                                                                isProcessing ||
+                                                                                isResponding
+                                                                                    ? "opacity-70 cursor-not-allowed"
+                                                                                    : ""
+                                                                            }`}
+                                                                            onClick={() =>
+                                                                                handleNotificationResponse(
+                                                                                    notification,
+                                                                                    "refuser"
+                                                                                )
+                                                                            }
+                                                                            disabled={
+                                                                                isProcessing ||
+                                                                                isResponding
+                                                                            }
+                                                                        >
+                                                                            {isProcessing ||
+                                                                            isResponding ? (
+                                                                                <FaSpinner className="animate-spin mr-1 flex-shrink-0" />
+                                                                            ) : (
+                                                                                <FaThumbsDown className="mr-1 flex-shrink-0" />
+                                                                            )}
+                                                                            Refuser
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-
-                                                            {/* Action buttons */}
-                                                            <div className="flex gap-2 mt-2 sm:mt-0">
-                                                                <button
-                                                                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                                                                    onClick={() =>
-                                                                        showShopDirections(
-                                                                            notification
-                                                                                .commande_id
-                                                                                ._id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    Voir
-                                                                </button>
-                                                                <button
-                                                                    className="bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded"
-                                                                    onClick={() => {
-                                                                        assignLivreur(
-                                                                            notification.commande_id,
-                                                                            authUser._id,
-                                                                            notification._id,
-                                                                            "accepter"
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    Accepter
-                                                                </button>
-                                                                <button
-                                                                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                                                                    onClick={() => {
-                                                                        assignLivreur(
-                                                                            notification.commande_id,
-                                                                            authUser._id,
-                                                                            notification._id,
-                                                                            "refuser"
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    Refuser
-                                                                </button>
-                                                            </div>
                                                         </div>
-                                                    ))}
-                                            </li>
-                                        ))}
-                                </ul>
-                            </div>
-                        )}
-
-                    {/* Affichage des derniers avis reçus */}
-                    {reviews && reviews.length > 0 && (
-                        <div className="bg-white p-6 rounded-lg shadow-lg">
-                            <h2 className="text-xl font-semibold text-emerald-700 mb-4 border-b border-emerald-100 pb-2">
-                                Derniers avis reçus
-                            </h2>
-                            <div className="space-y-4">
-                                {reviews.slice(0, 3).map((review) => (
-                                    <div
-                                        key={review._id}
-                                        className="bg-gray-50 p-4 rounded-lg border-l-4 border-emerald-400"
-                                    >
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <div className="flex items-center">
-                                                    <StarRating
-                                                        rating={review.rating}
-                                                    />
-                                                    <span className="ml-2 text-sm text-gray-500">
-                                                        {new Date(
-                                                            review.createdAt
-                                                        ).toLocaleDateString()}
-                                                    </span>
-                                                </div>
-                                                <p className="mt-2 text-gray-700">
-                                                    {review.comment}
-                                                </p>
-                                            </div>
-                                            <div className="text-xs bg-gray-200 px-2 py-1 rounded-full">
-                                                Commande #
-                                                {review.commandeId.slice(-6)}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                {reviews.length > 3 && (
-                                    <div className="text-center mt-4">
-                                        <button className="text-emerald-600 hover:text-emerald-800 font-medium text-sm">
-                                            Voir tous les avis ({reviews.length}
-                                            )
-                                        </button>
+                                                    </li>
+                                                );
+                                            }
+                                        )}
+                                    </ul>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                                        <FaRegEnvelope className="text-4xl mb-3 text-gray-300" />
+                                        <p>
+                                            Aucune demande de livraison en
+                                            attente
+                                        </p>
+                                        <p className="text-sm text-gray-400 mt-1">
+                                            Les nouvelles demandes apparaîtront
+                                            ici
+                                        </p>
                                     </div>
                                 )}
                             </div>
+
+                            {/* Footer with link to all notifications */}
+                            <div className="bg-gray-50 p-3 border-t border-gray-100">
+                                <Link
+                                    to="/notifications"
+                                    className="text-emerald-600 hover:text-emerald-800 text-sm font-medium flex items-center justify-center"
+                                >
+                                    Voir toutes les notifications
+                                    <FaArrowRight className="ml-1 text-xs" />
+                                </Link>
+                            </div>
                         </div>
-                    )}
+
+                        {/* Affichage des derniers avis reçus */}
+                        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
+                            <div className="flex items-center justify-between mb-4 border-b border-emerald-100 pb-2">
+                                <h2 className="text-lg sm:text-xl font-semibold text-emerald-700 flex items-center">
+                                    <FaStar className="mr-2 text-yellow-500" />
+                                    Derniers avis reçus
+                                </h2>
+                                {reviews && reviews.length > 0 && (
+                                    <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                        {reviews.length} avis
+                                    </span>
+                                )}
+                            </div>
+
+                            {isLoadingReviews ? (
+                                <div className="flex justify-center items-center h-32">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-500"></div>
+                                </div>
+                            ) : recentReviews && recentReviews.length > 0 ? (
+                                <div className="space-y-3">
+                                    {recentReviews.map((review) => (
+                                        <div
+                                            key={review._id}
+                                            className="bg-gray-50 p-3 rounded-lg border-l-4 border-yellow-400 hover:shadow-md transition-all duration-200"
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <div className="flex items-center">
+                                                        <StarRating
+                                                            rating={
+                                                                review.rating
+                                                            }
+                                                        />
+                                                        <span className="ml-2 text-xs text-gray-500">
+                                                            {formatDate(
+                                                                review.createdAt
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                    <p className="mt-2 text-gray-700 text-sm">
+                                                        {review.comment}
+                                                    </p>
+                                                </div>
+                                                <div className="text-xs bg-gray-200 px-2 py-1 rounded-full">
+                                                    Commande #
+                                                    {review.commandeId.slice(
+                                                        -6
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                                    <FaStar className="text-4xl mb-3 text-gray-300" />
+                                    <p>Aucun avis reçu pour le moment</p>
+                                </div>
+                            )}
+
+                            {reviews && reviews.length > 5 && (
+                                <div className="text-center mt-4">
+                                    <button className="text-emerald-600 hover:text-emerald-800 font-medium text-sm flex items-center justify-center">
+                                        Voir tous les avis ({reviews.length})
+                                        <FaArrowRight className="ml-1 text-xs" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </>
             )}
         </div>

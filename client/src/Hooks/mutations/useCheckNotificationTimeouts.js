@@ -70,9 +70,7 @@ export const useCheckNotificationTimeouts = () => {
                             r.status === "timeout" || r.status === "activated"
                     )
                 ) {
-                    toast.success(
-                        `${data.results.length} notifications expirées traitées`
-                    );
+                    toast.success(`notifications expirées traitées`);
                 }
             }
         },

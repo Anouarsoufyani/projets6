@@ -84,20 +84,6 @@ const GestionCommandePage = () => {
         setIsEditModalOpen(true);
     }, []);
 
-    // Memoized users based on selected user type
-    const filteredUsers = useMemo(() => {
-        switch (userType) {
-            case "client":
-                return clients;
-            case "commercant":
-                return commercants;
-            case "livreur":
-                return livreurs;
-            default:
-                return [];
-        }
-    }, [userType, clients, commercants, livreurs]);
-
     // Filter commandes based on selected filters
     const filteredCommandes = useMemo(() => {
         return commandes.filter((commande) => {
@@ -119,26 +105,6 @@ const GestionCommandePage = () => {
                 return false;
 
             // User filter
-            if (userFilter) {
-                if (
-                    userType === "client" &&
-                    (!commande.client_id ||
-                        commande.client_id._id !== userFilter)
-                )
-                    return false;
-                if (
-                    userType === "commercant" &&
-                    (!commande.commercant_id ||
-                        commande.commercant_id._id !== userFilter)
-                )
-                    return false;
-                if (
-                    userType === "livreur" &&
-                    (!commande.livreur_id ||
-                        commande.livreur_id._id !== userFilter)
-                )
-                    return false;
-            }
 
             // Search query
             if (searchQuery) {
@@ -167,14 +133,7 @@ const GestionCommandePage = () => {
 
             return true;
         });
-    }, [
-        commandes,
-        statusFilter,
-        dateFilter,
-        userType,
-        userFilter,
-        searchQuery,
-    ]);
+    }, [commandes, statusFilter, dateFilter, userType, searchQuery]);
 
     // Handle status update
     const handleStatusUpdate = async () => {
@@ -234,7 +193,6 @@ const GestionCommandePage = () => {
         setStatusFilter("all");
         setDateFilter({ start: "", end: "" });
         setUserFilter("");
-        setUserType("client");
         setSearchQuery("");
     };
 
@@ -516,61 +474,6 @@ const GestionCommandePage = () => {
                                     }
                                     className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                                 />
-                            </div>
-
-                            {/* User filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Utilisateur
-                                </label>
-                                <div className="flex space-x-2">
-                                    <select
-                                        value={userType}
-                                        onChange={(e) => {
-                                            setUserType(e.target.value);
-                                            setUserFilter(""); // Reset user filter when changing role
-                                        }}
-                                        className="w-1/3 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    >
-                                        <option value="client">Client</option>
-                                        <option value="commercant">
-                                            Commerçant
-                                        </option>
-                                        <option value="livreur">Livreur</option>
-                                    </select>
-                                    <select
-                                        value={userFilter}
-                                        onChange={(e) =>
-                                            setUserFilter(e.target.value)
-                                        }
-                                        className="w-2/3 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                        disabled={isUsersLoading}
-                                    >
-                                        <option value="">
-                                            Tous les{" "}
-                                            {userType === "client"
-                                                ? "clients"
-                                                : userType === "commercant"
-                                                ? "commerçants"
-                                                : "livreurs"}
-                                        </option>
-                                        {isUsersLoading ? (
-                                            <option disabled>
-                                                Chargement...
-                                            </option>
-                                        ) : (
-                                            filteredUsers.map((user) => (
-                                                <option
-                                                    key={user._id}
-                                                    value={user._id}
-                                                >
-                                                    {user.nom}{" "}
-                                                    {user.prenom || ""}
-                                                </option>
-                                            ))
-                                        )}
-                                    </select>
-                                </div>
                             </div>
                         </div>
 

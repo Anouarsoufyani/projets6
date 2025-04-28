@@ -67,57 +67,41 @@ export const useAssignLivreur = () => {
     });
 
     // Separate mutation for handling livreur responses
-    const responseMutation = useMutation({
+    const handleLivreurResponse = useMutation({
         mutationFn: async ({ notificationId, response }) => {
-            setIsResponding(true);
-
-            const endpoint = `/api/commandes/handle-response`;
-            const payload = {
-                notificationId,
-                response,
-            };
-
-            const res = await fetch(endpoint, {
+            const res = await fetch(`/api/commandes/handle-response`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ notificationId, response }),
             });
 
-            const data = await res.json();
-
             if (!res.ok) {
-                throw new Error(
-                    data.error || "Erreur lors de la réponse à la demande"
-                );
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Erreur lors de la réponse");
             }
 
-            return { data, response };
+            return res.json();
         },
-        onSuccess: (result) => {
-            // Show appropriate success message
-            if (result.response === "accept") {
-                toast.success("Livraison acceptée avec succès!");
-            } else {
+        onSuccess: (data) => {
+            queryClient.invalidateQueries(["notifications"]);
+            queryClient.invalidateQueries(["commandes"]);
+
+            if (data.success) {
                 toast.success(
-                    "Livraison refusée. La prochaine personne dans la file sera notifiée."
+                    data.message ||
+                        (data.commande
+                            ? "Livraison acceptée avec succès"
+                            : "Réponse envoyée avec succès")
                 );
             }
-
-            // Invalidate relevant queries
-            queryClient.invalidateQueries(["notifications"]);
-            queryClient.invalidateQueries(["getCommande"]);
-            queryClient.invalidateQueries(["getUserCommandes"]);
-
-            setIsResponding(false);
         },
         onError: (error) => {
             toast.error(
-                error.message || "Erreur lors de la réponse à la demande"
+                error.message ||
+                    "Erreur lors de la réponse à la demande de livraison"
             );
-            setIsResponding(false);
-        },
-        onSettled: () => {
-            setIsResponding(false);
         },
     });
 
@@ -127,15 +111,15 @@ export const useAssignLivreur = () => {
     };
 
     // Function to handle livreur response (accept/reject)
-    const handleLivreurResponse = (params) => {
-        return responseMutation.mutate(params);
-    };
+    // const handleLivreurResponse = (params) => {
+    //   return responseMutation.mutate(params)
+    // }
 
     return {
         assignLivreur,
-        handleLivreurResponse,
+        handleLivreurResponse: handleLivreurResponse.mutate,
         isLoading,
-        isResponding,
+        isResponding: handleLivreurResponse.isLoading,
         ...assignMutation,
     };
 };

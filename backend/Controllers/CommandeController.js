@@ -5,6 +5,9 @@ import Notification from "../Models/Notification.js";
 
 const { User, Livreur } = userModels;
 
+// In-memory lock for notification timeout processing (simple alternative to Redis)
+const timeoutLocks = new Map();
+
 export const getCommandeById = async (req, res) => {
     try {
         const commande = await Commande.findById(req.params.id)
@@ -89,22 +92,6 @@ export const createCommande = async (req, res) => {
         date_creation: new Date(),
         date_livraison: null,
     });
-
-    // const commande = new Commande({
-    //     client_id: "67d15d4c87a55d5aadf95b03",
-    //     commercant_id: "67d15e4ccf1feb1de84ad918",
-    //     livreur_id: "67d15c6987a55d5aadf95aff",
-    //     total: 100,
-    //     adresse_livraison: {
-    //         rue: "20 avenue de la paix",
-    //         ville: "Paris",
-    //         code_postal: "75002",
-    //         lat: 48.856614,
-    //         lng: 2.352222,
-    //     },
-    //     date_creation: new Date(),
-    //     date_livraison: null,
-    // });
 
     // checking if user exists
     const userToNotify = await User.findOne({ _id: commercant_id }).select(
@@ -498,175 +485,187 @@ export const assignLivreur = async (req, res) => {
         }
         // Handle automatic assignment mode
         else if (mode === "auto") {
+            let vehicleTypes = req.body.vehicleTypes;
             if (!vehicleTypes || !Array.isArray(vehicleTypes)) {
-              // Default to all vehicle types if none specified
-              vehicleTypes = ["voiture", "moto", "vélo", "autres"];
+                // Default to all vehicle types if none specified
+                vehicleTypes = ["voiture", "moto", "vélo", "autres"];
             }
-            
-            if (!criteria || !Array.isArray(criteria) || criteria.length === 0) {
-              return res.status(400).json({
-                success: false,
-                error: "Critères requis pour le mode automatique",
-              });
+
+            if (
+                !criteria ||
+                !Array.isArray(criteria) ||
+                criteria.length === 0
+            ) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Critères requis pour le mode automatique",
+                });
             }
-            
+
             // Find available livreurs
             const livreurs = await Livreur.find({
-              disponibilite: true,
-              isWorking: true,
+                disponibilite: true,
+                isWorking: true,
             }).select("-password");
-            
+
             if (livreurs.length === 0) {
-              return res.status(404).json({
-                success: false,
-                error: "Aucun livreur disponible actuellement",
-              });
+                return res.status(404).json({
+                    success: false,
+                    error: "Aucun livreur disponible actuellement",
+                });
             }
-            
+
             // Filter livreurs by vehicle type
             const filteredLivreurs = [];
             for (const livreur of livreurs) {
-              // Find the current vehicle that matches one of the requested types
-              const vehiculeActuel = livreur.vehicules.find(
-                (v) => v.current && vehicleTypes.includes(v.type)
-              );
-              if (vehiculeActuel) {
-                livreur.vehiculeActuel = vehiculeActuel;
-                filteredLivreurs.push(livreur);
-              }
+                // Find the current vehicle that matches one of the requested types
+                const vehiculeActuel = livreur.vehicules.find(
+                    (v) => v.current && vehicleTypes.includes(v.type)
+                );
+                if (vehiculeActuel) {
+                    livreur.vehiculeActuel = vehiculeActuel;
+                    filteredLivreurs.push(livreur);
+                }
             }
-            
+
             if (filteredLivreurs.length === 0) {
-              return res.status(404).json({
-                success: false,
-                error: "Aucun livreur disponible avec le bon type de véhicule",
-              });
+                return res.status(404).json({
+                    success: false,
+                    error: "Aucun livreur disponible avec le bon type de véhicule",
+                });
             }
-            
+
             // Enrich livreur data with calculated metrics
             const livreursAvecInfos = filteredLivreurs.map((livreur) => {
-              const vehicule = livreur.vehiculeActuel;
-              const distance = calculateDistance(
-                livreur.position.lat,
-                livreur.position.lng,
-                commande.adresse_livraison.lat,
-                commande.adresse_livraison.lng
-              );
-              const duree = distance / 1000 / 60;
-              
-              return {
-                livreur,
-                note: livreur.note_moyenne || 0,
-                distance,
-                duree,
-                capacite: vehicule.capacite || 0,
-              };
+                const vehicule = livreur.vehiculeActuel;
+                const distance = calculateDistance(
+                    livreur.position.lat,
+                    livreur.position.lng,
+                    commande.adresse_livraison.lat,
+                    commande.adresse_livraison.lng
+                );
+                const duree = distance / 1000 / 60;
+
+                return {
+                    livreur,
+                    note: livreur.note_moyenne || 0,
+                    distance,
+                    duree,
+                    capacite: vehicule.capacite || 0,
+                };
             });
-            
+
             // Apply hard filters based on criteria
             const filtered = livreursAvecInfos.filter(
-              ({ capacite, duree, distance, note }) => {
-                const poidsLimit = criteria.find((c) => c.type === "poids");
-                const dureeLimit = criteria.find((c) => c.type === "duree");
-                const distLimit = criteria.find((c) => c.type === "distanceMax");
-                const noteLimit = criteria.find((c) => c.type === "note");
-                
-                if (poidsLimit && capacite < poidsLimit.value) return false;
-                if (dureeLimit && duree > dureeLimit.value) return false;
-                if (distLimit && distance > distLimit.value * 1000) return false;
-                if (noteLimit && note < noteLimit.value) return false;
-                
-                return true;
-              }
+                ({ capacite, duree, distance, note }) => {
+                    const poidsLimit = criteria.find((c) => c.type === "poids");
+                    const dureeLimit = criteria.find((c) => c.type === "duree");
+                    const distLimit = criteria.find(
+                        (c) => c.type === "distanceMax"
+                    );
+                    const noteLimit = criteria.find((c) => c.type === "note");
+
+                    if (poidsLimit && capacite < poidsLimit.value) return false;
+                    if (dureeLimit && duree > dureeLimit.value) return false;
+                    if (distLimit && distance > distLimit.value * 1000)
+                        return false;
+                    if (noteLimit && note < noteLimit.value) return false;
+
+                    return true;
+                }
             );
-            
+
             if (filtered.length === 0) {
-              return res.status(404).json({
-                success: false,
-                error: "Aucun livreur valide selon les critères",
-              });
+                return res.status(404).json({
+                    success: false,
+                    error: "Aucun livreur valide selon les critères",
+                });
             }
-            
+
             // Sort by ordered criteria instead of using a score
             const orderedCriteria = criteria
-              .filter((c) => c.order !== undefined)
-              .sort((a, b) => a.order - b.order);
-            
+                .filter((c) => c.order !== undefined)
+                .sort((a, b) => a.order - b.order);
+
             // Sort based on priorities in orderedCriteria
             const sorted = filtered.sort((a, b) => {
-              for (const { type } of orderedCriteria) {
-                if (type === "distance" || type === "distanceMax") {
-                  if (a.distance !== b.distance) return a.distance - b.distance;
-                } else if (type === "rating" || type === "note") {
-                  if (b.note !== a.note) return b.note - a.note;
-                } else if (type === "duree" || type === "duration") {
-                  if (a.duree !== b.duree) return a.duree - b.duree;
-                } else if (type === "poids" || type === "weight") {
-                  if (b.capacite !== a.capacite) return b.capacite - a.capacite;
+                for (const { type } of orderedCriteria) {
+                    if (type === "distance" || type === "distanceMax") {
+                        if (a.distance !== b.distance)
+                            return a.distance - b.distance;
+                    } else if (type === "rating" || type === "note") {
+                        if (b.note !== a.note) return b.note - a.note;
+                    } else if (type === "duree" || type === "duration") {
+                        if (a.duree !== b.duree) return a.duree - b.duree;
+                    } else if (type === "poids" || type === "weight") {
+                        if (b.capacite !== a.capacite)
+                            return b.capacite - a.capacite;
+                    }
                 }
-              }
-              return 0;
+                return 0;
             });
-            
+
             console.log(
-              "Sorted livreurs by priority criteria:",
-              sorted.map((s) => ({
-                id: s.livreur._id,
-                nom: s.livreur.nom,
-                distance: s.distance,
-                note: s.note,
-              }))
+                "Sorted livreurs by priority criteria:",
+                sorted.map((s) => ({
+                    id: s.livreur._id,
+                    nom: s.livreur.nom,
+                    distance: s.distance,
+                    note: s.note,
+                }))
             );
-            
+
             // Create notifications for all livreurs, but only the first one is active
             const notificationPromises = [];
             const expirationTime = 60; // seconds
-            
+
             for (let i = 0; i < sorted.length; i++) {
-              const livreurAssigne = sorted[i].livreur;
-              const newNotification = new Notification({
-                sender: commande.commercant_id,
-                receiver: livreurAssigne._id,
-                isRequest: true,
-                isActive: i === 0, // Only the first one is active initially
-                commande_id: commandeId,
-                type: "nouvelle demande de livraison",
-                priority: i + 1, // Add priority based on sort order
-                expiresAt: i === 0 ? new Date(Date.now() + expirationTime * 1000) : null,
-                metadata: {
-                  distance: sorted[i].distance,
-                  duration: sorted[i].duree,
-                  rating: sorted[i].note,
-                  capacity: sorted[i].capacite,
-                  vehicleType: livreurAssigne.vehiculeActuel.type,
-                },
-              });
-              notificationPromises.push(newNotification.save());
+                const livreurAssigne = sorted[i].livreur;
+                const newNotification = new Notification({
+                    sender: commande.commercant_id,
+                    receiver: livreurAssigne._id,
+                    isRequest: true,
+                    isActive: i === 0, // Only the first one is active initially
+                    commande_id: commandeId,
+                    type: "nouvelle demande de livraison",
+                    priority: i + 1, // Add priority based on sort order
+                    expiresAt:
+                        i === 0
+                            ? new Date(Date.now() + expirationTime * 1000)
+                            : null,
+                    metadata: {
+                        distance: sorted[i].distance,
+                        duration: sorted[i].duree,
+                        rating: sorted[i].note,
+                        capacity: sorted[i].capacite,
+                        vehicleType: livreurAssigne.vehiculeActuel.type,
+                    },
+                });
+                notificationPromises.push(newNotification.save());
             }
-            
+
             // Save all notifications in parallel
             const savedNotifications = await Promise.all(notificationPromises);
             console.log(
-              "Auto assignment notifications created:",
-              savedNotifications.map((n) => ({
-                id: n._id,
-                receiver: n.receiver,
-                priority: n.priority,
-              }))
+                "Auto assignment notifications created:",
+                savedNotifications.map((n) => ({
+                    id: n._id,
+                    receiver: n.receiver,
+                    priority: n.priority,
+                }))
             );
-            
-            return res.status(200).json({
-              success: true,
-              message: "Demandes de livraison envoyées aux livreurs selon les critères",
-              notificationIds: savedNotifications.map((n) => n._id),
-              topLivreur: {
-                id: sorted[0].livreur._id,
-                nom: sorted[0].livreur.nom,
-              },
-            });
-          }
 
-        else {
+            return res.status(200).json({
+                success: true,
+                message:
+                    "Demandes de livraison envoyées aux livreurs selon les critères",
+                notificationIds: savedNotifications.map((n) => n._id),
+                topLivreur: {
+                    id: sorted[0].livreur._id,
+                    nom: sorted[0].livreur.nom,
+                },
+            });
+        } else {
             return res.status(400).json({
                 success: false,
                 error: "Mode d'assignation invalide. Utilisez 'manual' ou 'auto'",
@@ -946,85 +945,166 @@ async function activateNextNotification(commandeId, currentNotificationId) {
 // Add a new function to check notification timeouts
 export const checkNotificationTimeouts = async (req, res) => {
     try {
-        // Find pending notifications that have timed out
-        const timedOutNotifications = await Notification.find({
-            isRequest: true,
-            isAccepted: { $ne: true },
-            isRefused: { $ne: true },
-            isActive: true,
-            expiresAt: { $lt: new Date() },
-        });
+        // Use in-memory locking instead of Redis
+        const lockKey = `notification_timeout_lock_${req.user._id}`;
 
-        const results = [];
+        if (timeoutLocks.has(lockKey)) {
+            const lockTime = timeoutLocks.get(lockKey);
+            // Check if lock is older than 30 seconds (stale lock)
+            if (Date.now() - lockTime < 30000) {
+                return res.status(200).json({
+                    success: true,
+                    message: "Another process is already checking timeouts",
+                    results: [],
+                    locked: true,
+                });
+            }
+            // If lock is stale, we'll proceed and override it
+        }
 
-        for (const notification of timedOutNotifications) {
-            // Mark as refused due to timeout
-            notification.isRefused = true;
-            notification.refusalReason =
-                "Timeout - pas de réponse dans le délai imparti";
-            notification.responseTime = new Date();
-            await notification.save();
+        // Set lock
+        timeoutLocks.set(lockKey, Date.now());
 
-            results.push({
-                notificationId: notification._id,
-                commandeId: notification.commande_id,
-                livreurId: notification.receiver,
-                status: "timeout",
-            });
+        // Set a timeout to automatically release the lock after 30 seconds
+        setTimeout(() => {
+            if (timeoutLocks.get(lockKey) === Date.now()) {
+                timeoutLocks.delete(lockKey);
+            }
+        }, 30000);
 
-            // Find the commande
-            const commande = await Commande.findById(notification.commande_id);
+        try {
+            // Find pending notifications that have timed out
+            const query = {
+                isRequest: true,
+                isAccepted: { $ne: true },
+                isRefused: { $ne: true },
+                isActive: true,
+                expiresAt: { $lt: new Date() },
+            };
 
-            if (commande && !commande.livreur_id) {
-                // Activate the next notification
-                const nextNotification = await activateNextNotification(
-                    notification.commande_id,
-                    notification._id
-                );
+            // If not admin, only check notifications relevant to the user
+            if (req.user.role !== "admin") {
+                // For livreurs, check notifications where they are the receiver
+                if (req.user.role === "livreur") {
+                    query.receiver = req.user._id;
+                }
+                // For commercants, check notifications related to their commandes
+                else if (req.user.role === "commercant") {
+                    // Get all commandes for this commercant
+                    const commandes = await Commande.find({
+                        commercant_id: req.user._id,
+                    }).select("_id");
+                    const commandeIds = commandes.map((c) => c._id);
+                    query.commande_id = { $in: commandeIds };
+                }
+                // For clients, similar approach as commercants
+                else if (req.user.role === "client") {
+                    const commandes = await Commande.find({
+                        client_id: req.user._id,
+                    }).select("_id");
+                    const commandeIds = commandes.map((c) => c._id);
+                    query.commande_id = { $in: commandeIds };
+                }
+            }
 
-                if (nextNotification) {
-                    // Add a message to the next notification
-                    nextNotification.description =
-                        "Vous avez été sélectionné car le livreur précédent n'a pas répondu dans le délai imparti.";
-                    await nextNotification.save();
+            // Add a limit to prevent processing too many at once
+            const timedOutNotifications = await Notification.find(query).limit(
+                10
+            );
+
+            const results = [];
+
+            for (const notification of timedOutNotifications) {
+                try {
+                    // Mark as refused due to timeout
+                    notification.isRefused = true;
+                    notification.refusalReason =
+                        "Timeout - pas de réponse dans le délai imparti";
+                    notification.responseTime = new Date();
+                    await notification.save();
 
                     results.push({
-                        nextNotificationId: nextNotification._id,
-                        nextLivreurId: nextNotification.receiver,
-                        priority: nextNotification.priority,
-                        status: "activated",
+                        notificationId: notification._id,
+                        commandeId: notification.commande_id,
+                        livreurId: notification.receiver,
+                        status: "timeout",
                     });
-                } else {
-                    // No more livreurs available, notify merchant
-                    const merchantNotification = new Notification({
-                        sender: notification.receiver, // The livreur who timed out
-                        receiver: commande.commercant_id,
-                        commande_id: commande._id,
-                        type: "refus de livraison",
-                        description:
-                            "Tous les livreurs disponibles n'ont pas répondu ou ont refusé la livraison",
-                    });
-                    await merchantNotification.save();
 
+                    // Find the commande
+                    const commande = await Commande.findById(
+                        notification.commande_id
+                    );
+
+                    if (commande && !commande.livreur_id) {
+                        // Activate the next notification
+                        const nextNotification = await activateNextNotification(
+                            notification.commande_id,
+                            notification._id
+                        );
+
+                        if (nextNotification) {
+                            // Add a message to the next notification
+                            nextNotification.description =
+                                "Vous avez été sélectionné car le livreur précédent n'a pas répondu dans le délai imparti.";
+                            await nextNotification.save();
+
+                            results.push({
+                                nextNotificationId: nextNotification._id,
+                                nextLivreurId: nextNotification.receiver,
+                                priority: nextNotification.priority,
+                                status: "activated",
+                            });
+                        } else {
+                            // No more livreurs available, notify merchant
+                            const merchantNotification = new Notification({
+                                sender: notification.receiver, // The livreur who timed out
+                                receiver: commande.commercant_id,
+                                commande_id: commande._id,
+                                type: "refus de livraison",
+                                description:
+                                    "Tous les livreurs disponibles n'ont pas répondu ou ont refusé la livraison",
+                            });
+                            await merchantNotification.save();
+
+                            results.push({
+                                merchantNotified: true,
+                                merchantId: commande.commercant_id,
+                                status: "all_failed",
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error(
+                        `Error processing notification ${notification._id}:`,
+                        error
+                    );
                     results.push({
-                        merchantNotified: true,
-                        merchantId: commande.commercant_id,
-                        status: "all_failed",
+                        notificationId: notification._id,
+                        error: error.message,
+                        status: "error",
                     });
                 }
             }
-        }
 
-        return res.status(200).json({
-            success: true,
-            message: `${timedOutNotifications.length} notifications expirées traitées`,
-            results,
-        });
+            // Release the lock
+            timeoutLocks.delete(lockKey);
+
+            return res.status(200).json({
+                success: true,
+                message: `${timedOutNotifications.length} notifications expirées traitées`,
+                results,
+            });
+        } catch (error) {
+            // Release the lock in case of error
+            timeoutLocks.delete(lockKey);
+            throw error;
+        }
     } catch (error) {
         console.error(
             "Erreur lors de la vérification des timeouts de notifications:",
             error
         );
+
         return res.status(500).json({
             success: false,
             error: "Erreur serveur lors de la vérification des timeouts",
@@ -1036,8 +1116,6 @@ export const checkNotificationTimeouts = async (req, res) => {
 function calculateDistance(lat1, lon1, lat2, lon2) {
     return Math.sqrt(Math.pow(lat1 - lat2, 2) + Math.pow(lon1 - lon2, 2));
 }
-
-// Remove the delay function as we're no longer using it
 
 export const requestLivreur = async (req, res) => {
     try {
@@ -1148,8 +1226,6 @@ export const updateCommandeStatus = async (req, res) => {
         });
     }
 };
-
-// Ajouter cette fonction à la fin du fichier
 
 export const updateCommandeItineraire = async (req, res) => {
     try {

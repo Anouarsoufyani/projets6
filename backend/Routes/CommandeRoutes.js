@@ -17,16 +17,19 @@ import {
     getCommandeForItineraire,
     handleLivreurResponse,
     checkNotificationTimeouts,
+    getAllCommandes, // Add this import for the new admin route
 } from "../Controllers/CommandeController.js";
 import { protectRoute } from "../Middleware/protectRoute.js";
 import { protectSuivi } from "../Middleware/protectSuivi.js";
 import { protectCommercant } from "../Middleware/protectCommercant.js";
 import { protectLivreur } from "../Middleware/protectLivreur.js";
+import { protectAdmin } from "../Middleware/protectAdmin.js"; // Import admin middleware
 
 const router = express.Router();
 
 router.post("/new", protectRoute, createCommande);
 router.get("/", protectRoute, getCommandes);
+router.get("/all", protectRoute, protectAdmin, getAllCommandes); // Add new route for admin to get all commandes
 router.get("/:id", protectRoute, protectSuivi, getCommandeById);
 router.get("/itineraire/:id", protectRoute, getCommandeForItineraire);
 router.post("/cancel/:id", protectRoute, cancelCommande);

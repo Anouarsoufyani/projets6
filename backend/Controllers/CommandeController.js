@@ -1387,3 +1387,41 @@ export const problemsDelivery = async (req, res) => {
         message: "Problème signalé et notifications envoyées.",
     });
 };
+
+// Add this function to the CommandeController.js file
+// Place it near the other export functions
+
+export const getAllCommandes = async (req, res) => {
+    try {
+        // Only admins should be able to access all commandes
+        if (req.user.role !== "admin") {
+            return res.status(403).json({
+                success: false,
+                message:
+                    "Accès non autorisé. Seuls les administrateurs peuvent accéder à toutes les commandes.",
+            });
+        }
+
+        // Fetch all commandes with populated references
+        const commandes = await Commande.find({})
+            .populate("client_id")
+            .populate("commercant_id")
+            .populate("livreur_id")
+            .sort({ date_creation: -1 }); // Sort by creation date, newest first
+
+        return res.status(200).json({
+            success: true,
+            commandes,
+        });
+    } catch (error) {
+        console.error(
+            "Erreur lors de la récupération de toutes les commandes:",
+            error
+        );
+        return res.status(500).json({
+            success: false,
+            message: "Erreur serveur lors de la récupération des commandes",
+            error: error.message,
+        });
+    }
+};

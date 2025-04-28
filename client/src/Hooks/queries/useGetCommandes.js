@@ -25,6 +25,10 @@ export const getLatestPendingCommande = async () => {
         throw new Error(data.error || "Something went wrong");
     }
     const commandes = data.commandes;
+    if (!commandes || commandes.length === 0) {
+        return null;
+    }
+
     const commande = commandes.reduce((prev, current) =>
         (prev.date_creation > current.date_creation &&
             current.statut !== "livree") ||
@@ -77,5 +81,35 @@ export const useGetLatestPendingCommande = () => {
         queryFn: () => getLatestPendingCommande(),
         retry: false,
         refetchInterval: 2000,
+    });
+};
+
+// Function to get all commandes (admin only)
+export const getAllCommandes = async () => {
+    try {
+        const res = await fetch(`/api/commandes/all`);
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(
+                errorData.message || "Failed to fetch all commandes"
+            );
+        }
+
+        const data = await res.json();
+        return data;
+    } catch (error) {
+        console.error("Error fetching all commandes:", error);
+        throw error;
+    }
+};
+
+export const useGetCommandes = () => {
+    return useQuery({
+        queryKey: ["getAllCommandes"],
+        queryFn: getAllCommandes,
+        retry: 1,
+        refetchInterval: 5000,
+        refetchOnWindowFocus: true,
     });
 };

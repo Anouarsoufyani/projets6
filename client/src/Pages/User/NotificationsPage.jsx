@@ -187,7 +187,7 @@ const NotificationsPage = () => {
         checkExpiredNotifications();
 
         // Set up interval to check every 15 seconds
-        const intervalId = setInterval(checkExpiredNotifications, 15000);
+        const intervalId = setInterval(checkExpiredNotifications, 5000);
 
         // Clean up interval on component unmount
         return () => clearInterval(intervalId);

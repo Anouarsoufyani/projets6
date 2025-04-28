@@ -499,231 +499,174 @@ export const assignLivreur = async (req, res) => {
         // Handle automatic assignment mode
         else if (mode === "auto") {
             if (!vehicleTypes || !Array.isArray(vehicleTypes)) {
-                // Default to all vehicle types if none specified
-                const vehicleTypes = ["voiture", "moto", "vélo", "autres"];
+              // Default to all vehicle types if none specified
+              vehicleTypes = ["voiture", "moto", "vélo", "autres"];
             }
-
-            if (
-                !criteria ||
-                !Array.isArray(criteria) ||
-                criteria.length === 0
-            ) {
-                return res.status(400).json({
-                    success: false,
-                    error: "Critères requis pour le mode automatique",
-                });
+            
+            if (!criteria || !Array.isArray(criteria) || criteria.length === 0) {
+              return res.status(400).json({
+                success: false,
+                error: "Critères requis pour le mode automatique",
+              });
             }
-
+            
             // Find available livreurs
             const livreurs = await Livreur.find({
-                disponibilite: true,
-                isWorking: true,
+              disponibilite: true,
+              isWorking: true,
             }).select("-password");
-
+            
             if (livreurs.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    error: "Aucun livreur disponible actuellement",
-                });
+              return res.status(404).json({
+                success: false,
+                error: "Aucun livreur disponible actuellement",
+              });
             }
-
+            
             // Filter livreurs by vehicle type
             const filteredLivreurs = [];
             for (const livreur of livreurs) {
-                // Find the current vehicle that matches one of the requested types
-                const vehiculeActuel = livreur.vehicules.find(
-                    (v) =>
-                        v.current &&
-                        (vehicleTypes.length === 0 ||
-                            vehicleTypes.includes(v.type))
-                );
-
-                if (vehiculeActuel) {
-                    livreur.vehiculeActuel = vehiculeActuel;
-                    filteredLivreurs.push(livreur);
-                }
+              // Find the current vehicle that matches one of the requested types
+              const vehiculeActuel = livreur.vehicules.find(
+                (v) => v.current && vehicleTypes.includes(v.type)
+              );
+              if (vehiculeActuel) {
+                livreur.vehiculeActuel = vehiculeActuel;
+                filteredLivreurs.push(livreur);
+              }
             }
-
+            
             if (filteredLivreurs.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    error: "Aucun livreur disponible avec le bon type de véhicule",
-                });
+              return res.status(404).json({
+                success: false,
+                error: "Aucun livreur disponible avec le bon type de véhicule",
+              });
             }
-
+            
             // Enrich livreur data with calculated metrics
             const livreursAvecInfos = filteredLivreurs.map((livreur) => {
-                const vehicule = livreur.vehiculeActuel;
-                const distance = calculateDistance(
-                    livreur.position.lat,
-                    livreur.position.lng,
-                    commande.adresse_livraison.lat,
-                    commande.adresse_livraison.lng
-                );
-                const duree = distance / 1000 / 60;
-
-                return {
-                    livreur,
-                    note: livreur.note_moyenne || 0,
-                    distance,
-                    duree,
-                    capacite: vehicule.capacite || 0,
-                    // Add a score field for weighted ranking
-                    score: 0,
-                };
+              const vehicule = livreur.vehiculeActuel;
+              const distance = calculateDistance(
+                livreur.position.lat,
+                livreur.position.lng,
+                commande.adresse_livraison.lat,
+                commande.adresse_livraison.lng
+              );
+              const duree = distance / 1000 / 60;
+              
+              return {
+                livreur,
+                note: livreur.note_moyenne || 0,
+                distance,
+                duree,
+                capacite: vehicule.capacite || 0,
+              };
             });
-
+            
             // Apply hard filters based on criteria
             const filtered = livreursAvecInfos.filter(
-                ({ capacite, duree, distance, note }) => {
-                    const poidsLimit = criteria.find((c) => c.type === "poids");
-                    const dureeLimit = criteria.find((c) => c.type === "duree");
-                    const distLimit = criteria.find(
-                        (c) => c.type === "distanceMax"
-                    );
-                    const noteLimit = criteria.find((c) => c.type === "note");
-
-                    if (poidsLimit && capacite < poidsLimit.value) return false;
-                    if (dureeLimit && duree > dureeLimit.value) return false;
-                    if (distLimit && distance > distLimit.value * 1000)
-                        return false;
-                    if (noteLimit && note < noteLimit.value) return false;
-
-                    return true;
-                }
+              ({ capacite, duree, distance, note }) => {
+                const poidsLimit = criteria.find((c) => c.type === "poids");
+                const dureeLimit = criteria.find((c) => c.type === "duree");
+                const distLimit = criteria.find((c) => c.type === "distanceMax");
+                const noteLimit = criteria.find((c) => c.type === "note");
+                
+                if (poidsLimit && capacite < poidsLimit.value) return false;
+                if (dureeLimit && duree > dureeLimit.value) return false;
+                if (distLimit && distance > distLimit.value * 1000) return false;
+                if (noteLimit && note < noteLimit.value) return false;
+                
+                return true;
+              }
             );
-
+            
             if (filtered.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    error: "Aucun livreur valide selon les critères",
-                });
+              return res.status(404).json({
+                success: false,
+                error: "Aucun livreur valide selon les critères",
+              });
             }
-
-            // Calculate weighted scores based on criteria priority
+            
+            // Sort by ordered criteria instead of using a score
             const orderedCriteria = criteria
-                .filter((c) => c.order !== undefined)
-                .sort((a, b) => a.order - b.order);
-
-            // Normalize values for scoring (0-1 range)
-            const maxDistance = Math.max(
-                ...filtered.map((item) => item.distance)
-            );
-            const maxDuration = Math.max(...filtered.map((item) => item.duree));
-            const maxCapacity = Math.max(
-                ...filtered.map((item) => item.capacite)
-            );
-            const maxRating = 5; // Assuming 5-star rating system
-
-            // Calculate weighted scores
-            filtered.forEach((item) => {
-                let score = 0;
-                let totalWeight = 0;
-
-                orderedCriteria.forEach((criterion, index) => {
-                    // Higher priority criteria get higher weights
-                    const weight = orderedCriteria.length - index;
-                    totalWeight += weight;
-
-                    switch (criterion.type) {
-                        case "distance":
-                            // Lower distance is better (inverse normalization)
-                            score += weight * (1 - item.distance / maxDistance);
-                            break;
-                        case "duration":
-                        case "duree":
-                            // Lower duration is better (inverse normalization)
-                            score += weight * (1 - item.duree / maxDuration);
-                            break;
-                        case "rating":
-                        case "note":
-                            // Higher rating is better
-                            score += weight * (item.note / maxRating);
-                            break;
-                        case "weight":
-                        case "poids":
-                            // Higher capacity is better
-                            score += weight * (item.capacite / maxCapacity);
-                            break;
-                    }
-                });
-
-                // Normalize final score (0-100)
-                item.score = totalWeight > 0 ? (score / totalWeight) * 100 : 0;
+              .filter((c) => c.order !== undefined)
+              .sort((a, b) => a.order - b.order);
+            
+            // Sort based on priorities in orderedCriteria
+            const sorted = filtered.sort((a, b) => {
+              for (const { type } of orderedCriteria) {
+                if (type === "distance" || type === "distanceMax") {
+                  if (a.distance !== b.distance) return a.distance - b.distance;
+                } else if (type === "rating" || type === "note") {
+                  if (b.note !== a.note) return b.note - a.note;
+                } else if (type === "duree" || type === "duration") {
+                  if (a.duree !== b.duree) return a.duree - b.duree;
+                } else if (type === "poids" || type === "weight") {
+                  if (b.capacite !== a.capacite) return b.capacite - a.capacite;
+                }
+              }
+              return 0;
             });
-
-            // Sort by calculated score (highest first)
-            const sorted = filtered.sort((a, b) => b.score - a.score);
-
+            
             console.log(
-                "Sorted livreurs by score:",
-                sorted.map((s) => ({
-                    id: s.livreur._id,
-                    nom: s.livreur.nom,
-                    distance: s.distance,
-                    note: s.note,
-                    score: s.score.toFixed(2),
-                }))
+              "Sorted livreurs by priority criteria:",
+              sorted.map((s) => ({
+                id: s.livreur._id,
+                nom: s.livreur.nom,
+                distance: s.distance,
+                note: s.note,
+              }))
             );
-
-            // Create notifications for the top livreurs (non-blocking)
+            
+            // Create notifications for all livreurs, but only the first one is active
             const notificationPromises = [];
             const expirationTime = 60; // seconds
-
+            
             for (let i = 0; i < sorted.length; i++) {
-                const livreurAssigne = sorted[i].livreur;
-                const score = sorted[i].score;
-
-                const newNotification = new Notification({
-                    sender: commande.commercant_id,
-                    receiver: livreurAssigne._id,
-                    isRequest: true,
-                    isActive: i === 0, // Only the first one is active initially
-                    commande_id: commandeId,
-                    type: "nouvelle demande de livraison",
-                    priority: i + 1, // Add priority based on sort order
-                    score: score, // Store the calculated score
-                    expiresAt:
-                        i === 0
-                            ? new Date(Date.now() + expirationTime * 1000)
-                            : null, // Set expiration only for active notification
-                    metadata: {
-                        distance: sorted[i].distance,
-                        duration: sorted[i].duree,
-                        rating: sorted[i].note,
-                        capacity: sorted[i].capacite,
-                        vehicleType: livreurAssigne.vehiculeActuel.type,
-                    },
-                });
-
-                notificationPromises.push(newNotification.save());
+              const livreurAssigne = sorted[i].livreur;
+              const newNotification = new Notification({
+                sender: commande.commercant_id,
+                receiver: livreurAssigne._id,
+                isRequest: true,
+                isActive: i === 0, // Only the first one is active initially
+                commande_id: commandeId,
+                type: "nouvelle demande de livraison",
+                priority: i + 1, // Add priority based on sort order
+                expiresAt: i === 0 ? new Date(Date.now() + expirationTime * 1000) : null,
+                metadata: {
+                  distance: sorted[i].distance,
+                  duration: sorted[i].duree,
+                  rating: sorted[i].note,
+                  capacity: sorted[i].capacite,
+                  vehicleType: livreurAssigne.vehiculeActuel.type,
+                },
+              });
+              notificationPromises.push(newNotification.save());
             }
-
+            
             // Save all notifications in parallel
             const savedNotifications = await Promise.all(notificationPromises);
-
             console.log(
-                "Auto assignment notifications created:",
-                savedNotifications.map((n) => ({
-                    id: n._id,
-                    receiver: n.receiver,
-                    priority: n.priority,
-                    score: n.score,
-                }))
+              "Auto assignment notifications created:",
+              savedNotifications.map((n) => ({
+                id: n._id,
+                receiver: n.receiver,
+                priority: n.priority,
+              }))
             );
-
+            
             return res.status(200).json({
-                success: true,
-                message:
-                    "Demandes de livraison envoyées aux livreurs selon les critères",
-                notificationIds: savedNotifications.map((n) => n._id),
-                topLivreur: {
-                    id: sorted[0].livreur._id,
-                    nom: sorted[0].livreur.nom,
-                    score: sorted[0].score.toFixed(2),
-                },
+              success: true,
+              message: "Demandes de livraison envoyées aux livreurs selon les critères",
+              notificationIds: savedNotifications.map((n) => n._id),
+              topLivreur: {
+                id: sorted[0].livreur._id,
+                nom: sorted[0].livreur.nom,
+              },
             });
-        } else {
+          }
+
+        else {
             return res.status(400).json({
                 success: false,
                 error: "Mode d'assignation invalide. Utilisez 'manual' ou 'auto'",

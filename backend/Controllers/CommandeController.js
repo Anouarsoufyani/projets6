@@ -1186,12 +1186,21 @@ export const updateCommandeStatus = async (req, res) => {
             "-password"
         );
 
-        commande.statut = statut;
-
         if (!userToNotify || !currentUser) {
             return res
                 .status(404)
                 .json({ success: false, error: "User not found" });
+        }
+
+        commande.statut = statut;
+
+        // Remove delivery person association for specific statuses
+        if (
+            ["en_attente", "refusee", "en_preparation", "annulee"].includes(
+                statut
+            )
+        ) {
+            commande.livreur_id = null;
         }
 
         const newNotification = new Notification({

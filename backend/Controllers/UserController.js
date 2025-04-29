@@ -443,31 +443,94 @@ export const addVehicules = async (req, res) => {
 
 export const updateStatut = async (req, res) => {
     try {
-        const { userId, statut } = req.body;
-
+        const { userId, statut, vehicleIds } = req.body;
+        
         if (!userId) {
-            return res
-                .status(401)
-                .json({ error: "Utilisateur non authentifié" });
+            return res.status(401).json({ error: "Utilisateur non authentifié" });
         }
 
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
+        
+        const typeMapping = {
+            0: "vélo",
+            1: "moto",
+            2: "voiture",
+            3: "autres"
+        };
 
-        user.statut = statut;
+        switch (statut) {
+            case "vérifié":
+                
+                user.vehicules.forEach(vehicule => {
+                    const vehicleType = vehicule.type;
+                    const vehicleIdForType = Object.keys(typeMapping).find(
+                        key => typeMapping[key] === vehicleType
+                    );
+                    
+                    if (vehicleIds.includes(parseInt(vehicleIdForType))) {
+                        vehicule.statut = statut;
+                        user.statut = statut;
+                    }
+                });
+                break;
+                
+            case "refusé":
+                
+                user.vehicules.forEach(vehicule => {
+                    vehicule.statut = "refusé";
+                });
+                user.statut = statut;
+                break;
+                
+            case "en vérification":
+                
+                user.vehicules.forEach(vehicule => {
+                    const vehicleType = vehicule.type;
+                    const vehicleIdForType = Object.keys(typeMapping).find(
+                        key => typeMapping[key] === vehicleType
+                    );
+                    
+                    if (vehicleIds.includes(parseInt(vehicleIdForType))) {
+                        vehicule.statut = statut;
+                        user.statut = statut;
+                    } else if (vehicule.statut === "vérifié") {
+                        vehicule.statut = "refusé";
+                    }
+                });
+                break;
+                
+            case "non vérifié":
+                
+                user.vehicules.forEach(vehicule => {
+                    vehicule.statut = statut;
+                    vehicule.current = false;
+                });
+                user.isWorking = false;
+                user.statut = statut;
+                break;
+                
+            default:
+                return res.status(400).json({
+                    success: false,
+                    error: "Statut non valide"
+                });
+        }
+        
         await user.save();
-
+        
         return res.status(200).json({
             success: true,
-            message: "Changement de status effectué avec succès",
+            message: "Changement de status effectué avec succès"
         });
+        
     } catch (error) {
         console.error("Erreur updateStatut:", error);
         return res.status(500).json({
             success: false,
-            error: "Une erreur est survenue lors du changement de statut.",
+            error: "Une erreur est survenue lors du changement de statut."
         });
     }
 };
@@ -485,8 +548,10 @@ export const updateUserInfo = async (req, res) => {
             adresse_boutique,
             distance_max,
             vehicules,
+            disponibilite
         } = req.body;
-
+        console.log(disponibilite);
+        
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
@@ -516,6 +581,14 @@ export const updateUserInfo = async (req, res) => {
             if (falseVehicule === user.vehicules.length) {
                 user.statut = "non vérifié";
             }
+
+            if (disponibilite == true){
+                user.isWorking=true;
+            }
+            else{
+                user.isWorking=false;
+            }
+            
         }
 
         await user.save();
@@ -528,6 +601,8 @@ export const updateUserInfo = async (req, res) => {
         });
     }
 };
+
+
 
 export const updateCurrentVehicle = async (req, res) => {
     try {

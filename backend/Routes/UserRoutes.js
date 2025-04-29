@@ -47,6 +47,7 @@ router.put("/vehicules/current",protectRoute,protectLivreur,updateCurrentVehicle
 // router.get("/:id", protectRoute, getCommandeById);
 router.post("/updateUserform",protectRoute,updateUserInfo);
 router.put("/changeStatut",protectRoute,protectAdmin,updateStatut)
+
   
 
 export default router;

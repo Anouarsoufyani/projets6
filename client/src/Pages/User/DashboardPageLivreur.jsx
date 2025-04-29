@@ -537,6 +537,8 @@ const DashboardPageLivreur = () => {
   const navigate = useNavigate()
 
   if (commandeEnCours != null && !isLoading) {
+    console.log("2222222",commandeEnCours);
+    
     navigate(`/livraison/${commandeEnCours._id}`)
   }
 

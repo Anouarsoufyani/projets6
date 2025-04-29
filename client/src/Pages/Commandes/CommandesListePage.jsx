@@ -10,6 +10,7 @@ import DataTable from "../../Components/UI/DataTable"
 import StatusBadge from "../../Components/UI/StatusBadge"
 import ActionButton from "../../Components/UI/ActionButton"
 import { FaEye, FaMapMarkedAlt, FaCheck, FaTimes, FaTruck, FaPlus } from "react-icons/fa"
+import LoadingSpinner from "../../Components/UI/Loading";
 
 const CommandesListePage = () => {
   const { data: commandesData, isLoading, isError } = useGetUserCommandes()
@@ -544,18 +545,6 @@ const StatCard = ({ title, value, color, icon }) => {
   )
 }
 
-const LoadingSpinner = () => (
-  <div className="flex justify-center items-center h-screen bg-gray-50">
-    <div className="relative">
-      <div className="h-24 w-24 rounded-full border-t-4 border-b-4 border-indigo-500 animate-spin"></div>
-      <div
-        className="absolute top-0 left-0 h-24 w-24 rounded-full border-t-4 border-b-4 border-indigo-300 animate-spin"
-        style={{ animationDirection: "reverse", opacity: 0.7 }}
-      ></div>
-    </div>
-    <p className="ml-6 text-indigo-700 font-medium text-xl">Chargement...</p>
-  </div>
-)
 
 const ErrorMessage = ({ message }) => (
   <div className="flex justify-center items-center h-screen bg-gray-50">

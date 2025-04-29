@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api"
+import { GoogleMap, Marker, InfoWindow, DirectionsRenderer } from "@react-google-maps/api"
 import { useNavigate, useParams } from "react-router"
 import { toast } from "react-hot-toast"
+import LoadingSpinner from "../../Components/UI/Loading";
 // Ajouter un nouvel import pour l'icône de recherche
 import {
   FaFilter,
@@ -123,7 +124,8 @@ const SelectLivreurPage = () => {
     for (const batch of batches) {
       const promises = batch.map((livreur) => {
         return new Promise((resolve) => {
-          const vehicleType = livreur.vehicule?.type?.toLowerCase() || "autres"
+          const currentVehicle = livreur.vehicules.find((v) => v.current)
+          const vehicleType = currentVehicle?.type?.toLowerCase() || "autres"
           const travelMode = getTravelModeForVehicle(vehicleType)
 
           directionsService.route(
@@ -388,10 +390,8 @@ const SelectLivreurPage = () => {
   // Remplacer le return principal pour inclure la sélection du mode d'assignation
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <span className="loading loading-spinner loading-lg text-emerald-600"></span>
-      </div>
-    )
+      <LoadingSpinner/>
+  )
   }
 
   if (error) {
@@ -813,6 +813,8 @@ const SelectLivreurPage = () => {
   const columns = ["ID", "Nom", "Véhicule", "Distance", "Durée", "Note", "Actions"]
 
   const handleSelectLivreur = (livreur) => {
+    console.log(livreur);
+    
     // Clear previous directions
     if (directionsRendererRef.current) {
       directionsRendererRef.current.setMap(null)
@@ -841,6 +843,9 @@ const SelectLivreurPage = () => {
       vehicleType = livreur.vehicule.type.toLowerCase()
     }
 
+    console.log(vehicleType);
+    
+
     const travelMode = getTravelModeForVehicle(vehicleType)
 
     // If we have a pre-calculated route, use it
@@ -849,6 +854,7 @@ const SelectLivreurPage = () => {
       directionsRendererRef.current = new window.google.maps.DirectionsRenderer({
         map: mapRef.current,
         suppressMarkers: true,
+        suppressBicyclingLayer: true,
         polylineOptions: {
           strokeColor:
             vehicleType === "vélo"
@@ -886,6 +892,7 @@ const SelectLivreurPage = () => {
           travelMode: travelMode,
           avoidHighways: vehicleType === "vélo",
           avoidTolls: vehicleType === "vélo",
+          optimizeWaypoints: true,
         },
         (result, status) => {
           if (status === window.google.maps.DirectionsStatus.OK) {
@@ -897,6 +904,7 @@ const SelectLivreurPage = () => {
             directionsRendererRef.current = new window.google.maps.DirectionsRenderer({
               map: mapRef.current,
               suppressMarkers: true,
+              suppressBicyclingLayer: true,
               polylineOptions: {
                 strokeColor:
                   vehicleType === "vélo"
@@ -1021,45 +1029,50 @@ const SelectLivreurPage = () => {
         </div>
       )}
       {selectedLivreur && (
-        <div className="mb-4 p-4 bg-emerald-100 border border-emerald-300 rounded-md flex justify-between items-center">
-          <div className="flex flex-col md:flex-row md:items-center gap-2">
-            <span className="font-semibold text-emerald-800">Livreur sélectionné: </span>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">{selectedLivreur.nom}</span>
-              <div className="flex items-center gap-1 text-sm bg-white px-2 py-1 rounded-full">
-                {getVehicleIcon(selectedLivreur.vehicule?.type)}
-                <span>{selectedLivreur.vehicule?.type || "N/A"}</span>
-              </div>
-              <div className="flex items-center gap-1 text-sm bg-white px-2 py-1 rounded-full">
-                <FaMapMarkerAlt className="text-red-500" />
-                <span>{livreurDistances[selectedLivreur._id]?.distance || "Calcul..."}</span>
-              </div>
+  <div className="mb-4 p-4 bg-emerald-100 border border-emerald-300 rounded-md flex justify-between items-center">
+    <div className="flex flex-col md:flex-row md:items-center gap-2">
+      <span className="font-semibold text-emerald-800">Livreur sélectionné: </span>
+      <div className="flex items-center gap-2">
+        <span className="font-medium">{selectedLivreur.nom}</span>
+        {/* Get current vehicle using the find method */}
+        {(() => {
+          const currentVehicle = selectedLivreur.vehicules?.find((v) => v.current) || selectedLivreur.vehicule
+          return (
+            <div className="flex items-center gap-1 text-sm bg-white px-2 py-1 rounded-full">
+              {getVehicleIcon(currentVehicle?.type)}
+              <span>{currentVehicle?.type || "N/A"}</span>
             </div>
-          </div>
-          <div className="flex gap-2">
-            <button
-              className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors shadow-sm"
-              onClick={commandeId ? confirmAssignLivreur : () => alert("Confirmation de commande avec ce livreur")}
-              disabled={false} // Vous pouvez ajouter un état pour suivre si la requête est en cours
-            >
-              {"Confirmer"}
-            </button>
-            <button
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors shadow-sm"
-              onClick={() => {
-                if (directionsRendererRef.current) {
-                  directionsRendererRef.current.setMap(null)
-                  directionsRendererRef.current = null
-                }
-                setSelectedLivreur(null)
-              }}
-            >
-              Annuler
-            </button>
-          </div>
+          )
+        })()}
+        <div className="flex items-center gap-1 text-sm bg-white px-2 py-1 rounded-full">
+          <FaMapMarkerAlt className="text-red-500" />
+          <span>{livreurDistances[selectedLivreur._id]?.distance || "Calcul..."}</span>
         </div>
-      )}
-
+      </div>
+    </div>
+    <div className="flex gap-2">
+      <button
+        className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors shadow-sm"
+        onClick={commandeId ? confirmAssignLivreur : () => alert("Confirmation de commande avec ce livreur")}
+        disabled={false} // Vous pouvez ajouter un état pour suivre si la requête est en cours
+      >
+        {"Confirmer"}
+      </button>
+      <button
+        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors shadow-sm"
+        onClick={() => {
+          if (directionsRendererRef.current) {
+            directionsRendererRef.current.setMap(null)
+            directionsRendererRef.current = null
+          }
+          setSelectedLivreur(null)
+        }}
+      >
+        Annuler
+      </button>
+    </div>
+  </div>
+)}
       {selectedLivreur && distance && duration && (
         <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -1078,157 +1091,169 @@ const SelectLivreurPage = () => {
       <div className="flex flex-1 gap-5 rounded-lg md:flex-row-reverse flex-col min-h-[600px]">
         {/* Carte placée avant le tableau pour l'ordre sur mobile */}
         <div className="md:w-7/12 w-full h-96 md:min-h-[600px]">
-          <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            center={mapCenter}
-            zoom={mapZoom}
-            onLoad={(map) => {
-              onMapLoad(map)
-              mapRef.current = map
-            }}
-            options={{
-              styles: [
-                {
-                  featureType: "poi",
-                  elementType: "labels",
-                  stylers: [{ visibility: "off" }],
-                },
-              ],
-              fullscreenControl: false,
-              streetViewControl: false,
-              mapTypeControl: true,
-              zoomControl: true,
-            }}
-          >
-            {position.data && (
+        <GoogleMap
+  mapContainerStyle={mapContainerStyle}
+  center={mapCenter}
+  zoom={mapZoom}
+  onLoad={(map) => {
+    onMapLoad(map)
+    mapRef.current = map
+  }}
+  options={{
+    styles: [
+      {
+        featureType: "poi",
+        elementType: "labels",
+        stylers: [{ visibility: "off" }],
+      },
+    ],
+    fullscreenControl: false,
+    streetViewControl: false,
+    mapTypeControl: true,
+    zoomControl: true,
+  }}
+>
+  {position.data && (
+    <>
+      <Marker
+        position={{
+          lat: position.data.lat,
+          lng: position.data.lng,
+        }}
+        icon={{
+          url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+          scaledSize: new window.google.maps.Size(60, 60),
+        }}
+        label={{
+          text: "Votre Boutique",
+          color: "black",
+          fontWeight: "bold",
+          fontSize: "14px",
+          className: "marker-label",
+          background: "#2a9d8f",
+          padding: "5px",
+        }}
+      />
+    </>
+  )}
+  {livreurs &&
+    livreurs.map((livreur) => {
+      const position = livreur.position
+      // Get the current vehicle using the find method
+      const currentVehicle = livreur.vehicules?.find((v) => v.current) || livreur.vehicule
+
+      return (
+        <Marker
+          key={livreur._id}
+          position={{
+            lat: position.lat,
+            lng: position.lng,
+          }}
+          onClick={() => setSelectedMarker(livreur)}
+          icon={{
+            url:
+              selectedLivreur && selectedLivreur._id === livreur._id
+                ? "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                : "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
+            scaledSize: new window.google.maps.Size(40, 40),
+          }}
+          animation={
+            selectedLivreur && selectedLivreur._id === livreur._id
+              ? window.google.maps.Animation.BOUNCE
+              : null
+          }
+        />
+      )
+    })}
+
+  {selectedMarker && (
+    <InfoWindow
+      position={{
+        lat: selectedMarker.position.lat,
+        lng: selectedMarker.position.lng,
+      }}
+      onCloseClick={() => setSelectedMarker(null)}
+    >
+      <div className="p-3 max-w-xs">
+        <h3 className="font-semibold text-lg text-emerald-700 mb-2">{selectedMarker.nom}</h3>
+        <div className="space-y-2">
+          {/* Get the current vehicle for the selected marker */}
+          {(() => {
+            const currentVehicle = selectedMarker.vehicules?.find((v) => v.current) || selectedMarker.vehicule
+            return (
               <>
-                <Marker
-                  position={{
-                    lat: position.data.lat,
-                    lng: position.data.lng,
-                  }}
-                  icon={{
-                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-                    scaledSize: new window.google.maps.Size(60, 60),
-                  }}
-                  label={{
-                    text: "Votre Boutique",
-                    color: "black",
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    className: "marker-label",
-                    background: "#2a9d8f",
-                    padding: "5px",
-                  }}
-                />
+                <p className="flex items-center gap-2 text-sm">
+                  {getVehicleIcon(currentVehicle?.type)}
+                  <span className="text-gray-700">
+                    <span className="font-medium">Véhicule:</span> {currentVehicle?.type || "N/A"}
+                    {currentVehicle?.modele && ` (${currentVehicle.modele})`}
+                  </span>
+                </p>
+                {currentVehicle?.couleur && (
+                  <p className="flex items-center gap-2 text-sm">
+                    <span
+                      className="inline-block w-3 h-3 rounded-full"
+                      style={{
+                        backgroundColor: currentVehicle.couleur,
+                      }}
+                    ></span>
+                    <span className="text-gray-700">
+                      <span className="font-medium">Couleur:</span> {currentVehicle.couleur}
+                    </span>
+                  </p>
+                )}
+                {currentVehicle?.capacite && (
+                  <p className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-700">
+                      <span className="font-medium">Capacité:</span> {currentVehicle.capacite} kg
+                    </span>
+                  </p>
+                )}
               </>
-            )}
-            {livreurs &&
-              livreurs.map((livreur) => {
-                const position = livreur.position
-
-                return (
-                  <Marker
-                    key={livreur._id}
-                    position={{
-                      lat: position.lat,
-                      lng: position.lng,
-                    }}
-                    onClick={() => setSelectedMarker(livreur)}
-                    icon={{
-                      url:
-                        selectedLivreur && selectedLivreur._id === livreur._id
-                          ? "https://maps.google.com/mapfiles/ms/icons/red-dot.png"
-                          : "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
-                      scaledSize: new window.google.maps.Size(40, 40),
-                    }}
-                    animation={
-                      selectedLivreur && selectedLivreur._id === livreur._id
-                        ? window.google.maps.Animation.BOUNCE
-                        : null
-                    }
-                  />
-                )
-              })}
-
-            {selectedMarker && (
-              <InfoWindow
-                position={{
-                  lat: selectedMarker.position.lat,
-                  lng: selectedMarker.position.lng,
-                }}
-                onCloseClick={() => setSelectedMarker(null)}
-              >
-                <div className="p-3 max-w-xs">
-                  <h3 className="font-semibold text-lg text-emerald-700 mb-2">{selectedMarker.nom}</h3>
-                  <div className="space-y-2">
-                    <p className="flex items-center gap-2 text-sm">
-                      {getVehicleIcon(selectedMarker.vehicule?.type)}
-                      <span className="text-gray-700">
-                        <span className="font-medium">Véhicule:</span> {selectedMarker.vehicule?.type || "N/A"}
-                        {selectedMarker.vehicule?.modele && ` (${selectedMarker.vehicule.modele})`}
-                      </span>
-                    </p>
-                    {selectedMarker.vehicule?.couleur && (
-                      <p className="flex items-center gap-2 text-sm">
-                        <span
-                          className="inline-block w-3 h-3 rounded-full"
-                          style={{
-                            backgroundColor: selectedMarker.vehicule.couleur,
-                          }}
-                        ></span>
-                        <span className="text-gray-700">
-                          <span className="font-medium">Couleur:</span> {selectedMarker.vehicule.couleur}
-                        </span>
-                      </p>
-                    )}
-                    {selectedMarker.vehicule?.capacite && (
-                      <p className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-700">
-                          <span className="font-medium">Capacité:</span> {selectedMarker.vehicule.capacite} kg
-                        </span>
-                      </p>
-                    )}
-                    <p className="flex items-center gap-2 text-sm">
-                      <FaStar className="text-yellow-500" />
-                      <span className="text-gray-700">
-                        <span className="font-medium">Note:</span> {selectedMarker.note_moyenne.toFixed(1)}
-                        /5
-                      </span>
-                    </p>
-                    {livreurDistances[selectedMarker._id] && (
-                      <>
-                        <p className="flex items-center gap-2 text-sm">
-                          <FaMapMarkerAlt className="text-red-500" />
-                          <span className="text-gray-700">
-                            <span className="font-medium">Distance:</span>{" "}
-                            {livreurDistances[selectedMarker._id].distance}
-                          </span>
-                        </p>
-                        <p className="flex items-center gap-2 text-sm">
-                          <span className="text-blue-500">⏱️</span>
-                          <span className="text-gray-700">
-                            <span className="font-medium">Durée:</span>{" "}
-                            {livreurDistances[selectedMarker._id].duration || "Estimation en cours..."}
-                          </span>
-                        </p>
-                        <p className="text-xs text-gray-500 italic">
-                          (basé sur {selectedMarker.vehicule?.type || "autres"})
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleSelectLivreur(selectedMarker)}
-                    className="mt-3 w-full text-sm bg-emerald-600 text-white px-3 py-2 rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <FaTruck className="text-white" />
-                    Sélectionner ce livreur
-                  </button>
-                </div>
-              </InfoWindow>
-            )}
-          </GoogleMap>
+            )
+          })()}
+          <p className="flex items-center gap-2 text-sm">
+            <FaStar className="text-yellow-500" />
+            <span className="text-gray-700">
+              <span className="font-medium">Note:</span> {selectedMarker.note_moyenne.toFixed(1)}
+              /5
+            </span>
+          </p>
+          {livreurDistances[selectedMarker._id] && (
+            <>
+              <p className="flex items-center gap-2 text-sm">
+                <FaMapMarkerAlt className="text-red-500" />
+                <span className="text-gray-700">
+                  <span className="font-medium">Distance:</span>{" "}
+                  {livreurDistances[selectedMarker._id].distance}
+                </span>
+              </p>
+              <p className="flex items-center gap-2 text-sm">
+                <span className="text-blue-500">⏱️</span>
+                <span className="text-gray-700">
+                  <span className="font-medium">Durée:</span>{" "}
+                  {livreurDistances[selectedMarker._id].duration || "Estimation en cours..."}
+                </span>
+              </p>
+              <p className="text-xs text-gray-500 italic">
+                {/* Get vehicle type from current vehicle object */}
+                (basé sur {selectedMarker.vehicules?.find(v => v.current)?.type || 
+                           selectedMarker.vehicule?.type || "autres"})
+              </p>
+            </>
+          )}
+        </div>
+        <button
+          onClick={() => handleSelectLivreur(selectedMarker)}
+          className="mt-3 w-full text-sm bg-emerald-600 text-white px-3 py-2 rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+        >
+          <FaTruck className="text-white" />
+          Sélectionner ce livreur
+        </button>
+      </div>
+    </InfoWindow>
+  )}
+</GoogleMap>
         </div>
 
         <div className="md:w-5/12 w-full bg-white p-4 rounded-lg shadow-md overflow-auto">
@@ -1445,6 +1470,7 @@ const SelectLivreurPage = () => {
                         {livreur.vehicules && livreur.vehicules.length > 0 ? (
                           (() => {
                             const currentVehicle = livreur.vehicules.find((v) => v.current)
+                            
                             if (currentVehicle) {
                               return (
                                 <>

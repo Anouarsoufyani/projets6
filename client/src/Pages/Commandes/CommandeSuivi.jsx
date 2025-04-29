@@ -32,6 +32,7 @@ import {
 } from "react-icons/fa";
 // Ajouter l'import pour le composant ReviewForm et useGetUserReviews
 import ReviewForm from "../../Components/Reviews/ReviewForm";
+import LoadingSpinner from "../../Components/UI/Loading";
 import { useGetUserReviews } from "../../Hooks/queries/useGetReviews";
 
 const containerStyle = {
@@ -40,15 +41,7 @@ const containerStyle = {
     borderRadius: "0.75rem",
 };
 
-// Custom loading spinner component
-const LoadingSpinner = () => (
-    <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
-        <div className="relative animate-spin rounded-full h-16 w-16 border-4 border-emerald-200 border-t-emerald-600">
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-400 opacity-30"></div>
-        </div>
-        <p className="mt-4 text-emerald-700 font-medium">Loading...</p>
-    </div>
-);
+
 
 const CommandeSuivi = () => {
     const { data: authUser } = useAuthUserQuery();
@@ -756,96 +749,83 @@ const CommandeSuivi = () => {
                     </div>
 
                     {/* Vehicle info */}
-                    {commande?.data?.livreur_id?.vehicule && (
-                        <div className="bg-white p-6 rounded-2xl shadow-md">
-                            <h3 className="font-semibold text-emerald-800 mb-4 flex items-center">
-                                <FaCar className="mr-2 text-emerald-600" />
-                                Détails du Vehicule
-                            </h3>
-                            <div className="space-y-3">
+                    {commande?.data?.livreur_id?.vehicules ? (
+    <div className="bg-white p-6 rounded-2xl shadow-md">
+        <h3 className="font-semibold text-emerald-800 mb-4 flex items-center">
+            <FaCar className="mr-2 text-emerald-600" />
+            Détails du Vehicule
+        </h3>
+        <div className="space-y-3">
+            {/* Get current vehicle from the array or fallback to vehicule object */}
+            {(() => {
+                // First try to find the current vehicle in the vehicules array
+                if (commande?.data?.livreur_id?.vehicules && Array.isArray(commande.data.livreur_id.vehicules)) {
+                    const currentVehicle = commande.data.livreur_id.vehicules.find(v => v.current);
+                    if (currentVehicle) {
+                        return (
+                            <>
                                 <div className="flex justify-between items-center">
                                     <span className="text-gray-600">Type</span>
                                     <span className="font-medium flex items-center gap-1">
-                                        {commande.data.livreur_id.vehicule
-                                            .type === "voiture" ? (
+                                        {currentVehicle.type?.toLowerCase() === "voiture" ? (
                                             <FaCar className="text-blue-600" />
-                                        ) : commande.data.livreur_id.vehicule
-                                              .type === "moto" ? (
+                                        ) : currentVehicle.type?.toLowerCase() === "moto" ? (
                                             <FaMotorcycle className="text-red-600" />
-                                        ) : commande.data.livreur_id.vehicule
-                                              .type === "vélo" ? (
+                                        ) : currentVehicle.type?.toLowerCase() === "vélo" ? (
                                             <FaBiking className="text-green-600" />
                                         ) : (
                                             <FaBox className="text-purple-600" />
                                         )}
-                                        {commande.data.livreur_id.vehicule
-                                            .type || "N/A"}
+                                        {currentVehicle.type || "N/A"}
                                     </span>
                                 </div>
-                                {commande.data.livreur_id.vehicule.modele && (
+                                {currentVehicle.modele && (
                                     <div className="flex justify-between items-center">
-                                        <span className="text-gray-600">
-                                            Modèle
-                                        </span>
-                                        <span className="font-medium">
-                                            {
-                                                commande.data.livreur_id
-                                                    .vehicule.modele
-                                            }
-                                        </span>
+                                        <span className="text-gray-600">Modèle</span>
+                                        <span className="font-medium">{currentVehicle.modele}</span>
                                     </div>
                                 )}
-                                {commande.data.livreur_id.vehicule.plaque && (
+                                {currentVehicle.plaque && (
                                     <div className="flex justify-between items-center">
-                                        <span className="text-gray-600">
-                                            Plaque
-                                        </span>
-                                        <span className="font-medium">
-                                            {
-                                                commande.data.livreur_id
-                                                    .vehicule.plaque
-                                            }
-                                        </span>
+                                        <span className="text-gray-600">Plaque</span>
+                                        <span className="font-medium">{currentVehicle.plaque}</span>
                                     </div>
                                 )}
-                                {commande.data.livreur_id.vehicule.couleur && (
+                                {currentVehicle.couleur && (
                                     <div className="flex justify-between items-center">
-                                        <span className="text-gray-600">
-                                            Couleur
-                                        </span>
+                                        <span className="text-gray-600">Couleur</span>
                                         <span className="font-medium flex items-center gap-1">
                                             <span
                                                 className="inline-block w-3 h-3 rounded-full"
-                                                style={{
-                                                    backgroundColor:
-                                                        commande.data.livreur_id
-                                                            .vehicule.couleur,
-                                                }}
+                                                style={{ backgroundColor: currentVehicle.couleur }}
                                             ></span>
-                                            {
-                                                commande.data.livreur_id
-                                                    .vehicule.couleur
-                                            }
+                                            {currentVehicle.couleur}
                                         </span>
                                     </div>
                                 )}
-                                {commande.data.livreur_id.vehicule.capacite && (
+                                {currentVehicle.capacite && (
                                     <div className="flex justify-between items-center">
-                                        <span className="text-gray-600">
-                                            Capacité
-                                        </span>
-                                        <span className="font-medium">
-                                            {
-                                                commande.data.livreur_id
-                                                    .vehicule.capacite
-                                            }{" "}
-                                            kg
-                                        </span>
+                                        <span className="text-gray-600">Capacité</span>
+                                        <span className="font-medium">{currentVehicle.capacite} kg</span>
                                     </div>
                                 )}
-                            </div>
-                        </div>
-                    )}
+                            </>
+                        );
+                    }
+                }
+                
+
+                
+                // No vehicle data available
+                return (
+                    <div className="flex justify-center items-center text-gray-500">
+                        Aucune information de véhicule disponible
+                    </div>
+                );
+            })()}
+        </div>
+    </div>
+) : null}
 
                     {/* Commande info */}
                     {commande && (
@@ -1374,6 +1354,7 @@ const CommandeSuivi = () => {
                                     directions={directions}
                                     options={{
                                         suppressMarkers: true,
+                                        suppressBicyclingLayer: true,
                                         polylineOptions: {
                                             strokeColor: getRouteColor(),
                                             strokeWeight: 5,

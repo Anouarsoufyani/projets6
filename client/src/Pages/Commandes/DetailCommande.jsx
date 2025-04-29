@@ -24,6 +24,7 @@ import {
 } from "react-icons/fa";
 import ReviewForm from "../../Components/Reviews/ReviewForm";
 import { useGetUserReviews } from "../../Hooks/queries/useGetReviews";
+import LoadingSpinner from "../../Components/UI/Loading";
 
 const DetailCommande = () => {
     const { data: authUser } = useAuthUserQuery();
@@ -58,10 +59,8 @@ const DetailCommande = () => {
 
     if (isLoading || !commande) {
         return (
-            <div className="w-full min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-600"></div>
-            </div>
-        );
+            <LoadingSpinner/>
+        )
     }
 
     const {

@@ -89,7 +89,7 @@ const LoginPage = () => {
                         className="w-full bg-emerald-600 text-white py-3 rounded-md hover:bg-emerald-700 transition duration-300 mt-4"
                     >
                         {isPending ? (
-                            <span className="loading loading-spinner loading-md"></span>
+                            <span className="loading loading-spinner loading-md">...</span>
                         ) : (
                             "Se connecter"
                         )}

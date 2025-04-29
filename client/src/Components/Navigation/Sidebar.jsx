@@ -283,7 +283,7 @@ const Sidebar = ({
             {/* Overlay for mobile when sidebar is open */}
             {isMobile && isOpen && (
                 <div
-                    className="fixed inset-0 bg-black bg-opacity-50 z-20"
+                    className="fixed inset-0 bg-black/50 z-20"
                     onClick={() => {}} // This will be handled in App.jsx
                 />
             )}

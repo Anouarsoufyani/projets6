@@ -414,17 +414,14 @@ export const getUserById = async (req, res) => {
 
 export const addVehicules = async (req, res) => {
     try {
+       
         const livreur = await Livreur.findById(req.user.id);
 
         if (!livreur) {
             return res.status(404).json({ message: "Livreur non trouvé" });
         }
 
-        const vehicules = req.body.map((type) => ({
-            type,
-        }));
-
-        livreur.vehicules.push(...vehicules);
+        livreur.vehicules.push(req.body);
 
         const savedLivreur = await livreur.save();
 
@@ -481,7 +478,9 @@ export const updateStatut = async (req, res) => {
                 
                 user.vehicules.forEach(vehicule => {
                     vehicule.statut = "refusé";
+                    vehicule.current=false;
                 });
+                user.isWorking=false;
                 user.statut = statut;
                 break;
                 
@@ -492,13 +491,19 @@ export const updateStatut = async (req, res) => {
                     const vehicleIdForType = Object.keys(typeMapping).find(
                         key => typeMapping[key] === vehicleType
                     );
-                    
+                    user.vehicules.forEach(vehicule => {
+                        vehicule.current=false;
+                    });
+                    user.isWorking=false
                     if (vehicleIds.includes(parseInt(vehicleIdForType))) {
                         vehicule.statut = statut;
                         user.statut = statut;
                     } else if (vehicule.statut === "vérifié") {
                         vehicule.statut = "refusé";
                     }
+
+                   
+
                 });
                 break;
                 
@@ -550,7 +555,7 @@ export const updateUserInfo = async (req, res) => {
             vehicules,
             disponibilite
         } = req.body;
-        console.log(disponibilite);
+        
         
         const user = await User.findById(userId);
         if (!user) {
@@ -571,15 +576,39 @@ export const updateUserInfo = async (req, res) => {
 
             let falseVehicule = 0;
             const invalidStatuts = ["refusé", "en vérification", "non vérifié"];
-
+            let refuseCompteur=0;
+            let enVerificationCompteur=0;
+            let nonVerifieCompteur=0;
             for (const vehicule of user.vehicules) {
                 if (invalidStatuts.includes(vehicule.statut)) {
                     falseVehicule++;
                 }
+                if(vehicule.statut=="vérifié"){
+                    user.statut = "vérifié"
+                }
+                if (vehicule.statut=="refusé"){
+                    refuseCompteur++;
+                }
+                if (vehicule.statut=="non vérifié"){
+                    nonVerifieCompteur++;
+                }
+                if (vehicule.statut=="en vérification"){
+                    enVerificationCompteur++;
+                }
             }
 
-            if (falseVehicule === user.vehicules.length) {
-                user.statut = "non vérifié";
+            
+
+            if(refuseCompteur==user.vehicules.length){
+                user.statut = "refusé"
+            }
+
+            else if(nonVerifieCompteur== user.vehicules.length){
+                user.statut = "non vérifié"
+            }
+
+            else if(refuseCompteur+nonVerifieCompteur+enVerificationCompteur==user.vehicules.length){
+                user.statut = "en vérification"
             }
 
             if (disponibilite == true){
@@ -601,7 +630,6 @@ export const updateUserInfo = async (req, res) => {
         });
     }
 };
-
 
 
 export const updateCurrentVehicle = async (req, res) => {

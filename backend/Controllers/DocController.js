@@ -9,17 +9,12 @@ export const uploadDocuments = async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).send("Utilisateur non trouvé");
 
-        // const docs = req.files.map((file) => ({
-        //     nom: file.originalname,
-        //     url: file.path,
-        //     label: file.originalname,
-        //     statut: "en attente",
-        // }));
+        
 
         const labels = Array.isArray(req.body.labels)
             ? req.body.labels
             : [req.body.labels]; // gérer un seul label
-        console.log("labels", labels);
+        
 
         const docs = req.files.map((file, index) => ({
             nom: file.originalname,
@@ -28,7 +23,7 @@ export const uploadDocuments = async (req, res) => {
             label: labels[index] || "non spécifié",
         }));
 
-        // console.log("docs", docs);
+       
 
         user.documents.push(...docs);
         user.statut = "en vérification";

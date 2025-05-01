@@ -561,19 +561,29 @@ export const updateUserInfo = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
-        user.nom = nom;
-        user.email = email;
-        user.numero = numero;
-
+        if (nom || email || numero){
+            user.nom = nom;
+            user.email = email;
+            user.numero = numero;
+    
+        }
+      
         if (role == "client") {
             user.adresses_favorites = adresses_favorites;
         } else if (role == "commercant") {
             user.nom_boutique = nom_boutique;
             user.adresse_boutique = adresse_boutique;
         } else if (role == "livreur") {
-            user.distance_max = distance_max;
+            if(distance_max){
+                user.distance_max = distance_max;
+            }
+            
             user.vehicules = vehicules;
 
+            
+            console.log(user.vehicules);
+            
+            
             let falseVehicule = 0;
             const invalidStatuts = ["refusé", "en vérification", "non vérifié"];
             let refuseCompteur=0;

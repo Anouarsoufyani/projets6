@@ -271,7 +271,28 @@ const UserProfileAdmin = () => {
     } else if (field && index !== null) {
       // Handle array of objects changes
       const newArray = [...formData[field]]
-      newArray[index][name] = value
+
+      // Si c'est le champ "plaque" et que la valeur est une chaîne vide, définir comme undefined
+      if (name === "plaque" && value === "") {
+        newArray[index] = {
+          ...newArray[index],
+          [name]: undefined,
+        }
+      } else {
+        newArray[index] = {
+          ...newArray[index],
+          [name]: type === "checkbox" ? checked : value,
+        }
+      }
+
+      // Validation conditionnelle pour la plaque d'immatriculation
+      if (name === "type") {
+        // Si le type est vélo ou autres, la plaque n'est pas requise
+        if (value === "vélo" || value === "autres") {
+          newArray[index].plaque = undefined
+        }
+      }
+
       setFormData((prev) => ({ ...prev, [field]: newArray }))
     } else {
       // Handle direct field changes
@@ -288,6 +309,7 @@ const UserProfileAdmin = () => {
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
       adresse,
     )}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
+
     const response = await fetch(url)
     const data = await response.json()
 
@@ -338,7 +360,7 @@ const UserProfileAdmin = () => {
       if (formData.role === "livreur") {
         requestData.distance_max = formData.distance_max
         requestData.vehicules = formData.vehicules
-        requestData.disponibilite= formData.disponibilite
+        requestData.disponibilite = formData.disponibilite
       }
 
       const res = await fetch(url, {
@@ -451,8 +473,6 @@ const UserProfileAdmin = () => {
       toast.error(error.message || "Une erreur est survenue lors de la mise à jour du statut du document")
     }
   }
-
-  
 
   // Replace the main content section with this updated version
   return (
@@ -665,7 +685,18 @@ const UserProfileAdmin = () => {
                                     type="text"
                                     name="plaque"
                                     value={vehicule.plaque || ""}
-                                    onChange={(e) => handleChange(e, "vehicules", null, index)}
+                                    onChange={(e) => {
+                                      const { value } = e.target
+                                      // Create a synthetic event to pass to handleChange
+                                      const syntheticEvent = {
+                                        target: {
+                                          name: "plaque",
+                                          value: value,
+                                          type: "text", // or whatever type is appropriate
+                                        },
+                                      }
+                                      handleChange(syntheticEvent, "vehicules", null, index)
+                                    }}
                                     className="w-full p-2 border border-gray-300 rounded-md text-sm"
                                   />
                                 </div>
@@ -706,6 +737,22 @@ const UserProfileAdmin = () => {
                                     </option>
                                   ))}
                                 </select>
+                              </div>
+                              <div className="mt-2 flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newVehicules = [...formData.vehicules]
+                                    newVehicules.splice(index, 1)
+                                    setFormData({
+                                      ...formData,
+                                      vehicules: newVehicules,
+                                    })
+                                  }}
+                                  className="text-red-500 hover:text-red-700 text-sm"
+                                >
+                                  Supprimer ce véhicule
+                                </button>
                               </div>
                             </div>
                           ))}
@@ -1304,7 +1351,6 @@ const UserProfileAdmin = () => {
           </div>
         </div>
       )}
-      
     </main>
   )
 }

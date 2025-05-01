@@ -36,8 +36,10 @@ import {
 import toast from "react-hot-toast"
 
 const JustificativePage = () => {
-  // Modifier la variable d'état step pour inclure une nouvelle étape "vehicleDetails"
+  // État pour gérer les étapes du processus d'ajout de véhicule
   const [step, setStep] = useState("vehicles")
+  // État pour suivre si l'utilisateur est en train d'ajouter un nouveau véhicule
+  const [isAddingNewVehicle, setIsAddingNewVehicle] = useState(false)
 
   // Ajouter une nouvelle variable d'état pour stocker les détails des véhicules
   const [vehicleDetails, setVehicleDetails] = useState({})
@@ -198,9 +200,6 @@ const JustificativePage = () => {
             userId: authUser._id,
           }
 
-          
-          
-
           // Utiliser le hook uploadVehicule au lieu de fetch
           uploadVehicule(vehicleData, {
             onSuccess: (data) => {
@@ -218,7 +217,7 @@ const JustificativePage = () => {
       toast.success("Véhicules enregistrés avec succès!")
       setProcessingVehicles(false)
 
-      // Passer à l'étape suivante
+      // Toujours passer à l'étape des documents, même pour les utilisateurs déjà vérifiés
       setStep("documents")
     } catch (error) {
       setProcessingVehicles(false)
@@ -257,6 +256,10 @@ const JustificativePage = () => {
       // Utiliser les détails des véhicules déjà envoyés à l'étape précédente
       uploadDocument(formData, {
         onSuccess: () => {
+          // Toujours réinitialiser l'état après l'ajout réussi
+          setIsAddingNewVehicle(false)
+          setStep("vehicles")
+
           setTimeout(() => {
             refetchAuthUser()
           }, 1000)
@@ -311,47 +314,115 @@ const JustificativePage = () => {
     setShowEditVehicleForm(true)
   }
 
-  const handleUpdateVehicle = (e) => {
+  // Modifier la fonction handleUpdateVehicle pour utiliser l'endpoint "/api/user/updateUserform"
+  const handleUpdateVehicle = async (e) => {
     e.preventDefault()
 
     // Validation des champs
-    if ((newVehicle.type === "voiture" || newVehicle.type === "moto") && !newVehicle.plaque) {
+    if (
+      (newVehicle.type === "voiture" || newVehicle.type === "moto") &&
+      !newVehicle.plaque &&
+      currentVehicle.statut !== "vérifié"
+    ) {
       toast.error("La plaque d'immatriculation est obligatoire pour les voitures et motos")
       return
     }
 
-    updateVehicule(
-      {
-        vehiculeId: currentVehicle._id,
-        vehiculeData: newVehicle,
-      },
-      {
-        onSuccess: () => {
-          setShowEditVehicleForm(false)
-          setCurrentVehicle(null)
-          setNewVehicle({
-            type: "vélo",
-            plaque: "",
-            couleur: "",
-            capacite: 50,
-          })
-          setTimeout(() => {
-            refetchAuthUser()
-          }, 1000)
+    try {
+      // Préparer les données à envoyer
+      // Pour les véhicules vérifiés, on ne modifie que la couleur
+      const updatedVehicles = UserVehicles.map((vehicle) => {
+        if (vehicle._id === currentVehicle._id) {
+          if (vehicle.statut === "vérifié") {
+            // Pour les véhicules vérifiés, on ne modifie que la couleur et la capacité
+            return {
+              ...vehicle,
+              couleur: newVehicle.couleur,
+              capacite: newVehicle.capacite,
+            }
+          } else {
+            // Pour les autres véhicules, on peut tout modifier
+            return {
+              ...vehicle,
+              type: newVehicle.type,
+              plaque: newVehicle.plaque || undefined,
+              couleur: newVehicle.couleur,
+              capacite: newVehicle.capacite,
+            }
+          }
+        }
+        return vehicle
+      })
+
+      // Envoyer la requête avec tous les véhicules
+      const response = await fetch("/api/user/updateUserform", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      },
-    )
+        body: JSON.stringify({
+          userId: authUser._id,
+          vehicules: updatedVehicles,
+          role: "livreur",
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Échec de la mise à jour du véhicule")
+      }
+
+      toast.success("Véhicule mis à jour avec succès!")
+      setShowEditVehicleForm(false)
+      setCurrentVehicle(null)
+      setNewVehicle({
+        type: "vélo",
+        plaque: "",
+        couleur: "",
+        capacite: 50,
+      })
+
+      setTimeout(() => {
+        refetchAuthUser()
+      }, 1000)
+    } catch (error) {
+      toast.error(error.message || "Une erreur est survenue lors de la mise à jour du véhicule")
+    }
   }
 
-  const handleDeleteVehicle = (vehicleId) => {
+  // Modifier la fonction handleDeleteVehicle pour utiliser l'endpoint "/api/user/updateUserform"
+  const handleDeleteVehicle = async (vehicleId) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer ce véhicule ?")) {
-      deleteVehicule(vehicleId, {
-        onSuccess: () => {
-          setTimeout(() => {
-            refetchAuthUser()
-          }, 1000)
-        },
-      })
+      try {
+        // Filtrer le véhicule à supprimer
+        const updatedVehicles = UserVehicles.filter((vehicle) => vehicle._id !== vehicleId)
+
+        // Envoyer la requête avec la liste mise à jour des véhicules
+        const response = await fetch("/api/user/updateUserform", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: authUser._id,
+            vehicules: updatedVehicles,
+            role: "livreur",
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || "Échec de la suppression du véhicule")
+        }
+
+        toast.success("Véhicule supprimé avec succès!")
+
+        setTimeout(() => {
+          refetchAuthUser()
+        }, 1000)
+      } catch (error) {
+        toast.error(error.message || "Une erreur est survenue lors de la suppression du véhicule")
+      }
     }
   }
 
@@ -474,7 +545,7 @@ const JustificativePage = () => {
   }
 
   // Si l'utilisateur est en cours de vérification, afficher le tableau des documents et des véhicules
-  if (authUser?.statut !== "non vérifié") {
+  if (authUser?.statut !== "non vérifié" && !isAddingNewVehicle) {
     return (
       <div className="max-w-6xl mx-auto p-6">
         <div className="mb-8">
@@ -518,13 +589,29 @@ const JustificativePage = () => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Mes véhicules</h2>
             {authUser?.statut === "non vérifié" && (
-              <button
-                onClick={() => setShowAddVehicleForm(true)}
-                className="flex items-center text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors"
-              >
-                <FaPlus className="mr-1" />
-                Ajouter un véhicule
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => setShowAddVehicleForm(true)}
+                  className="flex items-center text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors"
+                >
+                  <FaPlus className="mr-1" />
+                  Ajouter rapidement
+                </button>
+                <button
+                  onClick={() => {
+                    setIsAddingNewVehicle(true)
+                    setStep("vehicles")
+                    setSelectedVehicles([])
+                    setVehicleDetails({})
+                    setDocuments({})
+                    setUploadProgress({})
+                  }}
+                  className="flex items-center text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors"
+                >
+                  <FaPlus className="mr-1" />
+                  Ajouter avec assistant
+                </button>
+              </div>
             )}
           </div>
 
@@ -563,26 +650,25 @@ const JustificativePage = () => {
                           <span className="ml-1.5">{getStatusText(vehicle.statut || "non vérifié")}</span>
                         </div>
                       </td>
+
                       <td className="py-4 px-4 text-right">
                         <div className="flex space-x-3 justify-end">
                           <button
                             onClick={() => handleEditVehicle(vehicle)}
                             className="text-amber-600 hover:text-amber-800 flex items-center"
-                            disabled={vehicle.statut === "vérifié"}
                           >
                             <FaPencilAlt className="mr-1" />
-                            <span>Modifier</span>
+                            <span>{vehicle.statut === "vérifié" ? "Modifier couleur/capacité" : "Modifier"}</span>
                           </button>
 
-                          {vehicle.statut !== "vérifié" && (
-                            <button
-                              onClick={() => handleDeleteVehicle(vehicle._id)}
-                              className="text-red-600 hover:text-red-800 flex items-center"
-                            >
-                              <FaTrash className="mr-1" />
-                              <span>Supprimer</span>
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleDeleteVehicle(vehicle._id)}
+                            className="text-red-600 hover:text-red-800 flex items-center"
+                            disabled={vehicle.statut === "vérifié"}
+                          >
+                            <FaTrash className="mr-1" />
+                            <span>Supprimer</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -710,7 +796,19 @@ const JustificativePage = () => {
             </div>
           )}
 
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-between">
+            <button
+              onClick={() => {
+                setIsAddingNewVehicle(true)
+                setStep("vehicles")
+                setSelectedVehicles([])
+                setVehicleDetails({})
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center"
+            >
+              <FaPlus className="mr-2" />
+              Ajouter un nouveau véhicule
+            </button>
             <button
               onClick={() => (window.location.href = "/dashboard")}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
@@ -808,7 +906,15 @@ const JustificativePage = () => {
         {showEditVehicleForm && currentVehicle && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-xl font-semibold mb-4">Modifier le véhicule</h3>
+              <h3 className="text-xl font-semibold mb-4">
+                {currentVehicle.statut === "vérifié" ? "Modifier la couleur du véhicule" : "Modifier le véhicule"}
+              </h3>
+              {currentVehicle.statut === "vérifié" && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-600 text-sm">
+                  <strong>Note :</strong> Pour un véhicule vérifié, seules la couleur et la capacité peuvent être
+                  modifiées.
+                </div>
+              )}
               <form onSubmit={handleUpdateVehicle}>
                 <div className="space-y-4">
                   <div>
@@ -818,6 +924,7 @@ const JustificativePage = () => {
                       value={newVehicle.type}
                       onChange={handleNewVehicleChange}
                       className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      disabled={currentVehicle.statut === "vérifié"}
                     >
                       <option value="vélo">Vélo</option>
                       <option value="moto">Moto</option>
@@ -829,15 +936,17 @@ const JustificativePage = () => {
                   {(newVehicle.type === "voiture" || newVehicle.type === "moto") && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Plaque d'immatriculation <span className="text-red-500">*</span>
+                        Plaque d'immatriculation{" "}
+                        {currentVehicle.statut !== "vérifié" && <span className="text-red-500">*</span>}
                       </label>
                       <input
                         type="text"
                         name="plaque"
                         value={newVehicle.plaque}
                         onChange={handleNewVehicleChange}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2"
-                        required
+                        className={`w-full border border-gray-300 rounded-md px-3 py-2 ${currentVehicle.statut === "vérifié" ? "bg-gray-100" : ""}`}
+                        required={currentVehicle.statut !== "vérifié"}
+                        disabled={currentVehicle.statut === "vérifié"}
                       />
                     </div>
                   )}
@@ -862,7 +971,7 @@ const JustificativePage = () => {
                       max="100"
                       value={newVehicle.capacite}
                       onChange={handleNewVehicleChange}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      className={`w-full border border-gray-300 rounded-md px-3 py-2`}
                     />
                   </div>
                 </div>
@@ -875,12 +984,8 @@ const JustificativePage = () => {
                   >
                     Annuler
                   </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700"
-                    disabled={isUpdatingVehicle}
-                  >
-                    {isUpdatingVehicle ? "Modification en cours..." : "Modifier"}
+                  <button type="submit" className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700">
+                    Modifier
                   </button>
                 </div>
               </form>
@@ -939,7 +1044,9 @@ const JustificativePage = () => {
       </div>
       {step === "vehicles" ? (
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-6">Quel(s) véhicule(s) utilisez-vous ?</h2>
+          <h2 className="text-xl font-semibold mb-6">
+            {isAddingNewVehicle ? "Quel(s) véhicule(s) voulez-vous rajouter ?" : "Quel(s) véhicule(s) utilisez-vous ?"}
+          </h2>
           <p className="text-gray-600 mb-6">Sélectionnez tous les véhicules que vous utiliserez pour vos livraisons</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -966,15 +1073,23 @@ const JustificativePage = () => {
             ))}
           </div>
 
-          <div className="flex justify-end">
-            <button
-              onClick={handleSubmitVehicles}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium flex items-center transition-colors duration-200"
-            >
-              Continuer
-              <FaArrowRight className="ml-2 h-4 w-4" />
-            </button>
-          </div>
+          {isAddingNewVehicle && (
+            <div className="flex justify-between">
+              <button
+                onClick={() => setIsAddingNewVehicle(false)}
+                className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSubmitVehicles}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium flex items-center transition-colors duration-200"
+              >
+                Continuer
+                <FaArrowRight className="ml-2 h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
       ) : null}
       {/* Ajouter une nouvelle section pour le formulaire de détails des véhicules */}
@@ -1132,10 +1247,16 @@ const JustificativePage = () => {
               véhicules */}
               <button
                 type="button"
-                onClick={() => setStep("vehicleDetails")}
+                onClick={() => {
+                  if (isAddingNewVehicle && authUser?.statut !== "non vérifié") {
+                    setIsAddingNewVehicle(false)
+                  } else {
+                    setStep("vehicleDetails")
+                  }
+                }}
                 className="border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
               >
-                Retour
+                {isAddingNewVehicle && authUser?.statut !== "non vérifié" ? "Annuler" : "Retour"}
               </button>
               <button
                 type="submit"
@@ -1144,7 +1265,11 @@ const JustificativePage = () => {
                 }`}
                 disabled={isUploading}
               >
-                {isUploading ? "Envoi en cours..." : "Soumettre les documents"}
+                {isUploading
+                  ? "Envoi en cours..."
+                  : isAddingNewVehicle && authUser?.statut !== "non vérifié"
+                    ? "Soumettre les documents pour le nouveau véhicule"
+                    : "Soumettre les documents"}
               </button>
             </div>
           </form>

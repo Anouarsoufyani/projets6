@@ -1,10 +1,11 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
-import { useState } from "react";
-import { Link } from "react-router"; // Correction de "react-router" à "react-router-dom"
-import { FaEnvelope, FaLock } from "react-icons/fa";
+"use client";
 
-const api = import.meta.env.VITE_API_URL;
+import { useState } from "react";
+import { Link } from "react-router"; // Correction de l'import
+import { FaEnvelope, FaLock } from "react-icons/fa";
+import { useLogin } from "../../../Hooks"; // Import du hook modularisé
+import { useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
@@ -13,52 +14,27 @@ const LoginPage = () => {
     });
 
     const queryClient = useQueryClient();
-
-    const {
-        mutate: loginMutation,
-        isError,
-        isPending,
-        error,
-    } = useMutation({
-        mutationFn: async ({ email, password }) => {
-            const res = await fetch(`${api}/auth/login`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email, password }),
-            });
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || "Something went wrong");
-            }
-
-            return data;
-        },
-        onSuccess: () => {
-            toast.success("Login successful");
-            setFormData({
-                email: "",
-                password: "",
-            });
-            queryClient.invalidateQueries({ queryKey: ["authUser"] });
-        },
-        onError: (error) => {
-            console.log(error);
-            toast.error(error.message);
-        },
-    });
+    const { mutate: loginMutation, isPending } = useLogin();
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!formData.email || !formData.password) {
             toast.error("Please fill in all fields");
         } else {
-            loginMutation({
-                email: formData.email,
-                password: formData.password,
-            });
+            loginMutation(
+                {
+                    email: formData.email,
+                    password: formData.password,
+                },
+                {
+                    onSuccess: () => {
+                        setFormData({
+                            email: "",
+                            password: "",
+                        });
+                    },
+                }
+            );
         }
     };
 
@@ -67,8 +43,8 @@ const LoginPage = () => {
     };
 
     return (
-        <main className="flex justify-center items-center w-full h-full bg-gray-100">
-            <div className="flex flex-col gap-6 justify-center items-center w-1/3 bg-white p-8 rounded-xl shadow-2xl">
+        <main className="flex justify-center items-center w-full min-h-screen px-4 py-8 bg-gray-100">
+            <div className="flex flex-col gap-6 justify-center items-center w-full max-w-md mx-auto bg-white p-4 sm:p-8 rounded-xl shadow-2xl">
                 <h1 className="text-3xl font-bold text-emerald-600 mb-4">
                     Connexion
                 </h1>
@@ -85,7 +61,7 @@ const LoginPage = () => {
                             <input
                                 type="email"
                                 placeholder="Votre email"
-                                name="email" // Aligné avec formData.username
+                                name="email"
                                 className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 onChange={handleInputChange}
                                 value={formData.email}
@@ -113,15 +89,12 @@ const LoginPage = () => {
                         className="w-full bg-emerald-600 text-white py-3 rounded-md hover:bg-emerald-700 transition duration-300 mt-4"
                     >
                         {isPending ? (
-                            <span className="loading loading-spinner loading-md"></span>
+                            <span className="loading loading-spinner loading-md">...</span>
                         ) : (
                             "Se connecter"
                         )}
                     </button>
                 </form>
-                {isError && (
-                    <p className="text-red-500 mt-2">{error.message}</p>
-                )}
                 <div className="mt-4 text-center">
                     <p className="text-gray-600">
                         Pas de compte ?{" "}

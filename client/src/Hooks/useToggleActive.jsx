@@ -1,16 +1,25 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useGetUserCommandes } from "./index";
 
-const api = import.meta.env.VITE_API_URL;
 const useToggleActive = () => {
     const queryClient = useQueryClient();
+    const { data: commandesData } = useGetUserCommandes();
+    const commandeEnCours = commandesData?.commandes?.find(
+        (cmd) => cmd.statut !== "livree"
+    );
 
     const { mutateAsync: toggleActive, isPending: isToggleActive } =
         useMutation({
             mutationFn: async (id) => {
-                console.log("id", JSON.stringify({ id }));
+                // Vérifier si le livreur a une commande en cours
+                if (commandeEnCours) {
+                    throw new Error(
+                        "Vous ne pouvez pas changer votre statut pendant une livraison en cours"
+                    );
+                }
 
-                const res = await fetch(`${api}/user/active`, {
+                const res = await fetch(`/api/user/active`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -28,10 +37,9 @@ const useToggleActive = () => {
                 return data;
             },
             onSuccess: () => {
-                toast.success("Livreur activé avec succès");
+                toast.success("Statut mis à jour avec succès");
                 // Invalide les caches pour rafraîchir les données
                 Promise.all([
-                    // queryClient.invalidateQueries({ queryKey: ["livreurs"] }),
                     queryClient.invalidateQueries({ queryKey: ["authUser"] }),
                 ]);
             },
@@ -40,7 +48,11 @@ const useToggleActive = () => {
             },
         });
 
-    return { toggleActive, isToggleActive };
+    return {
+        toggleActive,
+        isToggleActive,
+        hasActiveDelivery: !!commandeEnCours,
+    };
 };
 
 export default useToggleActive;

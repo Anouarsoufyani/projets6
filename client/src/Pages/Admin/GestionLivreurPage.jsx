@@ -1,12 +1,9 @@
-import { useState, useEffect } from "react";
-import PropTypes from "prop-types";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
-import toast from "react-hot-toast";
 import { useGetLivreurs } from "../../Hooks/useGetUsers";
 
 const GestionLivreurPage = () => {
     const { data: authUser, isLoading } = useAuthUserQuery();
-    let { data: users } = useGetLivreurs();
+    const { data: users } = useGetLivreurs();
 
     console.log("users", users);
 
@@ -25,7 +22,7 @@ const GestionLivreurPage = () => {
     }
 
     return (
-        <main className="w-full min-h-full bg-gray-100 p-6">
+        <main className="w-full min-h-full p-6">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
                 Gestion livreurs
             </h1>

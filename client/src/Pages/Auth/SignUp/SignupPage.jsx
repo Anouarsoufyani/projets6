@@ -1,12 +1,13 @@
-import { useMutation } from "@tanstack/react-query";
-import toast from "react-hot-toast";
-import { useState, useEffect } from "react";
-import { Link } from "react-router"; // Correction de "react-router" à "react-router-dom"
-import { FaUser, FaEnvelope, FaPhone, FaLock, FaUserTie } from "react-icons/fa";
+"use client";
 
-const api = import.meta.env.VITE_API_URL;
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router"; // Ajout de useNavigate
+import { FaUser, FaEnvelope, FaPhone, FaLock, FaUserTie } from "react-icons/fa";
+import { useSignup } from "../../../Hooks"; // Import du hook modularisé
+import toast from "react-hot-toast";
 
 const SignupPage = () => {
+    const navigate = useNavigate(); // Hook pour la navigation
     const [role, setRole] = useState(null);
 
     useEffect(() => {
@@ -24,43 +25,7 @@ const SignupPage = () => {
         role: "client",
     });
 
-    const { mutate: signupMutation, isPending } = useMutation({
-        mutationFn: async ({ email, nom, password, numero, role }) => {
-            const res = await fetch(`${api}/auth/signup`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    email,
-                    nom,
-                    password,
-                    numero,
-                    role,
-                }),
-            });
-
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.error || "Something went wrong");
-            }
-
-            return data;
-        },
-        onSuccess: () => {
-            toast.success("Account created successfully");
-            setFormData({
-                email: "",
-                nom: "",
-                password: "",
-                numero: "",
-                role: "client",
-            });
-        },
-        onError: (error) => {
-            toast.error(error.message);
-        },
-    });
+    const { mutate: signupMutation, isPending } = useSignup();
 
     const handleSubmit = (e) => {
         console.log(formData);
@@ -75,13 +40,28 @@ const SignupPage = () => {
         ) {
             toast.error("Please fill in all fields");
         } else {
-            signupMutation({
-                email: formData.email,
-                nom: formData.nom,
-                password: formData.password,
-                numero: formData.numero,
-                role: formData.role,
-            });
+            signupMutation(
+                {
+                    email: formData.email,
+                    nom: formData.nom,
+                    password: formData.password,
+                    numero: formData.numero,
+                    role: formData.role,
+                },
+                {
+                    onSuccess: () => {
+                        setFormData({
+                            email: "",
+                            nom: "",
+                            password: "",
+                            numero: "",
+                            role: "client",
+                        });
+
+                        navigate("/login");
+                    },
+                }
+            );
         }
     };
 
@@ -90,8 +70,8 @@ const SignupPage = () => {
     };
 
     return (
-        <main className="flex justify-center items-center w-full h-full bg-gray-100">
-            <div className="flex flex-col gap-6 justify-center items-center w-1/2 bg-white p-8 rounded-xl shadow-2xl">
+        <main className="flex justify-center items-center w-full min-h-screen px-4 py-8 bg-gray-100">
+            <div className="flex flex-col gap-6 justify-center items-center w-full max-w-lg mx-auto bg-white p-4 sm:p-8 rounded-xl shadow-2xl">
                 <h1 className="text-3xl font-bold text-emerald-600 mb-4">
                     Inscription
                 </h1>

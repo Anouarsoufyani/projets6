@@ -44,21 +44,39 @@ const AdminSchema = new mongoose.Schema({});
 const Admin = User.discriminator("admin", AdminSchema);
 
 const LivreurSchema = new mongoose.Schema({
-    vehicule: {
-        type: {
-            type: String,
-            enum: ["voiture", "moto", "vélo", "autres"],
+    vehicules: [
+        {
+            type: {
+                type: String,
+                enum: ["voiture", "moto", "vélo", "autres"],
+                required: true,
+            },
+            plaque: {
+                type: String,
+                unique: true,
+            },
+            couleur: {
+                type: String,
+                default: "inconnue",
+            },
+            capacite: {
+                type: Number,
+                min: 1,
+                max: 100,
+                default: 50,
+            },
+            statut: {
+                type: String,
+                emum: ["non vérifié", "vérifié", "refusé", "en vérification"],
+                default: "non vérifié",
+                required: true,
+            },
+            current: {
+                type: Boolean,
+                default: false,
+            },
         },
-        plaque: {
-            type: String,
-        },
-        couleur: {
-            type: String,
-        },
-        capacite: {
-            type: Number,
-        },
-    },
+    ],
     position: {
         lat: {
             type: Number,
@@ -89,9 +107,17 @@ const LivreurSchema = new mongoose.Schema({
                 enum: ["non soumis", "en attente", "validé", "refusé"],
                 default: "non soumis",
             },
+            label: {
+                type: String,
+                required: true,
+            },
         },
     ],
     disponibilite: {
+        type: Boolean,
+        default: true,
+    },
+    isWorking: {
         type: Boolean,
         default: false,
     },
@@ -138,6 +164,10 @@ const CommercantSchema = new mongoose.Schema({
             type: Number,
         },
     },
+    note_moyenne: {
+        type: Number,
+        default: 0,
+    },
 });
 
 const Commercant = User.discriminator("commercant", CommercantSchema);
@@ -145,10 +175,6 @@ const Commercant = User.discriminator("commercant", CommercantSchema);
 const ClientSchema = new mongoose.Schema({
     adresses_favorites: [
         {
-            nom: {
-                type: String,
-                required: true,
-            },
             rue: {
                 type: String,
                 required: true,

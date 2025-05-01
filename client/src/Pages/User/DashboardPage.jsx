@@ -1,3 +1,5 @@
+"use client";
+
 import { FaStar, FaRegStar } from "react-icons/fa";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import useToggleActive from "../../Hooks/useToggleActive";
@@ -97,7 +99,7 @@ const DashboardPage = () => {
         (cmd) => cmd.statut === "en_livraison"
     );
     const { position, loading, error } = useDeliveryPosition(
-        authUser?.disponibilite, 
+        authUser?.isWorking,
         authUser?._id,
         commandeEnCours?._id
     );
@@ -109,8 +111,6 @@ const DashboardPage = () => {
         window.location.reload();
     };
 
-    
-
     return (
         <div className="w-full h-full bg-gray-100 p-6">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
@@ -120,7 +120,7 @@ const DashboardPage = () => {
             {authUser?.role === "livreur" ? (
                 <div
                     className={
-                        authUser.disponibilite
+                        authUser.isWorking
                             ? " h-9/10 flex flex-col gap-4 bg-white p-6 rounded-lg shadow-lg mb-6 text-center"
                             : "flex flex-col gap-4 bg-white p-6 rounded-lg shadow-lg mb-6 text-center"
                     }
@@ -139,13 +139,13 @@ const DashboardPage = () => {
                         >
                             {isToggleActive
                                 ? "Activation..."
-                                : authUser.disponibilite
+                                : authUser.isWorking
                                 ? "Arrêter de livrer"
                                 : "Commencer à livrer"}
                         </button>
                     </div>
 
-                    {authUser.disponibilite && (
+                    {authUser.isWorking && (
                         <div className="w-full h-full">
                             {loading ? (
                                 <p className="text-gray-600">
@@ -171,7 +171,6 @@ const DashboardPage = () => {
                                             url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
                                         }}
                                     />
-                                    
                                 </GoogleMap>
                             ) : (
                                 <p className="text-gray-600">

@@ -1,12 +1,10 @@
 "use client";
 
-import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
+import { useAuthUserQuery, useGetUsersByRole, useGetCoords } from "../../Hooks";
 import { useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { FaStore, FaMapMarkerAlt, FaMoneyBillWave } from "react-icons/fa";
-import { useGetCoords } from "../../Hooks/useGetCoords";
-import { useGetUsersByRole } from "../../Hooks/useGetUsers";
 
 const CreateCommandePage = () => {
     const { data: authUser } = useAuthUserQuery();
@@ -43,6 +41,18 @@ const CreateCommandePage = () => {
 
     const { data: commercantsData, isLoading: isLoadingCommercants } =
         useGetUsersByRole("commercant");
+
+    const commercantsWithAddress = useMemo(() => {
+        if (!commercantsData?.data) return [];
+
+        return commercantsData.data.filter(
+            (commercant) =>
+                commercant.adresse_boutique &&
+                commercant.adresse_boutique.rue &&
+                commercant.adresse_boutique.ville &&
+                commercant.adresse_boutique.code_postal
+        );
+    }, [commercantsData]);
 
     const { mutate: createCommandeMutation, isPending } = useMutation({
         mutationFn: async (commandeData) => {
@@ -134,9 +144,9 @@ const CreateCommandePage = () => {
     };
 
     return (
-        <div className="w-full min-h-full items-center justify-center bg-gray-100 p-6 flex flex-col">
-            <div className="flex flex-col gap-6 justify-center items-center w-1/2 h-9/10 bg-white p-8 rounded-xl shadow-2xl">
-                <h1 className="text-3xl font-bold text-emerald-600 mb-4">
+        <div className="w-full h-screen items-center justify-center bg-gradient-to-br from-emerald-50 to-teal-100 p-4 sm:p-6 flex flex-col sm:justify-items-center sm:items-center">
+            <div className="flex flex-col gap-6 justify-center items-center w-full max-w-xl mx-auto bg-white p-4 sm:p-8 rounded-xl shadow-2xl">
+                <h1 className="text-2xl sm:text-3xl font-bold text-emerald-600 mb-2 sm:mb-4">
                     Créer une commande
                 </h1>
                 <form
@@ -159,20 +169,34 @@ const CreateCommandePage = () => {
                                 <option value="">
                                     Sélectionner un commerçant
                                 </option>
-                                {commercantsData?.data?.map((commercant) => (
-                                    <option
-                                        key={commercant._id}
-                                        value={commercant._id}
-                                    >
-                                        {commercant.nom_boutique ||
-                                            commercant.nom}{" "}
-                                        -{" "}
-                                        {commercant.adresse_boutique?.ville ||
-                                            "Adresse non spécifiée"}
+                                {commercantsWithAddress.length > 0 ? (
+                                    commercantsWithAddress.map((commercant) => (
+                                        <option
+                                            key={commercant._id}
+                                            value={commercant._id}
+                                        >
+                                            {commercant.nom_boutique ||
+                                                commercant.nom}{" "}
+                                            -{" "}
+                                            {commercant.adresse_boutique?.ville}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option value="" disabled>
+                                        Aucun commerçant avec adresse disponible
                                     </option>
-                                ))}
+                                )}
                             </select>
                         </div>
+                        {commercantsData?.data &&
+                            commercantsData.data.length > 0 &&
+                            commercantsWithAddress.length === 0 && (
+                                <p className="text-amber-600 text-sm mt-1">
+                                    Aucun commerçant n'a renseigné son adresse.
+                                    Veuillez contacter un commerçant pour qu'il
+                                    complète son profil.
+                                </p>
+                            )}
                     </div>
 
                     {/* Adresse de livraison */}
@@ -180,6 +204,69 @@ const CreateCommandePage = () => {
                         <label className="text-sm font-medium text-gray-700">
                             Adresse de livraison
                         </label>
+
+                        {/* Sélecteur d'adresses favorites */}
+                        {authUser?.adresses_favorites &&
+                            authUser.adresses_favorites.length > 0 && (
+                                <div className="mb-2">
+                                    <select
+                                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                const selectedAddress =
+                                                    authUser.adresses_favorites[
+                                                        Number.parseInt(
+                                                            e.target.value
+                                                        )
+                                                    ];
+                                                setFormData({
+                                                    ...formData,
+                                                    adresse_livraison: {
+                                                        rue:
+                                                            selectedAddress.rue ||
+                                                            "",
+                                                        ville:
+                                                            selectedAddress.ville ||
+                                                            "",
+                                                        code_postal:
+                                                            selectedAddress.code_postal ||
+                                                            "",
+                                                        lat:
+                                                            selectedAddress.lat ||
+                                                            "",
+                                                        lng:
+                                                            selectedAddress.lng ||
+                                                            "",
+                                                    },
+                                                });
+                                            }
+                                        }}
+                                        defaultValue=""
+                                    >
+                                        <option value="">
+                                            -- Sélectionner une adresse favorite
+                                            --
+                                        </option>
+                                        {authUser.adresses_favorites.map(
+                                            (adresse, index) => (
+                                                <option
+                                                    key={index}
+                                                    value={index}
+                                                >
+                                                    {adresse.nom
+                                                        ? `${adresse.nom}: `
+                                                        : ""}
+                                                    {adresse.rue},{" "}
+                                                    {adresse.ville},{" "}
+                                                    {adresse.code_postal}
+                                                </option>
+                                            )
+                                        )}
+                                    </select>
+                                </div>
+                            )}
+
+                        {/* Champs d'adresse */}
                         <div className="relative">
                             <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
                             <input
@@ -191,12 +278,12 @@ const CreateCommandePage = () => {
                                 value={formData.adresse_livraison.rue}
                             />
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <input
                                 type="text"
                                 placeholder="Ville"
                                 name="ville"
-                                className="w-1/2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                className="w-full sm:w-1/2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 onChange={handleAdresseChange}
                                 value={formData.adresse_livraison.ville}
                             />
@@ -204,7 +291,7 @@ const CreateCommandePage = () => {
                                 type="text"
                                 placeholder="Code postal"
                                 name="code_postal"
-                                className="w-1/2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                className="w-full sm:w-1/2 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
                                 onChange={handleAdresseChange}
                                 value={formData.adresse_livraison.code_postal}
                             />

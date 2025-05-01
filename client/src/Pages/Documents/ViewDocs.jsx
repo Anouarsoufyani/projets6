@@ -1,6 +1,10 @@
+"use client";
+
 import { useParams, Navigate } from "react-router";
-import { useAuthUserQuery } from "../../Hooks/useAuthQueries"; // adapte selon ton projet
+import { useAuthUserQuery } from "../../Hooks"; // adapte selon ton projet
 import { useEffect, useState } from "react";
+import LoadingSpinner from "../../Components/UI/Loading";
+
 
 const ViewDocs = () => {
     const { id, filename } = useParams();
@@ -10,17 +14,15 @@ const ViewDocs = () => {
 
     useEffect(() => {
         if (id && filename) {
-            const fileUrl = `https://projets6.onrender.com/uploads/${id}/${filename}`;
+            const fileUrl = `http://localhost:5001/uploads/${id}/${filename}`;
             setUrl(fileUrl);
         }
     }, [id, filename]);
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <span>Chargement...</span>
-            </div>
-        );
+            <LoadingSpinner/>
+        )
     }
 
     // 🚫 Protection ici

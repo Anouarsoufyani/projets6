@@ -46,6 +46,7 @@ const CommandeSchema = new mongoose.Schema({
             "recuperee_par_livreur",
             "livree",
             "annulee",
+            "probleme",
         ],
         default: "en_attente",
     },
@@ -60,6 +61,9 @@ const CommandeSchema = new mongoose.Schema({
     date_creation: {
         type: Date,
         default: Date.now,
+    },
+    date_recuperation: {
+        type: Date,
     },
     date_livraison: {
         type: Date,
@@ -80,10 +84,24 @@ const CommandeSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    itineraire: [
+    itineraire_parcouru_commercant: [
         {
-            lat: Number,
-            lng: Number,
+            position: {
+                lat: Number,
+                lng: Number,
+            },
+            timestamp: {
+                type: Date,
+                default: Date.now,
+            },
+        },
+    ],
+    itineraire_parcouru_client: [
+        {
+            position: {
+                lat: Number,
+                lng: Number,
+            },
             timestamp: {
                 type: Date,
                 default: Date.now,

@@ -9,11 +9,21 @@ export const uploadDocuments = async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).send("Utilisateur non trouvé");
 
-        const docs = req.files.map((file) => ({
+        
+
+        const labels = Array.isArray(req.body.labels)
+            ? req.body.labels
+            : [req.body.labels]; // gérer un seul label
+        
+
+        const docs = req.files.map((file, index) => ({
             nom: file.originalname,
             url: file.path,
             statut: "en attente",
+            label: labels[index] || "non spécifié",
         }));
+
+       
 
         user.documents.push(...docs);
         user.statut = "en vérification";
@@ -41,15 +51,63 @@ export const updateDocumentStatus = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).send("Utilisateur non trouvé");
 
-    user.documents[docIndex].statut =
-        action === "valider" ? "validé" : "refusé";
+    // 1. Met à jour le statut du document
+    const doc = user.documents[docIndex];
+    doc.statut = action === "valider" ? "validé" : "refusé";
 
-    // Vérifie si tous les docs sont validés
-    if (user.documents.every((doc) => doc.statut === "validé")) {
-        user.statut = "vérifié";
-    } else {
-        user.statut = "en vérification";
+    // 2. Vérifie si les documents généraux sont valides
+    const hasCarteIdentite = user.documents.some(
+        (d) => d.label === "carte d'identité" && d.statut === "validé"
+    );
+    const hasPhotoTete = user.documents.some(
+        (d) => d.label === "photo de votre tête" && d.statut === "validé"
+    );
+
+    // Vélo et autres : pas de documents spécifiques
+    if (hasCarteIdentite && hasPhotoTete) {
+        user.vehicules = user.vehicules.map((v) => {
+            if (["vélo", "autres"].includes(v.type)) {
+                v.statut = "vérifié";
+            }
+            return v;
+        });
     }
+
+    // 3. Moto
+    const motoDocsOk = [
+        "permis moto",
+        "carte grise moto",
+        "assurance moto",
+    ].every((label) =>
+        user.documents.some((d) => d.label === label && d.statut === "validé")
+    );
+
+    if (hasCarteIdentite && hasPhotoTete && motoDocsOk) {
+        user.vehicules = user.vehicules.map((v) => {
+            if (v.type === "moto") v.statut = "vérifié";
+            return v;
+        });
+    }
+
+    // 4. Voiture
+    const voitureDocsOk = [
+        "permis voiture",
+        "carte grise voiture",
+        "assurance voiture",
+    ].every((label) =>
+        user.documents.some((d) => d.label === label && d.statut === "validé")
+    );
+
+    if (hasCarteIdentite && hasPhotoTete && voitureDocsOk) {
+        user.vehicules = user.vehicules.map((v) => {
+            if (v.type === "voiture") v.statut = "vérifié";
+            return v;
+        });
+    }
+
+    // 5. Statut global du livreur
+    const allDocsValid = user.documents.every((d) => d.statut === "validé");
+    user.statut = allDocsValid ? "vérifié" : "en vérification";
 
     await user.save();
     res.send("Statut mis à jour");
@@ -66,8 +124,8 @@ export const updateDocument = async (req, res) => {
 
         const doc = user.documents.id(documentId);
         if (!doc) return res.status(404).send("Document introuvable");
-        if (doc.statut === "validé")
-            return res.status(403).send("Ce document a déjà été validé");
+        // if (doc.statut === "validé")
+        //     return res.status(403).send("Ce document a déjà été validé");
 
         // Supprimer l'ancien fichier physiquement
         if (fs.existsSync(doc.url)) {

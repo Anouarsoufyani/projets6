@@ -1,4 +1,7 @@
-import { Route, Routes, Navigate } from "react-router";
+"use client";
+
+import { useState, useEffect } from "react";
+import { Route, Routes, Navigate, useLocation } from "react-router";
 import SignupPage from "./Pages/Auth/SignUp/SignupPage";
 import LoginPage from "./Pages/Auth/Login/LoginPage";
 import HomePage from "./Pages/Home/HomePage";
@@ -11,22 +14,68 @@ import SelectLivreurPage from "./Pages/Livraisons/SelectLivreurPage";
 import CommandesListePage from "./Pages/Commandes/CommandesListePage";
 import JustificativePage from "./Pages/Livraisons/JustificativePage";
 import { Toaster } from "react-hot-toast";
-import { useAuthUserQuery } from "./Hooks/useAuthQueries";
+import { useAuthUserQuery } from "./Hooks";
 import CreateCommandePage from "./Pages/Commandes/CreateCommandePage";
 import CommandeSuivi from "./Pages/Commandes/CommandeSuivi";
 import NotificationsPage from "./Pages/User/NotificationsPage";
+import useDeliveryPosition from "./Hooks/mutations/useDeliveryPosition";
+import { useFilteredNotifications } from "./Hooks";
+
+import DetailCommande from "./Pages/Commandes/DetailCommande";
 
 import GestionPiecesPage from "./Pages/Admin/GestionPiecesPage";
 import DashboardPageAdmin from "./Pages/Admin/DashboardPageAdmin";
 import GestionUsersPage from "./Pages/Admin/GestionUsersPage";
 
 import ViewDocs from "./Pages/Documents/ViewDocs";
+import GestionCommandePage from "./Pages/Admin/GestionCommandePage";
+import UserProfileAdmin from "./Pages/Admin/UserProfileAdmin";
 
 function App() {
     const navbarSize = "4rem";
     const sidebarSize = "18rem";
+    const [isMobile, setIsMobile] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const location = useLocation();
+
+    // Close sidebar on route change
+    useEffect(() => {
+        if (isMobile) {
+            setSidebarOpen(false);
+        }
+    }, [location.pathname, isMobile]);
+
+    // Check if screen is mobile
+    useEffect(() => {
+        const checkIfMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        // Initial check
+        checkIfMobile();
+
+        // Add event listener
+        window.addEventListener("resize", checkIfMobile);
+
+        // Cleanup
+        return () => window.removeEventListener("resize", checkIfMobile);
+    }, []);
+
+    const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);
+    };
 
     const { data: authUser, isLoading } = useAuthUserQuery();
+
+    // Récupérer les notifications seulement si l'utilisateur est connecté
+    const { data: notifications } = useFilteredNotifications(authUser);
+
+    // Utiliser le hook de position pour les livreurs
+    const isLivreur = authUser?.role === "livreur";
+    const isLivreurActive = isLivreur && authUser?.isWorking;
+
+    // useDeliveryPosition est déjà conditionnel grâce à isLivreurActive
+    useDeliveryPosition(isLivreurActive, authUser?._id);
 
     if (isLoading) {
         return (
@@ -37,26 +86,37 @@ function App() {
     }
 
     return (
-        <div className={`flex flex-col w-full m-0 h-screen`}>
+        <div className="flex flex-col min-h-screen w-full bg-gradient-to-br from-emerald-50 to-teal-100">
+            <Navbar
+                isLoggedIn={!!authUser}
+                navbarHeight={navbarSize}
+                toggleSidebar={toggleSidebar}
+                isMobile={isMobile}
+            />
+
             {authUser && (
                 <Sidebar
                     authUser={authUser}
                     sidebarSize={sidebarSize}
                     navbarHeight={navbarSize}
+                    isOpen={sidebarOpen}
+                    isMobile={isMobile}
+                    notifications={notifications}
                 />
             )}
-            <Navbar isLoggedIn={!!authUser} navbarHeight={navbarSize} />
-            <div
-                className={`h-screen`}
-                style={
-                    authUser
-                        ? {
-                              marginLeft: sidebarSize,
-                              width: `calc(100% - ${sidebarSize})`,
-                              height: `calc(100vh - ${navbarSize})`,
-                          }
-                        : { height: `calc(100vh - ${navbarSize})` }
-                }
+
+            <main
+                className="flex-1 transition-all duration-300 ease-in-out"
+                style={{
+                    marginTop: navbarSize,
+                    marginLeft: isMobile ? 0 : authUser ? sidebarSize : 0,
+                    width: isMobile
+                        ? "100%"
+                        : authUser
+                        ? `calc(100% - ${sidebarSize})`
+                        : "100%",
+                }}
+                onClick={() => isMobile && sidebarOpen && setSidebarOpen(false)}
             >
                 <Routes>
                     <Route
@@ -64,8 +124,7 @@ function App() {
                         element={
                             !authUser ? (
                                 <HomePage navbarHeight={navbarSize} />
-                            ) : authUser.role === "client" ||
-                              authUser.role === "admin" ? (
+                            ) : authUser.role === "client" ? (
                                 <Navigate to="/commandes" />
                             ) : (
                                 <Navigate to="/dashboard" />
@@ -89,7 +148,9 @@ function App() {
                         element={
                             authUser ? (
                                 authUser.role === "livreur" ? (
-                                    <DashboardPageLivreur />
+                                    <DashboardPageLivreur
+                                        notifications={notifications}
+                                    />
                                 ) : authUser.role === "commercant" ? (
                                     <DashboardPageCommercant />
                                 ) : authUser.role === "admin" ? (
@@ -192,41 +253,22 @@ function App() {
                             )
                         }
                     />
-                    {/* <Route
-                        path="/client/gestion"
-                        element={
-                            authUser && authUser.role === "admin" ? (
-                                <GestionClientPage />
-                            ) : (
-                                <Navigate to="/login" />
-                            )
-                        }
-                    />
-                    <Route
-                        path="/livreur/gestion"
-                        element={
-                            authUser && authUser.role === "admin" ? (
-                                <GestionLivreurPage />
-                            ) : (
-                                <Navigate to="/login" />
-                            )
-                        }
-                    />
-                    <Route
-                        path="/commercant/gestion"
-                        element={
-                            authUser && authUser.role === "admin" ? (
-                                <GestionCommercantPage />
-                            ) : (
-                                <Navigate to="/login" />
-                            )
-                        }
-                    /> */}
                     <Route
                         path="/gestion/:role"
                         element={
                             authUser && authUser.role === "admin" ? (
                                 <GestionUsersPage />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+
+                    <Route
+                        path="/gestion-commande"
+                        element={
+                            authUser && authUser.role === "admin" ? (
+                                <GestionCommandePage />
                             ) : (
                                 <Navigate to="/login" />
                             )
@@ -261,8 +303,30 @@ function App() {
                             )
                         }
                     />
+
+                    <Route
+                        path="/commande/:id"
+                        element={
+                            authUser ? (
+                                <DetailCommande />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
+
+                    <Route
+                        path="/admin/user/:userId"
+                        element={
+                            authUser && authUser.role === "admin" ? (
+                                <UserProfileAdmin />
+                            ) : (
+                                <Navigate to="/login" />
+                            )
+                        }
+                    />
                 </Routes>
-            </div>
+            </main>
             <Toaster />
         </div>
     );

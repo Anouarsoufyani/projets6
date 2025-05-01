@@ -1,16 +1,12 @@
-import { LoadScript } from "@react-google-maps/api";
-import PropTypes from "prop-types";
+import { LoadScript } from "@react-google-maps/api"
+import PropTypes from "prop-types"
 
 const GoogleMapLoader = ({ children }) => {
-    return (
-        <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-            {children}
-        </LoadScript>
-    );
-};
+  return <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>{children}</LoadScript>
+}
 
 GoogleMapLoader.propTypes = {
-    children: PropTypes.node.isRequired,
-};
+  children: PropTypes.node.isRequired,
+}
 
-export default GoogleMapLoader;
+export default GoogleMapLoader

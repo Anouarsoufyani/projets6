@@ -1,36 +1,8 @@
-import { useState, useEffect } from "react";
-import PropTypes from "prop-types";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
-import toast from "react-hot-toast";
 import { useGetClients } from "../../Hooks/useGetUsers";
-import { useLocation } from "react-router";
-
-const fakeClients = [
-    {
-        id: "C001",
-        nom: "Anouar Soufyani",
-        email: "anouar@email.com",
-        statut: "actif",
-    },
-    {
-        id: "C002",
-        nom: "Rayan Hasnaoui-Mounir",
-        email: "rayan@email.com",
-        statut: "inactif",
-    },
-    {
-        id: "C003",
-        nom: "Fahed Zakaria",
-        email: "fahed@email.com",
-        statut: "actif",
-    },
-];
 
 const GestionUsersPage = () => {
     const { data: authUser, isLoading } = useAuthUserQuery();
-    const location = useLocation();
-    const path = location.pathname;
-    const role = path.split("/")[1];
     const { data: users } = useGetClients();
     console.log("users", users);
 
@@ -49,7 +21,7 @@ const GestionUsersPage = () => {
     }
 
     return (
-        <main className="w-full min-h-full bg-gray-100 p-6">
+        <main className="w-full min-h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-6">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
                 Gestion client
             </h1>

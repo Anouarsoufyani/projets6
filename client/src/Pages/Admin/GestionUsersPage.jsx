@@ -1,29 +1,32 @@
-import { useParams } from "react-router";
-import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
-import { useGetUsersByRole } from "../../Hooks/useGetUsers";
+"use client";
+
+import { useParams, useNavigate, Link } from "react-router";
+import { useGetUsersByRole, useAuthUserQuery } from "../../Hooks";
 import {
     FaSpinner,
     FaTimesCircle,
     FaCheckCircle,
     FaHourglassHalf,
+    FaEye,
 } from "react-icons/fa";
 
 const GestionUsersPage = () => {
     const { role } = useParams(); // "client", "livreur", etc.
+    const navigate = useNavigate();
     const { data: authUser, isLoading: authLoading } = useAuthUserQuery();
-
     const {
         data: usersData,
         isLoading: usersLoading,
         error,
     } = useGetUsersByRole(role);
 
-    console.log("usersData", usersData);
-
     if (authLoading || usersLoading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                Chargement...
+            <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
+                <div className="relative animate-spin rounded-full h-16 w-16 border-4 border-emerald-200 border-t-emerald-600">
+                    <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-400 opacity-30"></div>
+                </div>
+                <p className="mt-4 text-emerald-700 font-medium">Loading...</p>
             </div>
         );
     }
@@ -99,8 +102,12 @@ const GestionUsersPage = () => {
         }
     };
 
+    const handleViewUser = (userId) => {
+        navigate(`/admin/user/${userId}`);
+    };
+
     return (
-        <main className="w-full min-h-full bg-gray-100 p-6">
+        <main className="w-full min-h-full p-6">
             <h1 className="text-2xl font-bold text-emerald-700 mb-6">
                 Gestion {role}s
             </h1>
@@ -112,61 +119,76 @@ const GestionUsersPage = () => {
                     </h2>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-gray-50 border-b">
-                            <tr>
-                                <th className="py-3 px-4">ID</th>
-                                <th className="py-3 px-4">Nom</th>
-                                <th className="py-3 px-4">Email</th>
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="bg-gray-50">
+                                <th className="text-left py-4 px-4 font-semibold text-gray-600 rounded-tl-lg">
+                                    ID
+                                </th>
+                                <th className="text-left py-4 px-4 font-semibold text-gray-600">
+                                    Nom
+                                </th>
+                                <th className="text-left py-4 px-4 font-semibold text-gray-600">
+                                    Email
+                                </th>
                                 {role === "livreur" && (
-                                    <th className="py-3 px-4">Statut</th>
+                                    <th className="text-left py-4 px-4 font-semibold text-gray-600">
+                                        Statut
+                                    </th>
                                 )}
-                                <th className="py-3 px-4">Actions</th>
+                                <th className="text-right py-4 px-4 font-semibold text-gray-600 rounded-tr-lg">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {usersData?.data.map((data) => (
+                        <tbody className="divide-y divide-gray-100">
+                            {usersData?.data.map((data, index) => (
                                 <tr
-                                    key={data.id}
-                                    className="hover:bg-gray-50 transition-colors"
+                                    key={data._id}
+                                    className={`hover:bg-emerald-50 transition-colors duration-150 ${
+                                        index === usersData.data.length - 1
+                                            ? "rounded-b-lg"
+                                            : ""
+                                    }`}
                                 >
-                                    <td className="py-3 px-4">
+                                    <td className="py-4 px-4 font-medium text-emerald-600">
                                         {data._id.slice(0, 5)}...
                                     </td>
-                                    <td className="py-3 px-4">{data.nom}</td>
-                                    <td className="py-3 px-4">{data.email}</td>
+                                    <td className="py-4 px-4">{data.nom}</td>
+                                    <td className="py-4 px-4">{data.email}</td>
                                     {role === "livreur" && (
-                                        <td className="py-3 px-4">
+                                        <td className="py-4 px-4">
                                             <span
                                                 className={`${getStatusClass(
                                                     data.statut
-                                                )} px-2 py-1 rounded-full text-xs font-medium inline-flex items-center`}
+                                                )} px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center`}
                                             >
                                                 {getStatusIcon(data.statut)}
                                                 {getStatusText(data.statut)}
                                             </span>
                                         </td>
                                     )}
-                                    <td className="py-3 px-4 flex gap-2">
-                                        <button className="text-blue-600 hover:text-blue-800">
-                                            Voir
-                                        </button>
-                                        <button className="text-amber-600 hover:text-amber-800">
-                                            Modifier
-                                        </button>
-                                        <button className="text-red-600 hover:text-red-800">
-                                            Supprimer
-                                        </button>
-                                        {role === "livreur" &&
-                                            data.statut !== "non vérifié" && (
-                                                <button className="text-purple-600 hover:text-purple-800">
-                                                    <a
-                                                        href={`/livreur/${data._id}/pieces`}
-                                                    >
-                                                        Voir pièces jointes
-                                                    </a>
-                                                </button>
+                                    <td className="py-4 px-4 text-right">
+                                        <div className="flex gap-2 justify-end">
+                                            <button
+                                                onClick={() =>
+                                                    handleViewUser(data._id)
+                                                }
+                                                className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-xs flex items-center gap-1"
+                                            >
+                                                <FaEye className="text-xs" />{" "}
+                                                Voir
+                                            </button>
+                                            {data.role === "livreur" && (
+                                                <Link
+                                                    to={`/livreur/${data._id}/pieces`}
+                                                    className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-xs flex items-center gap-1"
+                                                >
+                                                    <FaEye className="text-xs" />{" "}
+                                                    Voir Pièce
+                                                </Link>
                                             )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

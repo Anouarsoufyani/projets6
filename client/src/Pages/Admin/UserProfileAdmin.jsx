@@ -1182,18 +1182,38 @@ const UserProfileAdmin = () => {
                     </p>
                     <p className="text-sm text-gray-600 mb-2">
                       Statut:{" "}
-                      <span className={doc.statut === "validé" ? "text-green-600" : "text-amber-600"}>
-                        {doc.statut === "validé" ? "Vérifié" : "En attente"}
+                      <span
+                        className={
+                          doc.statut === "validé"
+                            ? "text-green-600"
+                            : doc.statut === "refusé"
+                              ? "text-red-600"
+                              : doc.statut === "non soumis"
+                                ? "text-gray-600"
+                                : "text-amber-600"
+                        }
+                      >
+                        {doc.statut === "validé"
+                          ? "Vérifié"
+                          : doc.statut === "refusé"
+                            ? "Refusé"
+                            : doc.statut === "non soumis"
+                              ? "Non soumis"
+                              : "En attente"}
                       </span>
                     </p>
-                    <Link
-                      to={`/${doc.url.replace(/\\/g, "/")}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-blue-500 hover:underline text-sm"
-                    >
-                      Voir le document
-                    </Link>
+                    {doc.statut !== "non soumis" ? (
+                      <Link
+                        to={`/${doc.url.replace(/\\/g, "/")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-500 hover:underline text-sm"
+                      >
+                        Voir le document
+                      </Link>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Document non disponible</span>
+                    )}
                     {doc.statut === "en_attente" && (
                       <div className="mt-2 flex gap-2">
                         <button

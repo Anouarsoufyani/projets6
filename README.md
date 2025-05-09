@@ -1,26 +1,94 @@
 # Plateforme de Livraison
 
-## Description
-Ce projet est une **plateforme de gestion de livraison** qui permet aux livreurs de gérer leurs véhicules, soumettre leurs documents justificatifs, et suivre l'état de leur vérification. Les administrateurs peuvent également gérer et valider les documents des livreurs. L'interface utilisateur est développée avec **React** et le backend utilise **Node.js** avec **Express**.
+Application de mise en relation entre clients, commerçants et livreurs pour faciliter les livraisons de produits.
 
-## Technologies utilisées
-- **Frontend** : React, Vite
-- **Backend** : Node.js, Express
-- **Base de données** : (à spécifier si utilisée)
-- **Docker** : Pour l’environnement de développement
-- **API** : RESTful
+## 📋 Fonctionnalités principales
 
-## Prérequis
-Avant de démarrer le projet, vous devez vous assurer que vous avez installé les éléments suivants :
-- **Node.js** : version 14.x ou supérieure
-- **npm** : gestionnaire de paquets de Node.js
-- **Docker** (si vous souhaitez utiliser Docker pour l'environnement)
+### Client
+- Création et suivi de commandes
+- Gestion de profil
+- Consultation des commandes passées
+- Réception de notifications
 
-## Installation
+### Commerçant
+- Gestion des commandes reçues
+- Suivi des livraisons
+- Gestion de profil et informations boutique
+- Envoi de requêtes aux livreurs (manuel ou automatique)
+- Consultation des statistiques de vente
+- Consultation des avis et notifications
+
+### Livreur
+- Gestion des véhicules et pièces justificatives
+- Gestion de disponibilité
+- Réception et traitement des requêtes de livraison
+- Suivi des commandes attribuées
+- Validation des livraisons par code
+- Consultation des avis et notifications
+
+### Administrateur
+- Tableau de bord avec statistiques globales
+- Gestion des utilisateurs
+- Validation des pièces justificatives
+- Suivi des commandes
+- Consultation des notifications
+
+## 🚀 Installation et démarrage
+
+### Prérequis
+- Node.js (v14 ou supérieur)
+- NPM (v7 ou supérieur)
+- MongoDB (installé localement ou connecté à un cluster distant)
+
+### Configuration
+
+1. Clonez le dépôt
+```bash
+git clone https://github.com/votre-utilisateur/plateforme-livraison.git
+cd plateforme-livraison
+```
+
+2. Configuration des variables d'environnement
+   - Créez un fichier `.env` dans le dossier `backend` en vous basant sur `.env.example`
+   - Configurez les variables nécessaires (connexion MongoDB, clés JWT, etc.)
+
+### Installation et lancement
+
+#### Backend
+```bash
+# Se déplacer dans le dossier backend
+cd backend
+
+# Installer les dépendances
+npm i
+
+# Lancer le serveur en mode développement
+npm run dev
+```
+
+#### Frontend
+```bash
+# Dans un nouveau terminal, se déplacer dans le dossier client
+cd client
+
+# Installer les dépendances
+npm i
+
+# Lancer l'application client en mode développement
+npm run dev
+```
+
+L'application backend tournera sur `http://localhost:5001` et le frontend sur `http://localhost:3000` par défaut.
+
+## 📊 Architecture technique
 
 ### Backend
-1. **Accédez au dossier backend** :
-   Ouvrez un terminal et naviguez vers le dossier `backend` de votre projet.
+- Node.js avec Express
+- MongoDB avec Mongoose
+- Authentification JWT
 
-   ```bash
-   cd backend
+### Frontend
+- React.js avec hooks
+- TanstackQuery pour les requêtes API
+- Tailwind CSS pour le design
+- Google Maps pour l'affichage des cartes et itinéraires

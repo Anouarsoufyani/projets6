@@ -728,8 +728,6 @@ const UserProfileAdmin = () => {
                                                     "rue",
                                                     "ville",
                                                     "code_postal",
-                                                    "lat",
-                                                    "lng",
                                                 ].map((field) => (
                                                     <input
                                                         key={field}
@@ -1023,49 +1021,38 @@ const UserProfileAdmin = () => {
                                                         "rue",
                                                         "ville",
                                                         "code_postal",
-                                                    ]
-                                                        .filter(
-                                                            (field) =>
-                                                                field !==
-                                                                    "lat" &&
-                                                                field !== "lng"
-                                                        )
-                                                        .map((field) => (
-                                                            <input
-                                                                key={field}
-                                                                type="text"
-                                                                placeholder={
-                                                                    field
-                                                                        .charAt(
-                                                                            0
-                                                                        )
-                                                                        .toUpperCase() +
-                                                                    field
-                                                                        .slice(
-                                                                            1
-                                                                        )
-                                                                        .replace(
-                                                                            "_",
-                                                                            " "
-                                                                        )
-                                                                }
-                                                                value={
-                                                                    adresse[
-                                                                        field
-                                                                    ] || ""
-                                                                }
-                                                                name={field}
-                                                                onChange={(e) =>
-                                                                    handleChange(
-                                                                        e,
-                                                                        "adresses_favorites",
-                                                                        null,
-                                                                        index
+                                                    ].map((field) => (
+                                                        <input
+                                                            key={field}
+                                                            type="text"
+                                                            placeholder={
+                                                                field
+                                                                    .charAt(0)
+                                                                    .toUpperCase() +
+                                                                field
+                                                                    .slice(1)
+                                                                    .replace(
+                                                                        "_",
+                                                                        " "
                                                                     )
-                                                                }
-                                                                className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                                            />
-                                                        ))}
+                                                            }
+                                                            value={
+                                                                adresse[
+                                                                    field
+                                                                ] || ""
+                                                            }
+                                                            name={field}
+                                                            onChange={(e) =>
+                                                                handleChange(
+                                                                    e,
+                                                                    "adresses_favorites",
+                                                                    null,
+                                                                    index
+                                                                )
+                                                            }
+                                                            className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                                                        />
+                                                    ))}
                                                 </div>
                                             )
                                         )}
@@ -1081,8 +1068,8 @@ const UserProfileAdmin = () => {
                                                             rue: "",
                                                             ville: "",
                                                             code_postal: "",
-                                                            // lat: "",
-                                                            // lng: "",
+                                                            lat: "",
+                                                            lng: "",
                                                         },
                                                     ],
                                                 })

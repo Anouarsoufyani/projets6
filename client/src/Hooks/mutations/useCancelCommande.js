@@ -17,7 +17,6 @@ export const useCancelCommande = () => {
       return response.json()
     },
     onSuccess: () => {
-      // Rafraîchir les données au lieu de recharger la page
       queryClient.invalidateQueries(["getUserCommandes"])
       toast.success("Commande annulée avec succès")
     },

@@ -1,17 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-/**
- * Hook pour ajouter un nouveau véhicule au profil du livreur
- */
+
 export const useUploadVehicule = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (vehiculeData) => {
-            // Validation des données selon le type de véhicule
 
-            // Définir le statut comme non vérifié par défaut
             console.log("vehiculeData", vehiculeData);
 
             const res = await fetch("/api/user/livreur/vehicules", {
@@ -33,7 +29,7 @@ export const useUploadVehicule = () => {
         },
         onSuccess: () => {
             toast.success("Véhicule ajouté avec succès !");
-            // Actualiser les données de l'utilisateur après ajout
+
             setTimeout(() => {
                 queryClient.invalidateQueries(["authUser"]);
             }, 1000);
@@ -44,15 +40,13 @@ export const useUploadVehicule = () => {
     });
 };
 
-/**
- * Hook pour mettre à jour un véhicule existant
- */
+
 export const useUpdateVehicule = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async ({ vehiculeId, vehiculeData }) => {
-            // Validation des données selon le type de véhicule
+
 
             const res = await fetch(
                 `/api/user/livreur/vehicules/${vehiculeId}`,
@@ -77,7 +71,7 @@ export const useUpdateVehicule = () => {
         },
         onSuccess: () => {
             toast.success("Véhicule mis à jour avec succès !");
-            // Actualiser les données de l'utilisateur après mise à jour
+
             setTimeout(() => {
                 queryClient.invalidateQueries(["authUser"]);
             }, 1000);
@@ -90,9 +84,7 @@ export const useUpdateVehicule = () => {
     });
 };
 
-/**
- * Hook pour supprimer un véhicule
- */
+
 export const useDeleteVehicule = () => {
     const queryClient = useQueryClient();
 
@@ -117,7 +109,6 @@ export const useDeleteVehicule = () => {
         },
         onSuccess: () => {
             toast.success("Véhicule supprimé avec succès !");
-            // Actualiser les données de l'utilisateur après suppression
             setTimeout(() => {
                 queryClient.invalidateQueries(["authUser"]);
             }, 1000);

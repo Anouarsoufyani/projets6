@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* Base styles */
 html,
 body {
     margin: 0;
@@ -15,7 +14,6 @@ body {
     position: relative;
 }
 
-/* Responsive containers */
 .container {
     width: 100%;
     padding-right: 1rem;
@@ -48,20 +46,17 @@ body {
     }
 }
 
-/* Responsive card grid */
 .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1rem;
 }
 
-/* Responsive tables */
 .responsive-table {
     width: 100%;
     overflow-x: auto;
 }
 
-/* Utility classes */
 .cursor-pointer {
     cursor: pointer;
 }
@@ -70,20 +65,17 @@ button {
     cursor: pointer;
 }
 
-/* Fix for mobile overflow issues */
 .overflow-fix {
     overflow-x: hidden;
     max-width: 100%;
 }
 
-/* Responsive form elements */
 input,
 select,
 textarea {
     width: 100%;
 }
 
-/* Responsive images */
 img {
     max-width: 100%;
     height: auto;

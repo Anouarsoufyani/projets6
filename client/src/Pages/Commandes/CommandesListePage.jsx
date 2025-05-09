@@ -18,7 +18,6 @@ const CommandesListePage = () => {
   const queryClient = useQueryClient()
   const [selectedCommande, setSelectedCommande] = useState(null)
 
-  // Mutation pour mettre à jour le statut d'une commande
   const updateCommandeStatusMutation = useMutation({
     mutationFn: async ({ commandeId, newStatus }) => {
       const res = await fetch(`/api/commandes/update-status`, {
@@ -39,7 +38,6 @@ const CommandesListePage = () => {
     onSuccess: (data, variables) => {
       const statusText = variables.newStatus === "en_preparation" ? "acceptée" : "refusée"
       toast.success(`Commande ${statusText} avec succès!`)
-      // Rafraîchir les données des commandes
       queryClient.invalidateQueries(["getUserCommandes"])
     },
     onError: (error) => {
@@ -47,7 +45,6 @@ const CommandesListePage = () => {
     },
   })
 
-  // Fonction pour accepter une commande
   const acceptCommande = (commandeId) => {
     updateCommandeStatusMutation.mutate({
       commandeId,
@@ -55,7 +52,6 @@ const CommandesListePage = () => {
     })
   }
 
-  // Fonction pour refuser une commande
   const refuseCommande = (commandeId) => {
     updateCommandeStatusMutation.mutate({
       commandeId,
@@ -63,7 +59,6 @@ const CommandesListePage = () => {
     })
   }
 
-  // Fonction pour annuler une commande (client)
   const cancelCommande = async (id) => {
     try {
       const response = await fetch(`api/commandes/cancel/${id}`, {
@@ -73,7 +68,6 @@ const CommandesListePage = () => {
       })
       if (!response.ok) throw new Error("Échec de l'annulation")
 
-      // Rafraîchir les données au lieu de recharger la page
       queryClient.invalidateQueries(["getUserCommandes"])
       toast.success("Commande annulée avec succès")
     } catch (error) {
@@ -89,7 +83,6 @@ const CommandesListePage = () => {
     (a, b) => new Date(b.date_creation) - new Date(a.date_creation),
   )
 
-  // Configuration des colonnes pour le DataTable
   const getTableColumns = () => {
     const baseColumns = [
       {
@@ -99,7 +92,6 @@ const CommandesListePage = () => {
       },
     ]
 
-    // Colonnes spécifiques au rôle
     const roleSpecificColumns = {
       client: [
         {
@@ -254,7 +246,6 @@ const CommandesListePage = () => {
       ],
     }
 
-    // Colonnes communes à tous les rôles
     const commonColumns = [
       {
         key: "statut",
@@ -285,7 +276,6 @@ const CommandesListePage = () => {
               <ActionButton icon={<FaEye />} label="Voir" color="indigo" />
             </Link>
 
-            {/* Actions pour les commandes en livraison ou livrées */}
             {(row.statut === "prete_a_etre_recuperee" ||
               row.statut === "recuperee_par_livreur" ||
               row.statut === "livree" ||
@@ -295,10 +285,8 @@ const CommandesListePage = () => {
               </Link>
             )}
 
-            {/* Actions pour les commandes en attente */}
             {row.statut === "en_attente" && (
               <>
-                {/* Actions pour le client */}
                 {authUser.role === "client" && (
                   <ActionButton
                     icon={<FaTimes />}
@@ -309,7 +297,6 @@ const CommandesListePage = () => {
                   />
                 )}
 
-                {/* Actions pour le commerçant */}
                 {authUser.role === "commercant" && (
                   <div className="flex gap-2">
                     <ActionButton
@@ -331,7 +318,6 @@ const CommandesListePage = () => {
               </>
             )}
 
-            {/* Actions pour les commandes en préparation */}
             {row.statut === "en_preparation" && authUser.role === "commercant" && (
               <Link to={`/livreurs/${row._id}`}>
                 <ActionButton icon={<FaTruck />} label="Assigner" color="purple" />
@@ -385,7 +371,6 @@ const CommandesListePage = () => {
         </div>
       </div>
 
-      {/* Statistiques des commandes */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <StatCard
           title="En attente"

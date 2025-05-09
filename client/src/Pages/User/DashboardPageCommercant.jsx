@@ -37,7 +37,6 @@ import {
 } from "../../Components/Reviews/ReviewDisplay";
 import { useGetReviewsForUser } from "../../Hooks/queries/useGetReviews";
 
-// Couleurs pour les graphiques
 const COLORS = [
     "#10b981",
     "#3b82f6",
@@ -63,12 +62,11 @@ const DashboardPageCommercant = () => {
     const [timeRange, setTimeRange] = useState("month");
     const [activeTab, setActiveTab] = useState("statistiques");
 
-    // Récupérer les avis pour le commerçant
+
     const { data: reviews, isLoading: isLoadingReviews } = useGetReviewsForUser(
         authUser?._id
     );
 
-    // Traitement des données des commandes
     const {
         totalCommandes,
         totalRevenu,
@@ -85,7 +83,6 @@ const DashboardPageCommercant = () => {
         topClients,
         commandesParJourSemaine,
     } = useMemo(() => {
-        // ... Le reste du code reste inchangé
         if (!commandesData?.commandes) {
             return {
                 totalCommandes: 0,
@@ -111,7 +108,6 @@ const DashboardPageCommercant = () => {
                 cmd.commercant_id === authUser?._id
         );
 
-        // Filtrer par période
         const now = new Date();
         const filteredCommandes = commandes.filter((cmd) => {
             const cmdDate = new Date(cmd.date_creation);
@@ -138,15 +134,12 @@ const DashboardPageCommercant = () => {
             return true;
         });
 
-        // Statistiques globales
         const totalCommandes = filteredCommandes.length;
 
-        // Filtrer les commandes annulées et refusées pour les calculs de revenus
         const commandesValides = filteredCommandes.filter(
             (cmd) => cmd.statut !== "annulee" && cmd.statut !== "refusee"
         );
 
-        // Revenus par statut - IMPORTANT: exclure les commandes annulées et refusées
         const totalRevenu = commandesValides.reduce(
             (sum, cmd) => sum + (cmd.total || 0),
             0
@@ -158,13 +151,11 @@ const DashboardPageCommercant = () => {
             .filter((cmd) => cmd.statut !== "livree")
             .reduce((sum, cmd) => sum + (cmd.total || 0), 0);
 
-        // Clients uniques
         const clientsIds = new Set(
             filteredCommandes.map((cmd) => cmd.client_id?._id || cmd.client_id)
         );
         const clientsUniques = clientsIds.size;
 
-        // Commandes par statut
         const statutCount = {};
         filteredCommandes.forEach((cmd) => {
             const statut = cmd.statut || "inconnu";
@@ -177,7 +168,6 @@ const DashboardPageCommercant = () => {
             })
         );
 
-        // Nombre de commandes par statut (pour affichage détaillé)
         const nombreCommandesParStatut = {
             livrees: filteredCommandes.filter((cmd) => cmd.statut === "livree")
                 .length,
@@ -203,7 +193,6 @@ const DashboardPageCommercant = () => {
             ).length,
         };
 
-        // Commandes par jour (pour le graphique d'évolution)
         const commandesParDate = {};
         filteredCommandes.forEach((cmd) => {
             const date = new Date(cmd.date_creation).toLocaleDateString();
@@ -217,7 +206,6 @@ const DashboardPageCommercant = () => {
             }
             commandesParDate[date].commandes += 1;
 
-            // N'ajouter au revenu que si la commande n'est pas annulée ou refusée
             if (cmd.statut !== "annulee" && cmd.statut !== "refusee") {
                 commandesParDate[date].revenu += cmd.total || 0;
                 if (cmd.statut === "livree") {
@@ -226,12 +214,10 @@ const DashboardPageCommercant = () => {
             }
         });
 
-        // Trier par date
         const commandesParJour = Object.values(commandesParDate).sort(
             (a, b) => new Date(a.date) - new Date(b.date)
         );
 
-        // Commandes par heure
         const heuresCount = {};
         filteredCommandes.forEach((cmd) => {
             const heure = new Date(cmd.date_creation).getHours();
@@ -243,7 +229,6 @@ const DashboardPageCommercant = () => {
             commandes: heuresCount[i] || 0,
         }));
 
-        // Commandes par jour de la semaine
         const joursSemaine = [
             "Dimanche",
             "Lundi",
@@ -276,14 +261,12 @@ const DashboardPageCommercant = () => {
             commandes: count,
         }));
 
-        // Commandes récentes
         const commandesRecentes = [...filteredCommandes]
             .sort(
                 (a, b) => new Date(b.date_creation) - new Date(a.date_creation)
             )
             .slice(0, 5);
 
-        // Taux de conversion (commandes livrées / total des commandes valides)
         const commandesValidesTotal = commandesValides.length;
         const tauxConversion =
             commandesValidesTotal > 0
@@ -294,13 +277,11 @@ const DashboardPageCommercant = () => {
                   ).toFixed(1)
                 : 0;
 
-        // Valeur moyenne des commandes (uniquement pour les commandes valides)
         const valeurMoyenneCommande =
             commandesValidesTotal > 0
                 ? (totalRevenu / commandesValidesTotal).toFixed(2)
                 : 0;
 
-        // Top clients (exclure les commandes annulées et refusées)
         const clientsMap = {};
         commandesValides.forEach((cmd) => {
             const clientId = cmd.client_id?._id || cmd.client_id;
@@ -341,16 +322,13 @@ const DashboardPageCommercant = () => {
         };
     }, [commandesData, authUser, timeRange]);
 
-    // Fonction pour formater les montants et éviter les nombres scientifiques
     const formatCurrency = (amount) => {
         if (amount === undefined || amount === null) return "0.00 €";
 
-        // Si le montant est trop grand, le limiter pour éviter les notations scientifiques
         if (amount > 1000000000) {
             return "999,999,999.99 €";
         }
 
-        // Formater avec 2 décimales et ajouter le symbole €
         return (
             amount.toLocaleString("fr-FR", {
                 minimumFractionDigits: 2,
@@ -376,7 +354,6 @@ const DashboardPageCommercant = () => {
                 Bienvenue {authUser?.nom}
             </h1>
 
-            {/* Onglets personnalisés */}
             <div className="mb-6 md:mb-8 overflow-x-auto">
                 <div className="flex border-b-2 border-emerald-200 bg-white rounded-t-lg shadow-sm min-w-max">
                     <button
@@ -408,10 +385,8 @@ const DashboardPageCommercant = () => {
                 </div>
             </div>
 
-            {/* Contenu de l'onglet Statistiques */}
             {activeTab === "statistiques" && (
                 <div className="space-y-6 md:space-y-8">
-                    {/* Filtres de période */}
                     <div className="flex justify-end mb-4 overflow-x-auto">
                         <div className="bg-white rounded-lg shadow-md p-1 flex items-center min-w-max">
                             <FaFilter className="text-emerald-500 mx-2" />
@@ -451,9 +426,7 @@ const DashboardPageCommercant = () => {
                         </div>
                     </div>
 
-                    {/* Cartes de statistiques */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                        {/* Carte Total Commandes */}
                         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-l-4 border-emerald-500">
                             <div className="flex flex-row items-center justify-between pb-4">
                                 <h3 className="text-base md:text-lg font-semibold text-gray-800">
@@ -487,7 +460,6 @@ const DashboardPageCommercant = () => {
                             </div>
                         </div>
 
-                        {/* Carte Revenus */}
                         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-l-4 border-blue-500">
                             <div className="flex flex-row items-center justify-between pb-4">
                                 <h3 className="text-base md:text-lg font-semibold text-gray-800">
@@ -519,7 +491,6 @@ const DashboardPageCommercant = () => {
                             </div>
                         </div>
 
-                        {/* Carte Clients Uniques */}
                         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 border-l-4 border-purple-500">
                             <div className="flex flex-row items-center justify-between pb-4">
                                 <h3 className="text-base md:text-lg font-semibold text-gray-800">
@@ -547,9 +518,7 @@ const DashboardPageCommercant = () => {
                         </div>
                     </div>
 
-                    {/* Statistiques détaillées */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-4 md:mt-6">
-                        {/* Taux de conversion */}
                         <div className="bg-white rounded-xl shadow-md p-4 md:p-5 hover:shadow-lg transition-shadow duration-300">
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-xs md:text-sm font-medium text-gray-600">
@@ -575,7 +544,6 @@ const DashboardPageCommercant = () => {
                             </span>
                         </div>
 
-                        {/* Commandes par statut */}
                         <div className="bg-white rounded-xl shadow-md p-4 md:p-5 hover:shadow-lg transition-shadow duration-300">
                             <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-2">
                                 Commandes par statut
@@ -619,7 +587,6 @@ const DashboardPageCommercant = () => {
                             </div>
                         </div>
 
-                        {/* Valeur moyenne */}
                         <div className="bg-white rounded-xl shadow-md p-4 md:p-5 hover:shadow-lg transition-shadow duration-300">
                             <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-2">
                                 Valeur moyenne
@@ -636,7 +603,6 @@ const DashboardPageCommercant = () => {
                             </div>
                         </div>
 
-                        {/* Revenus par statut */}
                         <div className="bg-white rounded-xl shadow-md p-4 md:p-5 hover:shadow-lg transition-shadow duration-300">
                             <h3 className="text-xs md:text-sm font-medium text-gray-600 mb-2">
                                 Revenus par statut
@@ -673,9 +639,7 @@ const DashboardPageCommercant = () => {
                         </div>
                     </div>
 
-                    {/* Graphiques */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-                        {/* Évolution des ventes */}
                         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 col-span-1 lg:col-span-2 hover:shadow-xl transition-shadow duration-300">
                             <div className="mb-4 md:mb-6">
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -785,7 +749,6 @@ const DashboardPageCommercant = () => {
                             </div>
                         </div>
 
-                        {/* Répartition par statut */}
                         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow duration-300">
                             <div className="mb-4 md:mb-6">
                                 <div className="flex items-center">
@@ -850,7 +813,6 @@ const DashboardPageCommercant = () => {
                             </div>
                         </div>
 
-                        {/* Heures de pointe */}
                         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow duration-300">
                             <div className="mb-4 md:mb-6">
                                 <div className="flex items-center">
@@ -902,9 +864,7 @@ const DashboardPageCommercant = () => {
                         </div>
                     </div>
 
-                    {/* Graphiques supplémentaires */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mt-6 md:mt-8">
-                        {/* Commandes par jour de la semaine */}
                         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow duration-300">
                             <div className="mb-4 md:mb-6">
                                 <div className="flex items-center">
@@ -967,7 +927,6 @@ const DashboardPageCommercant = () => {
                             </div>
                         </div>
 
-                        {/* Top clients */}
                         <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow duration-300">
                             <div className="mb-4 md:mb-6">
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -1021,7 +980,6 @@ const DashboardPageCommercant = () => {
                         </div>
                     </div>
 
-                    {/* Commandes récentes */}
                     <div className="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow duration-300">
                         <div className="mb-4 md:mb-6">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -1133,7 +1091,6 @@ const DashboardPageCommercant = () => {
                 </div>
             )}
 
-            {/* Contenu de l'onglet Avis */}
             {activeTab === "avis" && (
                 <div>
                     <div className="bg-white p-4 md:p-8 rounded-xl shadow-lg mb-6 md:mb-8">
@@ -1142,7 +1099,6 @@ const DashboardPageCommercant = () => {
                         </h2>
                         <div className="flex flex-col sm:flex-row sm:items-center">
                             <span className="text-3xl md:text-4xl text-yellow-500 mr-3 font-bold">
-                                {/* {getAverageRating(reviews || [])} */}
                                 {authUser.note_moyenne}
                             </span>
                             <span className="mr-3 text-2xl md:text-3xl font-bold">
@@ -1154,7 +1110,6 @@ const DashboardPageCommercant = () => {
                             <span className="ml-0 mt-2 sm:ml-4 sm:mt-0">
                                 <StarRating
                                     rating={Math.round(
-                                        // getAverageRating(reviews || [])
                                         authUser.note_moyenne
                                     )}
                                 />

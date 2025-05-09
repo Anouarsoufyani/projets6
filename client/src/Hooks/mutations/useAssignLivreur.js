@@ -9,7 +9,7 @@ export const useAssignLivreur = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isResponding, setIsResponding] = useState(false);
 
-    // Mutation for assigning a livreur to a commande
+
     const assignMutation = useMutation({
         mutationFn: async ({
             commandeId,
@@ -48,7 +48,7 @@ export const useAssignLivreur = () => {
         onSuccess: (result) => {
             toast.success("Demande envoyée au livreur avec succès!");
 
-            // Invalidate relevant queries
+
             queryClient.invalidateQueries(["notifications"]);
             queryClient.invalidateQueries(["getCommande"]);
             queryClient.invalidateQueries(["getUserCommandes"]);
@@ -66,7 +66,7 @@ export const useAssignLivreur = () => {
         },
     });
 
-    // Separate mutation for handling livreur responses
+
     const handleLivreurResponse = useMutation({
         mutationFn: async ({ notificationId, response }) => {
             const res = await fetch(`/api/commandes/handle-response`, {
@@ -105,15 +105,10 @@ export const useAssignLivreur = () => {
         },
     });
 
-    // Function to assign a livreur
+
     const assignLivreur = (params) => {
         return assignMutation.mutate(params);
     };
-
-    // Function to handle livreur response (accept/reject)
-    // const handleLivreurResponse = (params) => {
-    //   return responseMutation.mutate(params)
-    // }
 
     return {
         assignLivreur,

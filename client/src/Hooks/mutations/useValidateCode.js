@@ -18,7 +18,6 @@ export const useValidateCommercantCode = () => {
     },
     onSuccess: () => {
       toast.success("Commande récupérée avec succès!")
-      // Invalider les requêtes pour forcer un rafraîchissement
       queryClient.invalidateQueries({ queryKey: ["getCommande"] })
       queryClient.invalidateQueries({ queryKey: ["getUserCommandes"] })
     },
@@ -45,7 +44,6 @@ export const useValidateClientCode = () => {
     },
     onSuccess: () => {
       toast.success("Livraison confirmée avec succès!")
-      // Invalider les requêtes pour forcer un rafraîchissement
       queryClient.invalidateQueries({ queryKey: ["getCommande"] })
       queryClient.invalidateQueries({ queryKey: ["getUserCommandes"] })
     },

@@ -40,11 +40,9 @@ const DetailCommande = () => {
         useState(false);
     const [showLivreurReviewForm, setShowLivreurReviewForm] = useState(false);
 
-    // Récupérer les avis laissés par l'utilisateur
     const { data: userReviews, isLoading: isLoadingUserReviews } =
         useGetUserReviews();
 
-    // Vérifier si l'utilisateur a déjà laissé un avis
     const hasReviewedCommercant = userReviews?.some(
         (review) =>
             review.commandeId === id &&
@@ -213,7 +211,6 @@ const DetailCommande = () => {
         return null;
     };
 
-    // Afficher les formulaires d'avis uniquement pour les clients et les commandes livrées
     const canReview = authUser?.role === "client" && statut === "livree";
 
     return (
@@ -446,7 +443,6 @@ const DetailCommande = () => {
                     {renderActionButtons()}
                 </div>
 
-                {/* Section d'avis pour le client */}
                 {canReview && (
                     <div className="mt-8 md:mt-12 space-y-6 md:space-y-8">
                         <h2 className="text-xl md:text-2xl font-semibold text-emerald-700 border-b border-emerald-200 pb-2 flex items-center">
@@ -454,7 +450,6 @@ const DetailCommande = () => {
                             Évaluations
                         </h2>
 
-                        {/* Avis pour le commerçant */}
                         <div className="bg-white p-4 md:p-6 rounded-2xl shadow-md border border-gray-100">
                             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
                                 <h3 className="text-base md:text-lg font-medium text-gray-800 flex items-center">
@@ -506,7 +501,6 @@ const DetailCommande = () => {
                                 )}
                         </div>
 
-                        {/* Avis pour le livreur (seulement si un livreur a été assigné) */}
                         {livreur_id && (
                             <div className="bg-white p-4 md:p-6 rounded-2xl shadow-md border border-gray-100">
                                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">

@@ -27,6 +27,6 @@ export const useGetCommande = (id) => {
       }
     },
     retry: false,
-    refetchInterval: 2000, // Rafraîchir toutes les 5 secondes
+    refetchInterval: 2000, 
   })
 }

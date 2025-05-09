@@ -7,7 +7,7 @@ const useUpdateProfile = () => {
   const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useMutation({
     mutationFn: async (formData) => {
       const res = await fetch("/api/user/update", {
-        method: "PUT", // Changé en PUT pour une mise à jour (plus idiomatique que POST)
+        method: "PUT", 
         headers: {
           "Content-Type": "application/json",
         },
@@ -19,11 +19,10 @@ const useUpdateProfile = () => {
         throw new Error(data.error || "Erreur lors de la mise à jour du profil")
       }
       console.log("Profil mis à jour :", data)
-      return data.user // Retourne l'utilisateur mis à jour (ajusté selon ta réponse API)
+      return data.user 
     },
     onSuccess: () => {
       toast.success("Profil mis à jour avec succès")
-      // Invalide les caches pour rafraîchir les données
       Promise.all([
         queryClient.invalidateQueries({
           queryKey: ["userProfile"],

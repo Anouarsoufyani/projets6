@@ -13,13 +13,13 @@ const useDeliveryPosition = (isDeliveryActive, userId) => {
     const isUpdatingRef = useRef(false);
     const queryClient = useQueryClient();
 
-    // Récupérer la commande en cours
+
     const { data: commandeEnCours } = useGetLatestPendingCommande();
     const commandeId = commandeEnCours?._id;
 
     const { mutate: updatePosition } = useMutation({
         mutationFn: async (newPosition) => {
-            // Mise à jour de la position du livreur
+
             const response = await fetch(`/api/user/${userId}/position`, {
                 method: "PUT",
                 headers: {
@@ -34,7 +34,6 @@ const useDeliveryPosition = (isDeliveryActive, userId) => {
                 throw new Error("Erreur lors de la mise à jour de la position");
             }
 
-            // Si une commande est en cours, mettre à jour son itinéraire
             if (commandeId) {
                 const itineraireResponse = await fetch(
                     `/api/commandes/${commandeId}/itineraire`,
@@ -60,7 +59,7 @@ const useDeliveryPosition = (isDeliveryActive, userId) => {
             return response.json();
         },
         onSuccess: () => {
-            // Invalider les requêtes qui dépendent de la position du livreur
+
             if (commandeId) {
                 queryClient.invalidateQueries(["getCommandeById", commandeId]);
             }
@@ -73,7 +72,6 @@ const useDeliveryPosition = (isDeliveryActive, userId) => {
     });
 
     const getCurrentPosition = () => {
-        // Éviter les mises à jour simultanées
         if (isUpdatingRef.current) return;
 
         isUpdatingRef.current = true;
@@ -96,7 +94,6 @@ const useDeliveryPosition = (isDeliveryActive, userId) => {
                 setPosition(newPosition);
                 setLoading(false);
 
-                // Mettre à jour la position dans la base de données
                 updatePosition(newPosition);
             },
             (err) => {
@@ -109,17 +106,16 @@ const useDeliveryPosition = (isDeliveryActive, userId) => {
     };
 
     useEffect(() => {
-        // Nettoyer l'intervalle existant si présent
+
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
         }
 
         if (isDeliveryActive && userId) {
-            // Récupérer la position immédiatement
             getCurrentPosition();
 
-            // Puis toutes les 5 secondes
+
             intervalRef.current = setInterval(getCurrentPosition, 5000);
         } else {
             setPosition(null);
@@ -132,7 +128,7 @@ const useDeliveryPosition = (isDeliveryActive, userId) => {
                 intervalRef.current = null;
             }
         };
-    }, [isDeliveryActive, userId]); // Retirer commandeId des dépendances
+    }, [isDeliveryActive, userId]);
 
     return { position, loading, error };
 };

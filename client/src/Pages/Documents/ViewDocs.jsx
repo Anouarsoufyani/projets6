@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, Navigate } from "react-router";
-import { useAuthUserQuery } from "../../Hooks"; // adapte selon ton projet
+import { useAuthUserQuery } from "../../Hooks";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../../Components/UI/Loading";
 
@@ -25,7 +25,6 @@ const ViewDocs = () => {
         )
     }
 
-    // 🚫 Protection ici
     if (!authUser || (authUser.role !== "admin" && authUser._id !== id)) {
         return <Navigate to="/login" />;
     }

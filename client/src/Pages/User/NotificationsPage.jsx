@@ -17,7 +17,6 @@ import {
 import { Link } from "react-router";
 import { useCheckNotificationTimeouts } from "../../Hooks/mutations/useCheckNotificationTimeouts";
 
-// Create separate hooks for notification actions
 const useMarkNotificationAsRead = () => {
     const queryClient = useQueryClient();
 
@@ -95,7 +94,7 @@ const NotificationsPage = () => {
     const deleteNotificationMutation = useDeleteNotification();
     const checkTimeoutsMutation = useCheckNotificationTimeouts();
 
-    // Store notifications in state to prevent UI flashing during refetches
+
     const [cachedNotifications, setCachedNotifications] = useState([]);
 
     const { data, isLoading, isError, refetch, error, isFetching } = useQuery({
@@ -103,7 +102,7 @@ const NotificationsPage = () => {
         queryFn: async () => {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                const timeoutId = setTimeout(() => controller.abort(), 5000); 
 
                 const res = await fetch(`/api/notifications`, {
                     method: "GET",
@@ -137,7 +136,7 @@ const NotificationsPage = () => {
         refetchOnWindowFocus: true,
         staleTime: 2000,
         onError: (error) => {
-            // Only show one toast error message to avoid spamming
+
             if (error.name !== "AbortError") {
                 toast.error("Erreur lors du chargement des notifications", {
                     id: "notification-fetch-error",
@@ -151,7 +150,6 @@ const NotificationsPage = () => {
         },
     });
 
-    // Manual refresh function with loading state
     const handleManualRefresh = async () => {
         setIsRefreshing(true);
         try {
@@ -169,7 +167,6 @@ const NotificationsPage = () => {
         }
     };
 
-    // Function to check for expired notifications
     const checkExpiredNotifications = useCallback(async () => {
         if (authUser && !checkingTimeoutsRef.current) {
             checkingTimeoutsRef.current = true;
@@ -181,19 +178,14 @@ const NotificationsPage = () => {
         }
     }, [authUser, checkTimeoutsMutation]);
 
-    // Set up interval to check for expired notifications
     useEffect(() => {
-        // Check immediately on component mount
         checkExpiredNotifications();
 
-        // Set up interval to check every 15 seconds
         const intervalId = setInterval(checkExpiredNotifications, 5000);
 
-        // Clean up interval on component unmount
         return () => clearInterval(intervalId);
     }, [checkExpiredNotifications]);
 
-    // Check for active notifications that are about to expire
     useEffect(() => {
         if (!data?.notifications) return;
 
@@ -206,10 +198,8 @@ const NotificationsPage = () => {
                 n.expiresAt
         );
 
-        // Clear any existing timeouts
         const timeoutIds = [];
 
-        // For each active notification, set up a timeout to check expiration
         activeNotifications.forEach((notification) => {
             const expiresAt = new Date(notification.expiresAt).getTime();
             const now = Date.now();
@@ -217,22 +207,19 @@ const NotificationsPage = () => {
             if (expiresAt > now) {
                 const timeUntilExpiry = expiresAt - now;
 
-                // Set timeout to check expiration when the notification is about to expire
                 const timeoutId = setTimeout(() => {
                     checkExpiredNotifications();
-                }, timeUntilExpiry + 1000); // Add 1 second buffer
+                }, timeUntilExpiry + 1000); 
 
                 timeoutIds.push(timeoutId);
             }
         });
 
-        // Clean up timeouts
         return () => {
             timeoutIds.forEach((id) => clearTimeout(id));
         };
     }, [data?.notifications, checkExpiredNotifications]);
 
-    // Use cached notifications if we have them and are currently fetching
     const displayNotifications =
         isFetching && cachedNotifications.length > 0
             ? cachedNotifications
@@ -300,7 +287,6 @@ const NotificationsPage = () => {
         }
     };
 
-    // Calculate time remaining for active notifications
     const getTimeRemaining = (expiresAt) => {
         if (!expiresAt) return null;
 
@@ -322,7 +308,6 @@ const NotificationsPage = () => {
         }
     );
 
-    // Check if we haven't had a successful fetch in over 30 seconds
     const isStale =
         lastSuccessfulFetchRef.current &&
         Date.now() - lastSuccessfulFetchRef.current > 30000;
@@ -409,7 +394,6 @@ const NotificationsPage = () => {
                 </div>
             </div>
 
-            {/* Show error message if there's an error and no cached data */}
             {(isError || isStale) && (
                 <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md mb-4">
                     <div className="flex">

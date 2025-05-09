@@ -5,7 +5,6 @@ import PropTypes from "prop-types";
 import { useAuthUserQuery, useUpdateProfile } from "../../Hooks";
 import toast from "react-hot-toast";
 
-// Initial form structure with empty values
 const initialForm = {
     nom: "",
     email: "",
@@ -29,7 +28,6 @@ const ProfilePage = () => {
     const { updateProfile, isUpdatingProfile } = useUpdateProfile();
     const [formData, setFormData] = useState(initialForm);
 
-    // Initialize form data when user data is available
     useEffect(() => {
         if (authUser) {
             setFormData({
@@ -45,23 +43,21 @@ const ProfilePage = () => {
         }
     }, [authUser]);
 
-    // Form change handlers
+
     const handleChange = (e, field = null, subField = null, index = null) => {
         const { name, value, type, checked } = e.target;
 
         if (field && subField) {
-            // Handle nested object changes
+
             setFormData((prev) => ({
                 ...prev,
                 [field]: { ...prev[field], [subField]: value },
             }));
         } else if (field && index !== null) {
-            // Handle array of objects changes
             const newArray = [...formData[field]];
             newArray[index][name] = value;
             setFormData((prev) => ({ ...prev, [field]: newArray }));
         } else {
-            // Handle direct field changes
             setFormData((prev) => ({
                 ...prev,
                 [name]: type === "checkbox" ? checked : value,
@@ -98,10 +94,8 @@ const ProfilePage = () => {
                 return;
             }
 
-            // Copier les données du formulaire pour les modifier
             const updatedFormData = { ...formData };
 
-            // Mettre à jour les coordonnées pour les adresses favorites si le rôle est client
             if (
                 authUser.role === "client" &&
                 updatedFormData.adresses_favorites
@@ -140,7 +134,6 @@ const ProfilePage = () => {
                 }
             }
 
-            // Mettre à jour les coordonnées pour l'adresse de la boutique si le rôle est commerçant
             if (
                 authUser.role === "commercant" &&
                 updatedFormData.adresse_boutique?.rue &&
@@ -163,7 +156,6 @@ const ProfilePage = () => {
                 }
             }
 
-            // Soumettre les données mises à jour
             updateProfile(updatedFormData);
             setEdit(false);
         } catch (error) {
@@ -191,7 +183,7 @@ const ProfilePage = () => {
                 Profil
             </h1>
             <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
-                {/* Header */}
+
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
                         <img
@@ -224,7 +216,6 @@ const ProfilePage = () => {
                         onSubmit={handleSubmit}
                         className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6"
                     >
-                        {/* Common fields */}
                         <FormField
                             label="Nom"
                             name="nom"
@@ -247,7 +238,6 @@ const ProfilePage = () => {
                             pattern="^0[1-9](\s?\d{2}){4}$"
                         />
 
-                        {/* Role-specific fields */}
                         {authUser.role === "commercant" && (
                             <>
                                 <FormField
@@ -480,7 +470,6 @@ const ProfilePage = () => {
                             </div>
                         )}
 
-                        {/* Password fields */}
                         <FormField
                             label="Mot de passe actuel"
                             name="currentPassword"
@@ -496,7 +485,6 @@ const ProfilePage = () => {
                             onChange={handleChange}
                         />
 
-                        {/* Submit button */}
                         <div className="col-span-1 md:col-span-2 flex justify-end mt-4">
                             <button
                                 type="submit"
@@ -601,7 +589,6 @@ const ProfilePage = () => {
     );
 };
 
-// Reusable form field component with PropTypes validation
 function FormField({ label, name, value, onChange, type, pattern }) {
     return (
         <div>
@@ -620,7 +607,7 @@ function FormField({ label, name, value, onChange, type, pattern }) {
     );
 }
 
-// PropTypes validation
+
 FormField.propTypes = {
     label: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
@@ -630,7 +617,7 @@ FormField.propTypes = {
     pattern: PropTypes.string,
 };
 
-// Default props
+
 FormField.defaultProps = {
     type: "text",
     pattern: null,

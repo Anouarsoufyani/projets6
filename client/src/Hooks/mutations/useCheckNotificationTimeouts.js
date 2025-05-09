@@ -8,12 +8,11 @@ import toast from "react-hot-toast";
 export const useCheckNotificationTimeouts = () => {
     const queryClient = useQueryClient();
 
-    // Track when the last check was performed to prevent excessive calls
     const lastCheckRef = React.useRef(0);
 
     return useMutation({
         mutationFn: async () => {
-            // Prevent calling the API too frequently (minimum 5 seconds between calls)
+
             const now = Date.now();
             if (now - lastCheckRef.current < 5000) {
                 return { results: [], skipped: true };
@@ -23,7 +22,7 @@ export const useCheckNotificationTimeouts = () => {
 
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+                const timeoutId = setTimeout(() => controller.abort(), 8000); 
 
                 const res = await fetch(`/api/commandes/check-timeouts`, {
                     method: "POST",
@@ -43,7 +42,6 @@ export const useCheckNotificationTimeouts = () => {
 
                 return res.json();
             } catch (error) {
-                // Don't throw for AbortError (timeout)
                 if (error.name === "AbortError") {
                     console.warn("Request timeout for notification check");
                     return { results: [], timedOut: true };
@@ -52,18 +50,15 @@ export const useCheckNotificationTimeouts = () => {
             }
         },
         onSuccess: (data) => {
-            // Skip invalidation if the request was skipped or timed out
             if (data.skipped || data.timedOut || data.locked) return;
 
             if (data.results && data.results.length > 0) {
-                // Use a small delay to avoid race conditions with other queries
                 setTimeout(() => {
                     queryClient.invalidateQueries(["notifications"]);
                     queryClient.invalidateQueries(["commandes"]);
                     queryClient.invalidateQueries(["filteredNotifications"]);
                 }, 300);
 
-                // Only show toast if there were actual changes
                 if (
                     data.results.some(
                         (r) =>
@@ -79,7 +74,6 @@ export const useCheckNotificationTimeouts = () => {
                 "Erreur lors de la vérification des timeouts:",
                 error
             );
-            // Don't show error toast to avoid spamming the user
         },
         retry: 2,
         retryDelay: 1000,

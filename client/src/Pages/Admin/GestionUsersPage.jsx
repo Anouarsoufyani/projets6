@@ -11,7 +11,7 @@ import {
 } from "react-icons/fa";
 
 const GestionUsersPage = () => {
-    const { role } = useParams(); // "client", "livreur", etc.
+    const { role } = useParams(); 
     const navigate = useNavigate();
     const { data: authUser, isLoading: authLoading } = useAuthUserQuery();
     const {

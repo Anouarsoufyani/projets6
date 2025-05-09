@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
-// Modifier les couleurs des badges de statut pour utiliser plus de emerald
+
 const STATUS_STYLES = {
-    // Commandes
+
     en_attente: {
         bg: "bg-amber-50",
         text: "text-amber-700",
@@ -54,7 +54,7 @@ const STATUS_STYLES = {
         border: "border-red-200",
     },
 
-    // Statuts utilisateurs
+
     "non vérifié": {
         bg: "bg-gray-50",
         text: "text-gray-700",
@@ -80,7 +80,7 @@ const STATUS_STYLES = {
         border: "border-red-200",
     },
 
-    // Statuts documents
+
     "en attente": {
         bg: "bg-amber-50",
         text: "text-amber-700",
@@ -100,7 +100,7 @@ const STATUS_STYLES = {
         border: "border-red-200",
     },
 
-    // Statuts par défaut
+
     default: {
         bg: "bg-orange-50",
         text: "text-orange-700",

@@ -25,7 +25,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "react-hot-toast";
 
-// Order statuses from the Commandes model
+
 const ORDER_STATUSES = [
     { value: "en_attente", label: "En attente" },
     { value: "refusee", label: "Refusée" },
@@ -38,14 +38,14 @@ const ORDER_STATUSES = [
 ];
 
 const GestionCommandePage = () => {
-    // State for selected commande and modal visibility
+
     const [selectedCommande, setSelectedCommande] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isStatusUpdating, setIsStatusUpdating] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState("");
 
-    // State for filters
+
     const [statusFilter, setStatusFilter] = useState("all");
     const [dateFilter, setDateFilter] = useState({ start: "", end: "" });
     const [userFilter, setUserFilter] = useState("");
@@ -53,14 +53,14 @@ const GestionCommandePage = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [isFilterExpanded, setIsFilterExpanded] = useState(true);
 
-    // Fetch commandes with error handling
+
     const { data, isLoading, isError, error, refetch } = useGetCommandes();
 
-    // Safely access commandes array with fallback to empty array
+
     const commandes =
         data?.success && Array.isArray(data.commandes) ? data.commandes : [];
 
-    // Fetch users for filtering with proper error handling
+
     const { data: clientsData, isLoading: isClientsLoading } =
         useGetUsersByRole("client");
     const { data: commercantsData, isLoading: isCommercantsLoading } =
@@ -68,30 +68,28 @@ const GestionCommandePage = () => {
     const { data: livreursData, isLoading: isLivreursLoading } =
         useGetUsersByRole("livreur");
 
-    // Ensure all user arrays are properly initialized
+
     const clients = Array.isArray(clientsData) ? clientsData : [];
     const commercants = Array.isArray(commercantsData) ? commercantsData : [];
     const livreurs = Array.isArray(livreursData) ? livreursData : [];
 
-    // Mutations
     const updateCommandeStatus = useUpdateCommandeStatus();
     const cancelCommande = useCancelCommande();
 
-    // Initialize selected status when opening edit modal
     const openEditModal = useCallback((commande) => {
         setSelectedCommande(commande);
         setSelectedStatus(commande.statut || "en_attente");
         setIsEditModalOpen(true);
     }, []);
 
-    // Filter commandes based on selected filters
+
     const filteredCommandes = useMemo(() => {
         return commandes.filter((commande) => {
-            // Status filter
+
             if (statusFilter !== "all" && commande.statut !== statusFilter)
                 return false;
 
-            // Date filter
+
             if (
                 dateFilter.start &&
                 new Date(commande.date_creation) < new Date(dateFilter.start)
@@ -104,9 +102,7 @@ const GestionCommandePage = () => {
             )
                 return false;
 
-            // User filter
 
-            // Search query
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
                 const matchesId = commande._id?.toLowerCase().includes(query);
@@ -135,7 +131,6 @@ const GestionCommandePage = () => {
         });
     }, [commandes, statusFilter, dateFilter, userType, searchQuery]);
 
-    // Handle status update
     const handleStatusUpdate = async () => {
         if (!selectedCommande || !selectedStatus) {
             toast.error(
@@ -151,7 +146,7 @@ const GestionCommandePage = () => {
                 newStatus: selectedStatus,
             });
 
-            // Success message is handled in the mutation hook
+
             refetch();
             setIsEditModalOpen(false);
         } catch (error) {
@@ -166,7 +161,7 @@ const GestionCommandePage = () => {
         }
     };
 
-    // Handle commande cancellation
+
     const handleCancelCommande = async (commandeId) => {
         if (
             !window.confirm("Êtes-vous sûr de vouloir annuler cette commande ?")
@@ -188,7 +183,7 @@ const GestionCommandePage = () => {
         }
     };
 
-    // Reset filters
+
     const resetFilters = () => {
         setStatusFilter("all");
         setDateFilter({ start: "", end: "" });
@@ -196,7 +191,7 @@ const GestionCommandePage = () => {
         setSearchQuery("");
     };
 
-    // Format date safely
+
     const formatDate = (dateString) => {
         try {
             if (!dateString) return "N/A";
@@ -207,7 +202,7 @@ const GestionCommandePage = () => {
         }
     };
 
-    // Table columns configuration
+
     const columns = [
         {
             key: "_id",
@@ -331,7 +326,7 @@ const GestionCommandePage = () => {
         },
     ];
 
-    // Loading states
+
     const isUsersLoading =
         isClientsLoading || isCommercantsLoading || isLivreursLoading;
 
@@ -378,7 +373,7 @@ const GestionCommandePage = () => {
                 </p>
             </div>
 
-            {/* Filters */}
+
             <div className="bg-white rounded-xl shadow-md p-4 mb-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-semibold">Filtres</h2>
@@ -416,7 +411,6 @@ const GestionCommandePage = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {/* Status filter */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Statut
@@ -442,7 +436,6 @@ const GestionCommandePage = () => {
                                 </select>
                             </div>
 
-                            {/* Date range filter */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Date de début
@@ -495,13 +488,13 @@ const GestionCommandePage = () => {
                 )}
             </div>
 
-            {/* Commandes Table */}
+
             <DataTable
                 data={filteredCommandes}
                 columns={columns}
                 onRowClick={(row) => {
                     setSelectedCommande(row);
-                    // setIsDetailModalOpen(true);
+
                 }}
                 selectedRow={selectedCommande}
                 emptyMessage={
@@ -525,7 +518,6 @@ const GestionCommandePage = () => {
                 }
             />
 
-            {/* Detail Modal */}
             {isDetailModalOpen && selectedCommande && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
@@ -848,7 +840,6 @@ const GestionCommandePage = () => {
                 </div>
             )}
 
-            {/* Edit Modal */}
             {isEditModalOpen && selectedCommande && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full">

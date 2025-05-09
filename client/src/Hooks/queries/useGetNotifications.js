@@ -7,13 +7,12 @@ export const useGetNotifications = () => {
         queryFn: async () => {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                const timeoutId = setTimeout(() => controller.abort(), 5000); 
 
                 const res = await fetch(`/api/notifications`, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
                     signal: controller.signal,
-                    // Add cache control headers to prevent browser caching
                     cache: "no-cache",
                 });
 
@@ -26,7 +25,6 @@ export const useGetNotifications = () => {
 
                 return await res.json();
             } catch (error) {
-                // Don't show toast for AbortError (timeout)
                 if (error.name !== "AbortError") {
                     console.error("Error fetching notifications:", error);
                 }
@@ -40,7 +38,6 @@ export const useGetNotifications = () => {
         refetchOnWindowFocus: true,
         staleTime: 2000,
         onError: (error) => {
-            // Only show one toast error message to avoid spamming
             if (error.name !== "AbortError") {
                 toast.error("Erreur lors du chargement des notifications", {
                     id: "notification-fetch-error",
@@ -56,7 +53,7 @@ export const useFilteredNotifications = (authUser) => {
         queryFn: async () => {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                const timeoutId = setTimeout(() => controller.abort(), 5000); 
 
                 const res = await fetch(`/api/notifications`, {
                     method: "GET",
@@ -79,7 +76,6 @@ export const useFilteredNotifications = (authUser) => {
 
                 return unreadNotifications;
             } catch (error) {
-                // Silent failure for this query
                 console.warn("Error fetching filtered notifications:", error);
                 return 0;
             }

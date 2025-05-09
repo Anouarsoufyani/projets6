@@ -16,7 +16,6 @@ export const useUploadDocument = () => {
         },
         onSuccess: () => {
             toast.success("Documents soumis avec succès !");
-            // Actualiser les données de l'utilisateur après soumission
             setTimeout(() => {
                 queryClient.invalidateQueries(["authUser"]);
             }, 1000);
@@ -27,7 +26,6 @@ export const useUploadDocument = () => {
     });
 };
 
-// Renommer la fonction useUpdateDocument en useUpdateUploadedDocument
 export const useUpdateUploadedDocument = () => {
     const queryClient = useQueryClient();
 

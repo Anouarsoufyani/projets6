@@ -20,7 +20,7 @@ const ReviewForm = ({
         useGetUserReviews();
     const [hasReviewed, setHasReviewed] = useState(false);
 
-    // Vérifier si l'utilisateur a déjà laissé un avis pour cette commande et ce destinataire
+
     useEffect(() => {
         if (userReviews && !isLoadingReviews) {
             const alreadyReviewed = userReviews.some(

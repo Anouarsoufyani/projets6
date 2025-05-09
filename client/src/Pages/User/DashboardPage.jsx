@@ -3,12 +3,12 @@
 import { FaStar, FaRegStar } from "react-icons/fa";
 import { useAuthUserQuery } from "../../Hooks/useAuthQueries";
 import useToggleActive from "../../Hooks/useToggleActive";
-// import { useState, useEffect } from "react";
+
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import PropTypes from "prop-types";
 import useDeliveryPosition from "../../Hooks/useDeliveryPosition";
 import { useGetUserCommandes } from "../../Hooks/useGetCommandes";
-// import useReviews from "../../hooks/useReviews";
+
 
 const fakeReviews = [
     {
@@ -103,7 +103,6 @@ const DashboardPage = () => {
         authUser?._id,
         commandeEnCours?._id
     );
-    // const { reviews, getAverageRating } = useReviews();
 
     const handleToggleActive = async () => {
         if (!authUser?._id) return;

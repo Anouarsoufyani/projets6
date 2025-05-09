@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-// Update user status (for livreurs)
+
 export const useUpdateUserStatus = () => {
     const queryClient = useQueryClient();
 
@@ -25,7 +25,7 @@ export const useUpdateUserStatus = () => {
             return data;
         },
         onSuccess: (data, variables) => {
-            // Invalidate relevant queries
+
             queryClient.invalidateQueries({
                 queryKey: ["getUserById", variables.userId],
             });
@@ -34,7 +34,7 @@ export const useUpdateUserStatus = () => {
     });
 };
 
-// Delete user
+
 export const useDeleteUser = () => {
     const queryClient = useQueryClient();
 
@@ -56,13 +56,13 @@ export const useDeleteUser = () => {
             return data;
         },
         onSuccess: (data, userId) => {
-            // Invalidate relevant queries
+
             queryClient.invalidateQueries({ queryKey: ["getUsersByRole"] });
         },
     });
 };
 
-// Update user profile (admin version)
+
 export const useAdminUpdateUserProfile = () => {
     const queryClient = useQueryClient();
 
@@ -87,7 +87,6 @@ export const useAdminUpdateUserProfile = () => {
             return data;
         },
         onSuccess: (data, userData) => {
-            // Invalidate relevant queries
             queryClient.invalidateQueries({
                 queryKey: ["getUserById", userData._id],
             });

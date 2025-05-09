@@ -1,4 +1,4 @@
-// Custom loading spinner component
+
 const LoadingSpinner = () => (
     <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
         <div className="relative animate-spin rounded-full h-16 w-16 border-4 border-emerald-200 border-t-emerald-600">

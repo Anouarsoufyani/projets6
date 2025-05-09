@@ -13,7 +13,6 @@ const useLivreurTracking = (commandeId, refreshInterval = 10000) => {
   const lastFetchTimeRef = useRef(0)
 
   const fetchLivreurInfo = async () => {
-    // Vérifier si on a fait une requête récemment (au moins 5 secondes d'intervalle)
     const now = Date.now()
     if (now - lastFetchTimeRef.current < 5000) {
       return
@@ -27,7 +26,6 @@ const useLivreurTracking = (commandeId, refreshInterval = 10000) => {
       if (!response.ok) {
         const errorData = await response.json()
         if (response.status === 404) {
-          // Gérer le cas où le livreur n'est pas assigné (erreur attendue)
           setLivreurPosition(null)
           setLivreurStatus({
             status: "en attente d'assignation",
@@ -59,7 +57,6 @@ const useLivreurTracking = (commandeId, refreshInterval = 10000) => {
 
       setIsLoading(false)
     } catch (err) {
-      // Éviter d'afficher des erreurs pour les problèmes de ressources
       if (!err.message.includes("ERR_INSUFFICIENT_RESOURCES")) {
         setError(err.message)
         setIsLoading(false)
@@ -71,14 +68,11 @@ const useLivreurTracking = (commandeId, refreshInterval = 10000) => {
   useEffect(() => {
     if (!commandeId) return
 
-    // Premier chargement immédiat
     fetchLivreurInfo()
 
-    // Configurer la mise à jour périodique avec un intervalle plus long
-    const actualInterval = Math.max(10000, refreshInterval) // Au moins 10 secondes
+    const actualInterval = Math.max(10000, refreshInterval)
     intervalRef.current = setInterval(fetchLivreurInfo, actualInterval)
 
-    // Nettoyer l'intervalle lors du démontage
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)

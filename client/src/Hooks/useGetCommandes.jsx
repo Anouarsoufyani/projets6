@@ -10,7 +10,7 @@ export const getUserCommandes = async () => {
   if (!res.ok) {
     throw new Error(data.error || "Something went wrong")
   }
-  // console.log("user commandes", data);
+
 
   return data
 }

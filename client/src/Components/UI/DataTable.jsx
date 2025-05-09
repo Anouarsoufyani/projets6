@@ -24,7 +24,7 @@ const DataTable = ({
   useEffect(() => {
     let result = [...data]
 
-    // Appliquer la recherche
+
     if (searchTerm) {
       result = result.filter((item) =>
         Object.values(item).some((value) => {
@@ -37,10 +37,10 @@ const DataTable = ({
       )
     }
 
-    // Appliquer le tri
+
     if (sortConfig.key) {
       result.sort((a, b) => {
-        // Gestion des valeurs imbriquées (ex: "client_id.nom")
+
         const aValue = sortConfig.key
           .split(".")
           .reduce((obj, key) => (obj && obj[key] !== undefined ? obj[key] : null), a)
@@ -60,7 +60,7 @@ const DataTable = ({
     }
 
     setFilteredData(result)
-    setCurrentPage(1) // Réinitialiser à la première page après filtrage
+    setCurrentPage(1) 
   }, [data, searchTerm, sortConfig])
 
   const requestSort = (key) => {
@@ -96,7 +96,7 @@ const DataTable = ({
     )
   }
 
-  // Pagination
+
   const totalPages = Math.ceil(filteredData.length / rowsPerPage)
   const startIndex = (currentPage - 1) * rowsPerPage
   const paginatedData = pagination ? filteredData.slice(startIndex, startIndex + rowsPerPage) : filteredData
@@ -111,7 +111,6 @@ const DataTable = ({
     setCurrentPage(1)
   }
 
-  // Générer les numéros de page à afficher
   const getPageNumbers = () => {
     const pages = []
     const maxVisiblePages = 5
@@ -121,36 +120,36 @@ const DataTable = ({
         pages.push(i)
       }
     } else {
-      // Toujours afficher la première page
+
       pages.push(1)
 
-      // Calculer les pages du milieu
+
       let startPage = Math.max(2, currentPage - 1)
       let endPage = Math.min(totalPages - 1, currentPage + 1)
 
-      // Ajuster si on est proche du début ou de la fin
+
       if (currentPage <= 3) {
         endPage = Math.min(totalPages - 1, 4)
       } else if (currentPage >= totalPages - 2) {
         startPage = Math.max(2, totalPages - 3)
       }
 
-      // Ajouter des ellipses si nécessaire
+
       if (startPage > 2) {
         pages.push("...")
       }
 
-      // Ajouter les pages du milieu
+
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i)
       }
 
-      // Ajouter des ellipses si nécessaire
+
       if (endPage < totalPages - 1) {
         pages.push("...")
       }
 
-      // Toujours afficher la dernière page
+
       if (totalPages > 1) {
         pages.push(totalPages)
       }

@@ -39,7 +39,6 @@ import { Link } from "react-router"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, useEffect, useCallback, useRef } from "react"
 
-// Fetch notifications function
 const getNotifications = async () => {
   try {
     const res = await fetch(`/api/notifications`, {
@@ -61,7 +60,6 @@ const getNotifications = async () => {
   }
 }
 
-// Format date helper function
 const formatDate = (dateString) => {
   const date = new Date(dateString)
   const now = new Date()
@@ -82,11 +80,9 @@ const formatDate = (dateString) => {
   })
 }
 
-// Function to check if a notification is active (can be acted upon)
 const isNotificationActive = (notification) => {
   if (!notification) return false
 
-  // Check if notification has expired
   const expiresAt = notification.expiresAt ? new Date(notification.expiresAt) : null
   const hasExpired = expiresAt && new Date() > expiresAt
 
@@ -101,7 +97,6 @@ const isNotificationActive = (notification) => {
   )
 }
 
-// Calculate time remaining for a notification
 const getTimeRemaining = (expiresAt) => {
   if (!expiresAt) return null
 
@@ -131,16 +126,12 @@ const DashboardPageLivreur = () => {
   const checkingTimeoutsRef = useRef(false)
   const checkTimeoutsMutation = useCheckNotificationTimeouts()
 
-  // Track notifications being processed
   const [processingNotifications, setProcessingNotifications] = useState([])
 
-  // State for time remaining counters
   const [timeRemainingState, setTimeRemainingState] = useState({})
 
-  // Reference to store the original notification data with expiry times
   const notificationsRef = useRef([])
 
-  // Fetch notifications with improved error handling and caching
   const {
     data: notificationsData,
     isLoading: isLoadingNotifications,
@@ -158,40 +149,33 @@ const DashboardPageLivreur = () => {
     },
   })
 
-  // Use the existing useAssignLivreur hook that contains handleLivreurResponse
   const { handleLivreurResponse, isResponding } = useAssignLivreur()
 
   const getUserById = useGetUserById()
 
   const { position, loading, error } = useDeliveryPosition(authUser?.isWorking, authUser?._id, commandeEnCours?._id)
 
-  // Récupérer les avis pour le livreur avec une limite de 5
   const { data: reviews, isLoading: isLoadingReviews } = useGetReviewsForUser(authUser?._id)
   const averageRating = getAverageRating(reviews)
 
   const [selectedVehicle, setSelectedVehicle] = useState("")
   const [showVehicleSelector, setShowVehicleSelector] = useState(false)
 
-  // Process notifications to get only active ones
   const notifications = notificationsData?.notifications || []
 
-  // Update notifications reference when data changes
   useEffect(() => {
     if (notifications && notifications.length > 0) {
       notificationsRef.current = notifications
     }
   }, [notifications])
 
-  // Filter active delivery requests (not expired, not accepted, not refused)
   const activeDeliveryRequests = notifications
     .filter((notification) => isNotificationActive(notification))
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 5)
 
-  // Count of active delivery requests
   const activeRequestCount = activeDeliveryRequests.length
 
-  // Function to check for expired notifications
   const checkExpiredNotifications = useCallback(async () => {
     if (authUser && !checkingTimeoutsRef.current) {
       checkingTimeoutsRef.current = true
@@ -203,19 +187,17 @@ const DashboardPageLivreur = () => {
     }
   }, [authUser, checkTimeoutsMutation])
 
-  // Set up interval to check for expired notifications
   useEffect(() => {
-    // Check immediately on component mount
+
     checkExpiredNotifications()
 
-    // Set up interval to check every 15 seconds
+
     const intervalId = setInterval(checkExpiredNotifications, 5000)
 
-    // Clean up interval on component unmount
+
     return () => clearInterval(intervalId)
   }, [checkExpiredNotifications])
 
-  // Check for active notifications that are about to expire
   useEffect(() => {
     if (!notifications) return
 
@@ -223,10 +205,8 @@ const DashboardPageLivreur = () => {
       (n) => n.isActive && n.isRequest && !n.isAccepted && !n.isRefused && n.expiresAt,
     )
 
-    // Clear any existing timeouts
     const timeoutIds = []
 
-    // For each active notification, set up a timeout to check expiration
     activeNotifications.forEach((notification) => {
       const expiresAt = new Date(notification.expiresAt).getTime()
       const now = Date.now()
@@ -234,27 +214,23 @@ const DashboardPageLivreur = () => {
       if (expiresAt > now) {
         const timeUntilExpiry = expiresAt - now
 
-        // Set timeout to check expiration when the notification is about to expire
         const timeoutId = setTimeout(() => {
           checkExpiredNotifications()
-        }, timeUntilExpiry + 1000) // Add 1 second buffer
+        }, timeUntilExpiry + 1000) 
 
         timeoutIds.push(timeoutId)
       }
     })
 
-    // Clean up timeouts
     return () => {
       timeoutIds.forEach((id) => clearTimeout(id))
     }
   }, [notifications, checkExpiredNotifications])
 
-  // Get the 5 most recent reviews
   const recentReviews = reviews
     ? [...reviews].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5)
     : []
 
-  // Handle notification response (accept/refuse)
   const handleNotificationResponse = useCallback(
     (notification, action) => {
       if (!notification || !notification._id) {
@@ -262,45 +238,37 @@ const DashboardPageLivreur = () => {
         return
       }
 
-      // Add notification to processing list
       setProcessingNotifications((prev) => [...prev, notification._id])
 
-      // Use the handleLivreurResponse function from useAssignLivreur hook
       handleLivreurResponse({
         notificationId: notification._id,
         response: action === "accepter" ? "accept" : "refuse",
       })
         .then(() => {
-          // Success handling is done in the hook
+
           queryClient.invalidateQueries(["notifications"])
         })
         .catch((error) => {
-          // Error handling
           toast.error(`Erreur: ${error.message || "Une erreur est survenue"}`)
           console.error("Error processing notification:", error)
         })
         .finally(() => {
-          // Remove notification from processing list
           setProcessingNotifications((prev) => prev.filter((id) => id !== notification._id))
         })
     },
     [handleLivreurResponse, queryClient],
   )
 
-  // Force refresh notifications when component mounts and periodically
   useEffect(() => {
-    // Initial refresh
     queryClient.invalidateQueries({ queryKey: ["notifications"] })
 
-    // Set up periodic refresh
     const intervalId = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
-    }, 30000) // Every 30 seconds
+    }, 30000)
 
     return () => clearInterval(intervalId)
   }, [queryClient])
 
-  // Update time remaining counters every second
   useEffect(() => {
     const updateTimeRemaining = () => {
       const updatedTimeRemaining = {}
@@ -314,20 +282,16 @@ const DashboardPageLivreur = () => {
       setTimeRemainingState(updatedTimeRemaining)
     }
 
-    // Initial update
     updateTimeRemaining()
 
-    // Set up interval to update every second
     const intervalId = setInterval(updateTimeRemaining, 1000)
 
     return () => clearInterval(intervalId)
   }, [notifications])
 
-  // Set up timers for notifications that have expiration times
   useEffect(() => {
     if (!notifications || notifications.length === 0) return
 
-    // Create timers for notifications with expiration times
     const timers = notifications
       .filter((notification) => notification.expiresAt && isNotificationActive(notification))
       .map((notification) => {
@@ -338,15 +302,13 @@ const DashboardPageLivreur = () => {
         if (timeUntilExpiry <= 0) return null
 
         return setTimeout(() => {
-          // Refresh notifications when one expires
           queryClient.invalidateQueries({
             queryKey: ["notifications"],
           })
-        }, timeUntilExpiry + 1000) // Add 1 second buffer
+        }, timeUntilExpiry + 1000) 
       })
       .filter(Boolean)
 
-    // Cleanup function
     return () => {
       timers.forEach((timer) => clearTimeout(timer))
     }
@@ -356,12 +318,9 @@ const DashboardPageLivreur = () => {
     if (!authUser?._id) return
 
     if (!authUser.isWorking) {
-      // If starting to work, show vehicle selector
       setShowVehicleSelector(true)
     } else {
-      // If stopping work, directly toggle and reset current vehicle
       try {
-        // First update all vehicles to set current = false
         const updateVehicleRes = await fetch(`/api/user/update`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -377,7 +336,6 @@ const DashboardPageLivreur = () => {
           throw new Error(errorData.error || "Erreur lors de la mise à jour du statut")
         }
 
-        // Then toggle active status
         await toggleActive(authUser._id)
         setShowVehicleSelector(false)
         window.location.reload()
@@ -408,7 +366,6 @@ const DashboardPageLivreur = () => {
         throw new Error(errorData.error || "Erreur lors de la mise à jour du statut")
       }
 
-      // Then toggle active status
       await toggleActive(authUser._id)
       setShowVehicleSelector(false)
       window.location.reload()
@@ -419,7 +376,6 @@ const DashboardPageLivreur = () => {
 
   const showShopDirections = async (commandeId) => {
     try {
-      // Get the commande details to extract commercant ID
       const commandeRes = await fetch(`/api/commandes/itineraire/${commandeId}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
@@ -431,7 +387,6 @@ const DashboardPageLivreur = () => {
 
       const commande = await commandeRes.json()
 
-      // Get the commercant details using the user ID
       const commercantRes = await fetch(`/api/user/${commande.data.commercant_id._id}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
@@ -451,14 +406,12 @@ const DashboardPageLivreur = () => {
 
       setSelectedShop(commercant)
 
-      // If we have the current position and shop coords, calculate directions
       if (position && commercant.adresse_boutique.lat && commercant.adresse_boutique.lng) {
         const shopPosition = {
           lat: commercant.adresse_boutique.lat,
           lng: commercant.adresse_boutique.lng,
         }
 
-        // Get directions using the Google Maps Directions Service
         const directionsService = new window.google.maps.DirectionsService()
 
         directionsService.route(
@@ -477,7 +430,6 @@ const DashboardPageLivreur = () => {
           },
         )
       } else if (!commercant.adresse_boutique.lat || !commercant.adresse_boutique.lng) {
-        // If coordinates aren't directly available, try to geocode the address
         const addressString = `${commercant.adresse_boutique.rue}, ${commercant.adresse_boutique.code_postal} ${commercant.adresse_boutique.ville}`
 
         try {
@@ -497,7 +449,6 @@ const DashboardPageLivreur = () => {
               lng: coords.lng,
             }
 
-            // Get directions
             const directionsService = new window.google.maps.DirectionsService()
 
             directionsService.route(
@@ -528,7 +479,6 @@ const DashboardPageLivreur = () => {
     }
   }
 
-  // Function to clear directions and return to normal map view
   const clearDirections = () => {
     setDirections(null)
     setSelectedShop(null)
@@ -542,7 +492,6 @@ const DashboardPageLivreur = () => {
     navigate(`/livraison/${commandeEnCours._id}`)
   }
 
-  // Loading state for the entire dashboard
   if (isLoadingNotifications && isLoadingReviews) {
     return (
       <div className="w-full h-full p-4 sm:p-6 flex flex-col">
@@ -576,7 +525,6 @@ const DashboardPageLivreur = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <h1 className="text-xl sm:text-2xl font-bold text-emerald-700">Bienvenue {authUser.nom}</h1>
 
-            {/* Affichage de la note moyenne */}
             <div className="bg-white px-4 py-2 rounded-lg shadow-md flex items-center gap-3 mt-2 md:mt-0">
               <FaStar className="text-yellow-500 h-5 w-5 sm:h-6 sm:w-6" />
               <div>
@@ -714,7 +662,6 @@ const DashboardPageLivreur = () => {
                         zoomControl: true,
                       }}
                     >
-                      {/* Current position marker */}
                       <Marker
                         position={position}
                         icon={{
@@ -722,7 +669,6 @@ const DashboardPageLivreur = () => {
                         }}
                       />
 
-                      {/* Shop marker if we have a selected shop but no directions yet */}
                       {selectedShop && !directions && selectedShop.adresse_boutique && (
                         <Marker
                           position={{
@@ -735,7 +681,6 @@ const DashboardPageLivreur = () => {
                         />
                       )}
 
-                      {/* Display directions if available */}
                       {directions && (
                         <DirectionsRenderer
                           directions={directions}
@@ -750,7 +695,6 @@ const DashboardPageLivreur = () => {
                       )}
                     </GoogleMap>
 
-                    {/* Shop info and clear button when directions are shown */}
                     {selectedShop && (
                       <div className="absolute bottom-4 left-4 right-4 bg-white p-3 rounded-lg shadow-lg max-w-md mx-auto">
                         <div className="flex justify-between items-center">
@@ -790,11 +734,8 @@ const DashboardPageLivreur = () => {
             )}
           </div>
 
-          {/* Affichage des notifications de demande de livraison */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-            {/* Demandes de livraison - Enhanced UI */}
             <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              {/* Header with notification count badge */}
               <div className="bg-gradient-to-r from-emerald-600 to-teal-500 p-4 flex items-center justify-between">
                 <h2 className="text-lg sm:text-xl font-semibold text-white flex items-center">
                   <FaBell className="mr-2" />
@@ -808,7 +749,6 @@ const DashboardPageLivreur = () => {
                 )}
               </div>
 
-              {/* Notification content */}
               <div className="p-4">
                 {isLoadingNotifications ? (
                   <div className="flex justify-center items-center h-32">
@@ -833,7 +773,6 @@ const DashboardPageLivreur = () => {
                   <ul className="space-y-3">
                     {activeDeliveryRequests.map((notification) => {
                       const isProcessing = processingNotifications.includes(notification._id)
-                      // Use the real-time updated time remaining from state
                       const timeRemaining =
                         timeRemainingState[notification._id] ||
                         (notification.expiresAt ? getTimeRemaining(notification.expiresAt) : null)
@@ -843,12 +782,10 @@ const DashboardPageLivreur = () => {
                           key={notification._id}
                           className="relative bg-white border border-emerald-100 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
                         >
-                          {/* Colored status bar */}
                           <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
 
                           <div className="p-4 pl-5">
                             <div className="flex flex-col sm:flex-row items-start justify-between gap-3 w-full">
-                              {/* Notification content with improved layout */}
                               <div className="flex-1">
                                 <div className="flex items-center mb-2">
                                   <div className="p-2 rounded-full bg-emerald-100 text-emerald-600 mr-3">
@@ -872,7 +809,6 @@ const DashboardPageLivreur = () => {
                                   </div>
                                 </div>
 
-                                {/* Order details with icons */}
                                 <div className="ml-11 text-sm text-gray-600">
                                   {notification.commande_id?.details && (
                                     <div className="flex items-start mb-1">
@@ -895,10 +831,7 @@ const DashboardPageLivreur = () => {
                                   )}
                                 </div>
                               </div>
-
-                              {/* Time remaining and action buttons */}
                               <div className="flex flex-col items-end gap-2 min-w-[120px]">
-                                {/* Time remaining with animated countdown */}
                                 {timeRemaining && (
                                   <div className="flex items-center bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
                                     <FaStopwatch className="text-amber-500 mr-1.5" />
@@ -916,7 +849,6 @@ const DashboardPageLivreur = () => {
                                   </div>
                                 )}
 
-                                {/* Action buttons with improved styling */}
                                 <div className="flex gap-2 mt-1">
                                   <button
                                     className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium py-1.5 px-3 rounded-md transition-colors flex items-center justify-center"
@@ -973,7 +905,6 @@ const DashboardPageLivreur = () => {
                 )}
               </div>
 
-              {/* Footer with link to all notifications */}
               <div className="bg-gray-50 p-3 border-t border-gray-100">
                 <Link
                   to="/notifications"
@@ -984,8 +915,6 @@ const DashboardPageLivreur = () => {
                 </Link>
               </div>
             </div>
-
-            {/* Affichage des derniers avis reçus */}
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
               <div className="flex items-center justify-between mb-4 border-b border-emerald-100 pb-2">
                 <h2 className="text-lg sm:text-xl font-semibold text-emerald-700 flex items-center">

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 
-const API_KEY = "AIzaSyD9buKfiAVASpx1zzEWbuSyHI05CaJyQ6c" // Remplace par ta clé API
+const API_KEY = "AIzaSyD9buKfiAVASpx1zzEWbuSyHI05CaJyQ6c" 
 
 const getCoords = async (adresse) => {
   if (!adresse) throw new Error("L'adresse ne peut pas être vide")
@@ -20,7 +20,7 @@ export const useGetCoords = (adresse) => {
   return useQuery({
     queryKey: ["getCoords", adresse],
     queryFn: () => getCoords(adresse),
-    enabled: !!adresse, // Ne s'exécute que si l'adresse est définie
+    enabled: !!adresse, 
     retry: false,
   })
 }

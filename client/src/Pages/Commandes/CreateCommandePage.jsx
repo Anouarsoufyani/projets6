@@ -35,7 +35,7 @@ const CreateCommandePage = () => {
         isFetching,
         refetch,
     } = useGetCoords(fullAdresse, {
-        enabled: false, // on déclenche manuellement
+        enabled: false, 
         retry: false,
     });
 
@@ -109,7 +109,6 @@ const CreateCommandePage = () => {
             return;
         }
 
-        // Déclencher la récupération des coordonnées
         setShouldSubmit(true);
         refetch();
     };
@@ -199,13 +198,11 @@ const CreateCommandePage = () => {
                             )}
                     </div>
 
-                    {/* Adresse de livraison */}
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-medium text-gray-700">
                             Adresse de livraison
                         </label>
 
-                        {/* Sélecteur d'adresses favorites */}
                         {authUser?.adresses_favorites &&
                             authUser.adresses_favorites.length > 0 && (
                                 <div className="mb-2">
@@ -266,7 +263,6 @@ const CreateCommandePage = () => {
                                 </div>
                             )}
 
-                        {/* Champs d'adresse */}
                         <div className="relative">
                             <FaMapMarkerAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
                             <input
@@ -298,7 +294,6 @@ const CreateCommandePage = () => {
                         </div>
                     </div>
 
-                    {/* Total */}
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-medium text-gray-700">
                             Total
@@ -315,7 +310,6 @@ const CreateCommandePage = () => {
                         </div>
                     </div>
 
-                    {/* Bouton */}
                     <button
                         type="submit"
                         className="w-full bg-emerald-600 text-white py-3 rounded-md hover:bg-emerald-700 transition duration-300 mt-4"

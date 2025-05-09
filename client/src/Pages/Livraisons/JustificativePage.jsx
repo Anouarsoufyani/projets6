@@ -36,10 +36,8 @@ import {
 import toast from "react-hot-toast"
 
 const JustificativePage = () => {
-  // Modifier la variable d'état step pour inclure une nouvelle étape "vehicleDetails"
   const [step, setStep] = useState("vehicles")
 
-  // Ajouter une nouvelle variable d'état pour stocker les détails des véhicules
   const [vehicleDetails, setVehicleDetails] = useState({})
   const [selectedVehicles, setSelectedVehicles] = useState([])
   const [documents, setDocuments] = useState({})
@@ -53,19 +51,16 @@ const JustificativePage = () => {
     couleur: "",
     capacite: 50,
   })
-  // Ajouter un état pour suivre les véhicules en cours de traitement
   const [processingVehicles, setProcessingVehicles] = useState(false)
 
   const { data: authUser, refetch: refetchAuthUser } = useAuthUserQuery()
   const UserDocuments = authUser?.documents || []
   const UserVehicles = authUser?.vehicules || []
 
-  // Utilisation des hooks modularisés pour les documents
   const { mutate: uploadDocument, isPending: isUploading } = useUploadDocument()
   const { mutate: updateDocument, isPending: isUpdating } = useUpdateUploadedDocument()
   const { mutate: deleteDocument, isPending: isDeleting } = useDeleteDocument()
 
-  // Utilisation des nouveaux hooks pour les véhicules
   const { mutate: uploadVehicule, isPending: isUploadingVehicle } = useUploadVehicule()
   const { mutate: updateVehicule, isPending: isUpdatingVehicle } = useUpdateVehicule()
   const { mutate: deleteVehicule, isPending: isDeletingVehicle } = useDeleteVehicule()
@@ -97,13 +92,11 @@ const JustificativePage = () => {
     },
   ]
 
-  // Initialiser les véhicules sélectionnés si l'utilisateur en a déjà
   useEffect(() => {
     if (authUser?.vehicules && authUser.vehicules.length > 0 && selectedVehicles.length === 0) {
-      // Extraire uniquement les types de véhicules pour la sélection
       const vehicleTypes = authUser.vehicules.map((v) => {
         const option = vehicleOptions.find((opt) => opt.value === v.type)
-        return option ? option.value : v.type // Modifier pour stocker la valeur et non le nom
+        return option ? option.value : v.type 
       })
       setSelectedVehicles(vehicleTypes)
     }
@@ -133,14 +126,12 @@ const JustificativePage = () => {
     setUploadProgress((prev) => ({ ...prev, [docType]: 100 }))
   }
 
-  // Modifier la fonction handleSubmitVehicles pour aller à l'étape des détails des véhicules
   const handleSubmitVehicles = () => {
     if (selectedVehicles.length === 0) {
       toast.error("Veuillez sélectionner au moins un véhicule.")
       return
     }
 
-    // Initialiser les détails des véhicules sélectionnés
     const initialDetails = {}
     selectedVehicles.forEach((vehicle) => {
       initialDetails[vehicle] = {
@@ -155,7 +146,6 @@ const JustificativePage = () => {
     setStep("vehicleDetails")
   }
 
-  // Ajouter une fonction pour gérer les changements dans le formulaire de détails des véhicules
   const handleVehicleDetailChange = (vehicleType, field, value) => {
     setVehicleDetails((prev) => ({
       ...prev,
@@ -166,9 +156,7 @@ const JustificativePage = () => {
     }))
   }
 
-  // Modifier la fonction pour utiliser le hook useUploadVehicule
   const handleSubmitVehicleDetails = async () => {
-    // Validation des champs obligatoires
     let isValid = true
 
     Object.entries(vehicleDetails).forEach(([type, details]) => {
@@ -180,7 +168,6 @@ const JustificativePage = () => {
 
     if (!isValid) return
 
-    // Vérifier que l'utilisateur est connecté et que son ID est disponible
     if (!authUser || !authUser._id) {
       toast.error("Vous devez être connecté pour effectuer cette action")
       return
@@ -189,10 +176,9 @@ const JustificativePage = () => {
     try {
       setProcessingVehicles(true)
 
-      // Utiliser Promise.all pour attendre que tous les véhicules soient traités
       const vehiclePromises = Object.values(vehicleDetails).map((vehicle) => {
         return new Promise((resolve, reject) => {
-          // Ajouter l'ID de l'utilisateur aux données du véhicule
+
           const vehicleData = {
             ...vehicle,
             userId: authUser._id,
@@ -201,7 +187,6 @@ const JustificativePage = () => {
           
           
 
-          // Utiliser le hook uploadVehicule au lieu de fetch
           uploadVehicule(vehicleData, {
             onSuccess: (data) => {
               resolve(data)
@@ -218,7 +203,6 @@ const JustificativePage = () => {
       toast.success("Véhicules enregistrés avec succès!")
       setProcessingVehicles(false)
 
-      // Passer à l'étape suivante
       setStep("documents")
     } catch (error) {
       setProcessingVehicles(false)
@@ -236,7 +220,6 @@ const JustificativePage = () => {
     return docs
   }
 
-  // Modifier la fonction handleSubmit pour inclure les détails des véhicules
   const handleSubmit = (e) => {
     e.preventDefault()
     const formData = new FormData()
@@ -254,7 +237,6 @@ const JustificativePage = () => {
     })
 
     if (allDocsPresent) {
-      // Utiliser les détails des véhicules déjà envoyés à l'étape précédente
       uploadDocument(formData, {
         onSuccess: () => {
           setTimeout(() => {
@@ -265,7 +247,6 @@ const JustificativePage = () => {
     }
   }
 
-  // Gestion du formulaire d'ajout de véhicule
   const handleNewVehicleChange = (e) => {
     const { name, value } = e.target
     setNewVehicle((prev) => ({
@@ -277,7 +258,6 @@ const JustificativePage = () => {
   const handleAddVehicle = (e) => {
     e.preventDefault()
 
-    // Validation des champs
     if ((newVehicle.type === "voiture" || newVehicle.type === "moto") && !newVehicle.plaque) {
       toast.error("La plaque d'immatriculation est obligatoire pour les voitures et motos")
       return
@@ -299,7 +279,6 @@ const JustificativePage = () => {
     })
   }
 
-  // Gestion du formulaire de modification de véhicule
   const handleEditVehicle = (vehicle) => {
     setCurrentVehicle(vehicle)
     setNewVehicle({
@@ -314,7 +293,6 @@ const JustificativePage = () => {
   const handleUpdateVehicle = (e) => {
     e.preventDefault()
 
-    // Validation des champs
     if ((newVehicle.type === "voiture" || newVehicle.type === "moto") && !newVehicle.plaque) {
       toast.error("La plaque d'immatriculation est obligatoire pour les voitures et motos")
       return
@@ -473,7 +451,6 @@ const JustificativePage = () => {
     }
   }
 
-  // Si l'utilisateur est en cours de vérification, afficher le tableau des documents et des véhicules
   if (authUser?.statut !== "non vérifié") {
     return (
       <div className="max-w-6xl mx-auto p-6">
@@ -482,7 +459,6 @@ const JustificativePage = () => {
           <p className="text-gray-600">Vos documents sont en cours de vérification par notre équipe</p>
         </div>
 
-        {/* Statut global */}
         {authUser?.statut === "vérifié" ? (
           <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
             <div className="flex">
@@ -513,7 +489,6 @@ const JustificativePage = () => {
           </div>
         )}
 
-        {/* Section des véhicules */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Mes véhicules</h2>
@@ -597,7 +572,6 @@ const JustificativePage = () => {
           )}
         </div>
 
-        {/* Section des documents */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Documents soumis</h2>
@@ -720,7 +694,6 @@ const JustificativePage = () => {
           </div>
         </div>
 
-        {/* Modal d'ajout de véhicule */}
         {showAddVehicleForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -803,8 +776,6 @@ const JustificativePage = () => {
             </div>
           </div>
         )}
-
-        {/* Modal de modification de véhicule */}
         {showEditVehicleForm && currentVehicle && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -891,14 +862,12 @@ const JustificativePage = () => {
     )
   }
 
-  // Sinon, afficher le formulaire normal avec les étapes
   return (
     <div className="max-w-4xl mx-auto p-6 ">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Soumettre vos pièces justificatives</h1>
         <p className="text-gray-600">Veuillez compléter les informations ci-dessous pour finaliser votre inscription</p>
       </div>
-      {/* Modifier la section de navigation des étapes pour inclure la nouvelle étape */}
       <div className="mb-6">
         <div className="flex items-center mb-2">
           <div
@@ -977,7 +946,6 @@ const JustificativePage = () => {
           </div>
         </div>
       ) : null}
-      {/* Ajouter une nouvelle section pour le formulaire de détails des véhicules */}
       {step === "vehicleDetails" && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-6">Détails des véhicules</h2>
@@ -1128,8 +1096,6 @@ const JustificativePage = () => {
             </div>
 
             <div className="flex justify-between pt-4">
-              {/* Modifier le bouton de retour dans la section des documents pour revenir à l'étape des détails des
-              véhicules */}
               <button
                 type="button"
                 onClick={() => setStep("vehicleDetails")}

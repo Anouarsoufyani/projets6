@@ -1,6 +1,4 @@
-// Exporter tous les hooks pour faciliter les imports
 
-// Queries
 export { useAvailableLivreurs } from "./queries/useAvailableLivreurs";
 export {
     useGetCommandeById,
@@ -23,7 +21,7 @@ export {
     useGetUserReviews,
 } from "./queries/useGetReviews";
 
-// Mutations
+
 export { default as useUpdateProfile } from "./mutations/useUpdateProfile";
 export { useAssignLivreur } from "./mutations/useAssignLivreur";
 export { useRequestLivreur } from "./mutations/useRequestLivreur";
@@ -50,17 +48,15 @@ export {
 } from "./mutations/useNotifications";
 export { useSubmitReview } from "./mutations/useSubmitReview";
 
-// Admin mutations
+
 export {
     useUpdateUserStatus,
     useDeleteUser,
     useAdminUpdateUserProfile,
 } from "./mutations/useAdminUserManagement";
 
-// Autres hooks (qui ne sont pas des queries ou mutations)
 export { default as useGoogleMapDirections } from "./useGoogleMapDirections";
 
-// Utils
 export { getDocumentUrl } from "./utils/getDocumentsUrl";
 export { default as GoogleMapLoader } from "./utils/GoogleMapLoader";
 

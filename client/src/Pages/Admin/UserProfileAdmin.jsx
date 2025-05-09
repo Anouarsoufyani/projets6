@@ -45,39 +45,39 @@ const UserProfileAdmin = () => {
   const [formData, setFormData] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  // Add these new states and hooks
+
   const [activeTab, setActiveTab] = useState("profile")
   const [timeRange, setTimeRange] = useState("month")
   const [showVehicleModal, setShowVehicleModal] = useState(false)
   const [selectedVehicles, setSelectedVehicles] = useState([])
   const [actionType, setActionType] = useState(null)
-  // Add a new state for the "select all" checkbox
+
   const [selectAllVehicles, setSelectAllVehicles] = useState(false)
   const [userData, setUserData] = useState(null)
 
-  // Fetch user data
+
   const { data: fetchedUserData, isLoading, error } = useGetUserById(userId)
 
   useEffect(() => {
     setUserData(fetchedUserData)
   }, [fetchedUserData])
 
-  // Add this hook to get user commandes
+
   const { data: commandesData, isLoading: isLoadingCommandes } = useGetUserCommandes(userId)
 
-  // Fetch documents if user is a livreur
+
   const { data: documents, isLoading: docsLoading } = useGetDocuments(
     userData?.data?.role === "livreur" ? userId : null,
   )
 
-  // Initialize form data when user data is available
+
   useEffect(() => {
     if (userData?.data) {
       setFormData(userData.data)
     }
   }, [userData])
 
-  // Add this useMemo to process statistics
+
   const userStats = useMemo(() => {
     if (!commandesData?.commandes || !userData?.data) {
       return {
@@ -94,7 +94,7 @@ const UserProfileAdmin = () => {
     const commandes = commandesData.commandes || []
     const user = userData.data
 
-    // Filter commandes related to this user based on role
+ 
     const userCommandes = commandes.filter((cmd) => {
       if (user.role === "client") return cmd.client_id === userId || cmd.client_id?._id === userId
       if (user.role === "commercant") return cmd.commercant_id === userId || cmd.commercant_id?._id === userId
@@ -102,7 +102,7 @@ const UserProfileAdmin = () => {
       return false
     })
 
-    // Filter by period
+
     const now = new Date()
     const filteredCommandes = userCommandes.filter((cmd) => {
       const cmdDate = new Date(cmd.date_creation)
@@ -119,25 +119,25 @@ const UserProfileAdmin = () => {
       return true
     })
 
-    // Basic stats
+
     const totalCommandes = filteredCommandes.length
 
-    // Filter valid commandes (not cancelled or refused)
+
     const validCommandes = filteredCommandes.filter((cmd) => cmd.statut !== "annulee" && cmd.statut !== "refusee")
 
-    // Calculate revenue based on role
+
     let totalRevenu = 0
     if (user.role === "commercant") {
       totalRevenu = validCommandes.reduce((sum, cmd) => sum + (cmd.total || 0), 0)
     } else if (user.role === "livreur") {
-      // For livreurs, we could calculate commission or just count deliveries
+
       totalRevenu = validCommandes.filter((cmd) => cmd.statut === "livree").length
     } else {
-      // For clients, just sum what they spent
+
       totalRevenu = validCommandes.reduce((sum, cmd) => sum + (cmd.total || 0), 0)
     }
 
-    // Commandes by status
+
     const statutCount = {}
     filteredCommandes.forEach((cmd) => {
       const statut = cmd.statut || "inconnu"
@@ -149,7 +149,7 @@ const UserProfileAdmin = () => {
       value,
     }))
 
-    // Commandes by day
+
     const commandesParDate = {}
     filteredCommandes.forEach((cmd) => {
       const date = new Date(cmd.date_creation).toLocaleDateString()
@@ -169,16 +169,16 @@ const UserProfileAdmin = () => {
 
     const commandesParJour = Object.values(commandesParDate).sort((a, b) => new Date(a.date) - new Date(b.date))
 
-    // Recent commandes
+
     const commandesRecentes = [...filteredCommandes]
       .sort((a, b) => new Date(b.date_creation) - new Date(a.date_creation))
       .slice(0, 5)
 
-    // Conversion rate (delivered / total valid)
+
     const livreesCount = validCommandes.filter((cmd) => cmd.statut === "livree").length
     const tauxConversion = validCommandes.length > 0 ? ((livreesCount / validCommandes.length) * 100).toFixed(1) : 0
 
-    // Average order value
+
     const valeurMoyenneCommande =
       validCommandes.length > 0
         ? (validCommandes.reduce((sum, cmd) => sum + (cmd.total || 0), 0) / validCommandes.length).toFixed(2)
@@ -195,7 +195,7 @@ const UserProfileAdmin = () => {
     }
   }, [commandesData, userData, timeRange, userId])
 
-  // Add this helper function for formatting currency
+
   const formatCurrency = (amount) => {
     if (amount === undefined || amount === null) return "0.00 €"
 
@@ -211,13 +211,13 @@ const UserProfileAdmin = () => {
     )
   }
 
-  // Update the useEffect to handle the selectAllVehicles state
+
   useEffect(() => {
     if (selectAllVehicles && userData?.data?.vehicules) {
-      // Select all vehicle indexes
+
       setSelectedVehicles(userData.data.vehicules.map((_, index) => index))
     } else if (!selectAllVehicles && selectedVehicles.length === userData?.data?.vehicules?.length) {
-      // If "select all" is unchecked, clear all selections
+
       setSelectedVehicles([])
     }
   }, [selectAllVehicles, userData?.data?.vehicules, selectedVehicles.length])
@@ -258,23 +258,23 @@ const UserProfileAdmin = () => {
 
   const user = userData.data
 
-  // Form change handlers
+
   const handleChange = (e, field = null, subField = null, index = null) => {
     const { name, value, type, checked } = e.target
 
     if (field && subField) {
-      // Handle nested object changes
+
       setFormData((prev) => ({
         ...prev,
         [field]: { ...prev[field], [subField]: value },
       }))
     } else if (field && index !== null) {
-      // Handle array of objects changes
+
       const newArray = [...formData[field]]
       newArray[index][name] = value
       setFormData((prev) => ({ ...prev, [field]: newArray }))
     } else {
-      // Handle direct field changes
+
       setFormData((prev) => ({
         ...prev,
         [name]: type === "checkbox" ? checked : value,
@@ -358,7 +358,7 @@ const UserProfileAdmin = () => {
 
       setEdit(false)
 
-      // window.location.reload();
+
     } catch (error) {
       console.error("Erreur lors de la mise à jour du profil :", error)
     }
@@ -366,7 +366,7 @@ const UserProfileAdmin = () => {
 
   const handleDeleteUser = () => {
     if (confirmDelete) {
-      // Implement delete user functionality
+
       console.log("Deleting user:", user._id)
       navigate(-1)
     } else {
@@ -405,7 +405,7 @@ const UserProfileAdmin = () => {
     }
   }
 
-  // Add this function to handle user status changes
+
   const handleUserStatusChange = async (newStatus, selectedVehicleIds = []) => {
     try {
       const response = await fetch(`/api/user/changeStatut`, {
@@ -424,7 +424,7 @@ const UserProfileAdmin = () => {
       }
 
       toast.success(`Statut mis à jour avec succès: ${newStatus}`)
-      // Refresh user data
+
       window.location.reload()
     } catch (error) {
       toast.error(error.message || "Une erreur est survenue")
@@ -445,7 +445,7 @@ const UserProfileAdmin = () => {
       }
 
       toast.success(`Statut du document mis à jour avec succès: ${newStatus}`)
-      // Refresh user data
+
       window.location.reload()
     } catch (error) {
       toast.error(error.message || "Une erreur est survenue lors de la mise à jour du statut du document")
@@ -454,7 +454,7 @@ const UserProfileAdmin = () => {
 
   
 
-  // Replace the main content section with this updated version
+
   return (
     <main className="w-full min-h-full bg-gradient-to-br from-emerald-50 to-teal-100 p-4 md:p-6 overflow-x-hidden">
       <div className="flex items-center gap-4 mb-6">
@@ -470,7 +470,6 @@ const UserProfileAdmin = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
-        {/* Header with actions */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 border-b pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 md:gap-6">
             <img
@@ -518,7 +517,6 @@ const UserProfileAdmin = () => {
                 </button>
                 <button
                   onClick={() => {
-                    // Pour refusé, appliquer directement à tous les véhicules
                     const allVehicleIndexes = user.vehicules?.map((_, index) => index) || []
                     handleUserStatusChange("refusé", allVehicleIndexes)
                   }}
@@ -528,7 +526,6 @@ const UserProfileAdmin = () => {
                 </button>
                 <button
                   onClick={() => {
-                    // Pour non vérifié, appliquer directement à tous les véhicules
                     const allVehicleIndexes = user.vehicules?.map((_, index) => index) || []
                     handleUserStatusChange("non vérifié", allVehicleIndexes)
                   }}
@@ -593,12 +590,10 @@ const UserProfileAdmin = () => {
           </div>
         </div>
 
-        {/* Profile Tab Content */}
         {activeTab === "profile" && (
           <>
             {edit ? (
               <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {/* Common fields */}
                 <FormField label="Nom" name="nom" value={formData.nom} onChange={handleChange} />
                 <FormField label="Email" name="email" type="email" value={formData.email} onChange={handleChange} />
                 <FormField
@@ -610,7 +605,6 @@ const UserProfileAdmin = () => {
                   pattern="^0[1-9](\s?\d{2}){4}$"
                 />
 
-                {/* Role-specific fields */}
                 {user.role === "commercant" && (
                   <>
                     <FormField
@@ -804,7 +798,6 @@ const UserProfileAdmin = () => {
                   </div>
                 )}
 
-                {/* Submit button */}
                 <div className="col-span-1 md:col-span-2 flex justify-end mt-4">
                   <button
                     type="submit"
@@ -909,10 +902,8 @@ const UserProfileAdmin = () => {
           </>
         )}
 
-        {/* Statistics Tab Content */}
         {activeTab === "statistics" && (
           <div className="space-y-6">
-            {/* Filtres de période */}
             <div className="flex justify-end mb-4">
               <div className="bg-white rounded-lg shadow-sm p-1 flex items-center">
                 <FaChartLine className="text-emerald-500 mx-2" />
@@ -943,10 +934,8 @@ const UserProfileAdmin = () => {
                 </button>
               </div>
             </div>
-
-            {/* Cartes de statistiques */}
+           
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Carte Total Commandes */}
               <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-emerald-500">
                 <div className="flex items-center justify-between pb-4">
                   <h3 className="text-base font-semibold text-gray-800">Total Commandes</h3>
@@ -960,7 +949,6 @@ const UserProfileAdmin = () => {
                 </div>
               </div>
 
-              {/* Carte Revenus ou Livraisons */}
               <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-blue-500">
                 <div className="flex items-center justify-between pb-4">
                   <h3 className="text-base font-semibold text-gray-800">
@@ -982,7 +970,6 @@ const UserProfileAdmin = () => {
                 </div>
               </div>
 
-              {/* Carte Taux de conversion ou Note moyenne */}
               <div className="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500">
                 <div className="flex items-center justify-between pb-4">
                   <h3 className="text-base font-semibold text-gray-800">
@@ -1005,7 +992,6 @@ const UserProfileAdmin = () => {
               </div>
             </div>
 
-            {/* Graphique d'évolution */}
             {userStats.commandesParJour.length > 0 && (
               <div className="bg-white rounded-xl shadow-md p-4 mt-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4">Évolution des commandes</h3>
@@ -1052,7 +1038,6 @@ const UserProfileAdmin = () => {
               </div>
             )}
 
-            {/* Répartition par statut */}
             {userStats.commandesParStatut.length > 0 && (
               <div className="bg-white rounded-xl shadow-md p-4 mt-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4">Répartition des commandes</h3>
@@ -1080,7 +1065,6 @@ const UserProfileAdmin = () => {
               </div>
             )}
 
-            {/* Commandes récentes */}
             {userStats.commandesRecentes.length > 0 && (
               <div className="bg-white rounded-xl shadow-md p-4 mt-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4">Commandes récentes</h3>
@@ -1115,7 +1099,6 @@ const UserProfileAdmin = () => {
           </div>
         )}
 
-        {/* Documents Tab Content */}
         {activeTab === "documents" && user.role === "livreur" && (
           <div className="space-y-6">
             <h2 className="text-lg font-bold text-emerald-700 mb-4">Documents</h2>
@@ -1219,13 +1202,11 @@ const UserProfileAdmin = () => {
                     onClick={() => {
                       if (selectedVehicles.includes(index)) {
                         setSelectedVehicles(selectedVehicles.filter((i) => i !== index))
-                        // If we're deselecting one and had all selected, uncheck "select all"
                         if (selectedVehicles.length === user.vehicules.length) {
                           setSelectAllVehicles(false)
                         }
                       } else {
                         setSelectedVehicles([...selectedVehicles, index])
-                        // If all are now selected, check "select all"
                         if (selectedVehicles.length + 1 === user.vehicules.length) {
                           setSelectAllVehicles(true)
                         }
@@ -1279,7 +1260,6 @@ const UserProfileAdmin = () => {
               </button>
               <button
                 onClick={() => {
-                  // If no vehicles are selected, apply to all
                   if (selectedVehicles.length === 0 && user?.vehicules?.length > 0) {
                     const allVehicleIndexes = user.vehicules.map((_, index) => index)
                     handleUserStatusChange(actionType, allVehicleIndexes)
@@ -1309,7 +1289,6 @@ const UserProfileAdmin = () => {
   )
 }
 
-// Reusable form field component
 function FormField({ label, name, value, onChange, type, pattern }) {
   return (
     <div>

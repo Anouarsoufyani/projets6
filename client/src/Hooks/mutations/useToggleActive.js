@@ -9,7 +9,6 @@ const useToggleActive = () => {
     const { mutateAsync: toggleActive, isPending: isToggleActive } =
         useMutation({
             mutationFn: async (id) => {
-                // Vérifier si le livreur a une commande en cours
                 if (commandeEnCours) {
                     throw new Error(
                         "Vous ne pouvez pas changer votre statut pendant une livraison en cours"
@@ -35,7 +34,6 @@ const useToggleActive = () => {
             },
             onSuccess: () => {
                 toast.success("Statut mis à jour avec succès");
-                // Invalide les caches pour rafraîchir les données
                 Promise.all([
                     queryClient.invalidateQueries({ queryKey: ["authUser"] }),
                 ]);

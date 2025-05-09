@@ -1,17 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router"; // Ajout de useNavigate
+import { Link, useNavigate } from "react-router";
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaUserTie } from "react-icons/fa";
-import { useSignup } from "../../../Hooks"; // Import du hook modularisé
+import { useSignup } from "../../../Hooks"; 
 import toast from "react-hot-toast";
 
 const SignupPage = () => {
-    const navigate = useNavigate(); // Hook pour la navigation
+    const navigate = useNavigate(); 
     const [role, setRole] = useState(null);
 
     useEffect(() => {
-        // Récupérer les paramètres de l'URL
         const urlParams = new URLSearchParams(window.location.search);
         const roleParam = urlParams.get("role");
         setRole(roleParam);

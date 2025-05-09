@@ -13,7 +13,7 @@ import StatusBadge from "../../Components/UI/StatusBadge"
 import ActionButton from "../../Components/UI/ActionButton"
 
 const GestionPiecesPage = () => {
-  const { id } = useParams() // id du livreur
+  const { id } = useParams() 
   const queryClient = useQueryClient()
   const { data: authUser, isLoading: authLoading } = useAuthUserQuery()
   const { data: livreur, isLoading: livreurLoading } = useGetUserById(id)
@@ -118,7 +118,6 @@ const GestionPiecesPage = () => {
 
   const getDocumentUrl = (url) => {
     if (!url) return "#"
-    // Remplacer les backslashes par des slashes pour l'URL
     return `/${url.replace(/\\/g, "/")}`
   }
 
@@ -136,7 +135,6 @@ const GestionPiecesPage = () => {
     return <FaFileAlt className="text-gray-500" />
   }
 
-  // Configuration des colonnes pour le DataTable
   const getTableColumns = () => [
     {
       key: "nomFichier",
@@ -231,7 +229,6 @@ const GestionPiecesPage = () => {
         pagination={true}
       />
 
-      {/* Modal de prévisualisation du document */}
       {previewDocument && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">

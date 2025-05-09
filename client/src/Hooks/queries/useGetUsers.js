@@ -33,7 +33,7 @@ export const useGetUsersByRole = (role) => {
     return useQuery({
         queryKey: ["getUsersByRole", role],
         queryFn: () => fetchUsersByRole(role),
-        enabled: !!role, // ← important : on évite l'exécution tant que role est vide
+        enabled: !!role, 
         retry: false,
     });
 };
@@ -42,7 +42,7 @@ export const useGetUserById = (id) => {
     return useQuery({
         queryKey: ["getUserById", id],
         queryFn: () => fetchUserById(id),
-        enabled: !!id, // ← important : on évite l'exécution tant que id est vide
+        enabled: !!id,
         retry: false,
     });
 };

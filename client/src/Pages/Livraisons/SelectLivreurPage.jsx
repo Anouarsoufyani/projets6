@@ -5,7 +5,7 @@ import { GoogleMap, Marker, InfoWindow, DirectionsRenderer } from "@react-google
 import { useNavigate, useParams } from "react-router"
 import { toast } from "react-hot-toast"
 import LoadingSpinner from "../../Components/UI/Loading";
-// Ajouter un nouvel import pour l'icône de recherche
+
 import {
   FaFilter,
   FaMapMarkerAlt,
@@ -20,12 +20,11 @@ import {
   FaUserEdit,
 } from "react-icons/fa"
 
-// Import des hooks modularisés
 import {
   useAvailableLivreurs,
   useAuthUserQuery,
   useGetCoords,
-  useAssignLivreur, // Remplacer useRequestLivreur par useAssignLivreur
+  useAssignLivreur, 
   useGoogleMapDirections,
 } from "../../Hooks"
 
@@ -51,58 +50,55 @@ const SelectLivreurPage = () => {
   const navigate = useNavigate()
   const [livreurDistances, setLivreurDistances] = useState({})
   const [isCalculatingDistances, setIsCalculatingDistances] = useState(false)
-  // Ajouter un nouvel état pour la recherche par nom
-  const [searchQuery, setSearchQuery] = useState("")
-  // Ajouter un état pour le mode d'assignation
-  const [assignationMode, setAssignationMode] = useState(null) // null, "manual", "auto"
 
-  // Ajouter un état pour les critères d'assignation automatique
-  // Modifier la structure des critères d'assignation automatique pour inclure l'ordre de priorité
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const [assignationMode, setAssignationMode] = useState(null) 
+
+
   const [autoCriteria, setAutoCriteria] = useState({
     vehicleTypes: [],
-    criteria: [], // Tableau qui contiendra les critères dans l'ordre de priorité
+    criteria: [], 
   })
-  // Utiliser useParams pour récupérer l'ID de la commande
+
   const { commandeId } = useParams()
 
-  // Initialiser avec une position par défaut pour la France
+
   const [mapCenter, setMapCenter] = useState({
-    lat: 46.603354, // Centre de la France
+    lat: 46.603354, 
     lng: 1.888334,
   })
 
-  // Modifier la structure de l'état sortBy pour gérer plusieurs critères
-  const [sortCriteria, setSortCriteria] = useState([]) // ["distance", "note", "duration"]
-  const [sortBy, setSortBy] = useState(null) // "distance" ou "note"
-  const [vehiculeFilter, setVehiculeFilter] = useState([]) // ["voiture", "moto"]
+
+  const [sortCriteria, setSortCriteria] = useState([]) 
+  const [sortBy, setSortBy] = useState(null)
+  const [vehiculeFilter, setVehiculeFilter] = useState([])
   const [showFilters, setShowFilters] = useState(false)
   const [distance, setDistance] = useState(null)
   const [duration, setDuration] = useState(null)
 
-  // Utiliser le hook de mutation modularisé
-  // const assignLivreurMutation = useRequestLivreur()
+
   const assignLivreur = useAssignLivreur()
 
-  // Add this near the other useRef declarations
   const directionsRendererRef = useRef(null)
   const mapRef = useRef(null)
 
-  // Mettre à jour le centre de la carte quand les coordonnées sont chargées
+
   useEffect(() => {
     if (position.data) {
       setMapCenter(position.data)
     }
   }, [position.data])
 
-  // Utiliser notre hook personnalisé pour les directions
+
   const { calculateRoute, onMapLoad, clearDirections } = useGoogleMapDirections({
-    strokeColor: "#10b981", // emerald-500
+    strokeColor: "#10b981", 
     strokeWeight: 5,
     strokeOpacity: 0.8,
     suppressMarkers: true,
   })
 
-  // Modify the function calculateRealDistances for more accurate calculations
+
   const calculateRealDistances = useCallback(async () => {
     if (!position.data || !livreurs || livreurs.length === 0 || !window.google) {
       return
@@ -112,7 +108,6 @@ const SelectLivreurPage = () => {
     const directionsService = new window.google.maps.DirectionsService()
     const origin = { lat: position.data.lat, lng: position.data.lng }
 
-    // Process livreurs in batches to avoid overwhelming the API
     const batchSize = 10
     const batches = []
     for (let i = 0; i < livreurs.length; i += batchSize) {
@@ -144,13 +139,13 @@ const SelectLivreurPage = () => {
                 const route = result.routes[0]
                 const leg = route.legs[0]
 
-                // Apply vehicle-specific adjustments
+
                 const adjustmentFactor = getVehicleSpeedFactor(vehicleType)
-                let durationValue = leg.duration.value // in seconds
+                let durationValue = leg.duration.value 
                 let durationText = leg.duration.text
 
                 if (vehicleType !== "voiture") {
-                  // Adjust duration for non-car vehicles
+
                   durationValue = Math.round(durationValue * adjustmentFactor)
                   const minutes = Math.floor(durationValue / 60)
                   durationText = `~${minutes} min`
@@ -159,13 +154,13 @@ const SelectLivreurPage = () => {
                 newDistances[livreur._id] = {
                   distance: leg.distance.text,
                   duration: durationText,
-                  distanceValue: leg.distance.value, // in meters
-                  durationValue: durationValue, // in adjusted seconds
+                  distanceValue: leg.distance.value, 
+                  durationValue: durationValue, 
                   vehicleType: vehicleType,
-                  route: result, // Store the route for later use
+                  route: result, 
                 }
               } else {
-                // Fallback to direct distance calculation
+
                 const directDistance = getDirectDistance(
                   position.data.lat,
                   position.data.lng,
@@ -191,10 +186,10 @@ const SelectLivreurPage = () => {
         })
       })
 
-      // Wait for all promises in this batch to resolve
+
       await Promise.all(promises)
 
-      // Small delay between batches to avoid rate limiting
+
       if (batches.length > 1) {
         await new Promise((resolve) => setTimeout(resolve, 500))
       }
@@ -205,7 +200,7 @@ const SelectLivreurPage = () => {
     setIsCalculatingDistances(false)
   }, [position.data, livreurs])
 
-  // Add this helper function to determine the appropriate travel mode
+
   const getTravelModeForVehicle = (vehicleType) => {
     switch (vehicleType) {
       case "vélo":
@@ -220,46 +215,44 @@ const SelectLivreurPage = () => {
     }
   }
 
-  // Ajouter ces fonctions pour calculer la vitesse selon le type de véhicule
   const getVehicleSpeed = (vehicleType) => {
     switch (vehicleType) {
       case "voiture":
-        return 50 // 50 km/h
+        return 50 
       case "moto":
-        return 45 // 45 km/h
+        return 45 
       case "vélo":
-        return 15 // 15 km/h
+        return 15 
       case "autres":
-        return 5 // 5 km/h (à pied)
+        return 5 
       default:
-        return 30 // Valeur par défaut
+        return 30 
     }
   }
 
   const getVehicleSpeedFactor = (vehicleType) => {
-    // Facteur par rapport à la voiture (1.0)
+
     switch (vehicleType) {
       case "voiture":
         return 1.0
       case "moto":
-        return 1.1 // Légèrement plus rapide en ville (embouteillages)
+        return 1.1 
       case "vélo":
-        return 3.3 // 50/15 = 3.33 fois plus lent
+        return 3.3 
       case "autres":
-        return 10.0 // 50/5 = 10 fois plus lent
+        return 10.0 
       default:
-        return 1.7 // Valeur par défaut
+        return 1.7 
     }
   }
 
-  // Calculer les distances réelles lorsque les livreurs et la position sont disponibles
+
   useEffect(() => {
     if (position.data && livreurs && livreurs.length > 0 && window.google) {
       calculateRealDistances()
     }
   }, [position.data, livreurs, calculateRealDistances])
 
-  // Add a cleanup function to remove the directions renderer when component unmounts
   useEffect(() => {
     return () => {
       if (directionsRendererRef.current) {
@@ -268,9 +261,7 @@ const SelectLivreurPage = () => {
     }
   }, [])
 
-  // Modifier les fonctions d'assignation pour utiliser le hook unifié
 
-  // Remplacer la fonction confirmAssignLivreur
   const confirmAssignLivreur = () => {
     if (!selectedLivreur) {
       toast.error("Veuillez sélectionner un livreur")
@@ -282,67 +273,64 @@ const SelectLivreurPage = () => {
       return
     }
 
-    // Show loading toast
     const loadingToast = toast.loading("Envoi de la demande au livreur...")
 
-    // Use the unified hook with 'manual' mode
+
     assignLivreur.assignLivreur({
       commandeId,
       livreurId: selectedLivreur._id,
       mode: "manual",
     })
 
-    // Dismiss loading toast
+
     toast.dismiss(loadingToast)
 
-    // Inform the user
+
     toast.success(`Demande envoyée au livreur ${selectedLivreur.nom}`)
 
-    // Redirect to the commandes page
+
     navigate("/commandes")
   }
 
-  // Ajouter cette fonction pour l'assignation automatique
-  // Modifier la fonction d'assignation automatique pour envoyer les nouveaux critères
-  // Remplacer la fonction assignLivreurAutomatically
+
   const assignLivreurAutomatically = useCallback(async () => {
     if (!commandeId) {
       toast.error("ID de commande manquant")
       return
     }
 
-    // Vérifier qu'au moins un critère est sélectionné
+
     if (autoCriteria.criteria.length === 0) {
       toast.error("Veuillez sélectionner au moins un critère de priorité")
       return
     }
 
-    // Préparer les données à envoyer
+
     const criteriaWithOrder = autoCriteria.criteria.map((criterion, index) => ({
       type: criterion,
       order: index + 1,
       enabled: true,
-      // Add default values for criteria types
+
       value:
         criterion === "poids"
           ? 10
-          : // Default weight capacity: 10kg
+          : 
             criterion === "duree"
             ? 30
-            : // Default max duration: 30 minutes
+            : 
               criterion === "distanceMax"
               ? 10
-              : // Default max distance: 10km
+              : 
                 criterion === "note"
                 ? 3
-                : 0, // Default minimum rating: 3 stars
+                : 0, 
     }))
 
     try {
-      // Show loading toast
+
       const loadingToast = toast.loading("Recherche des livreurs disponibles...")
 
-      // Use the unified hook with 'auto' mode
+
       const result = await assignLivreur.assignLivreur({
         commandeId,
         mode: "auto",
@@ -350,10 +338,10 @@ const SelectLivreurPage = () => {
         criteria: criteriaWithOrder,
       })
 
-      // Dismiss loading toast and show success
+
       toast.dismiss(loadingToast)
 
-      // Show more detailed success message
+
       if (result?.data?.topLivreur) {
         toast.success(
           `Demande envoyée au livreur ${result.data.topLivreur.nom || result.data.topLivreur.id.slice(-6)} (score: ${
@@ -365,29 +353,28 @@ const SelectLivreurPage = () => {
         toast.success("Demande d'assignation automatique envoyée")
       }
 
-      // Navigate back to commandes page after successful assignment
       navigate("/commandes")
     } catch (error) {
       toast.error(error.message || "Erreur lors de l'assignation automatique")
     }
   }, [commandeId, autoCriteria, assignLivreur, navigate])
 
-  // Modifier la logique de filtrage pour inclure la recherche par nom
+
   let filteredLivreurs = livreurs || []
 
-  // Filtrer par recherche de nom
+
   if (searchQuery.trim() !== "") {
     filteredLivreurs = filteredLivreurs.filter((livreur) =>
       livreur.nom.toLowerCase().includes(searchQuery.toLowerCase()),
     )
   }
 
-  // Filtrer par type de véhicule (code existant)
+
   if (vehiculeFilter.length > 0) {
     filteredLivreurs = filteredLivreurs.filter((livreur) => vehiculeFilter.includes(livreur.vehicule?.type))
   }
 
-  // Remplacer le return principal pour inclure la sélection du mode d'assignation
+
   if (isLoading) {
     return (
       <LoadingSpinner/>
@@ -398,7 +385,6 @@ const SelectLivreurPage = () => {
     return <div className="text-red-500 text-center p-4">Une erreur est survenue lors du chargement des livreurs</div>
   }
 
-  // Gérer le cas où il n'y a pas de livreurs disponibles
   if (livreurs && livreurs.length === 0) {
     return (
       <div className="w-full h-full p-6 flex flex-col items-center justify-center">
@@ -416,7 +402,7 @@ const SelectLivreurPage = () => {
     )
   }
 
-  // Afficher l'écran de sélection du mode d'assignation si aucun mode n'est sélectionné
+
   if (assignationMode === null) {
     return (
       <div className="w-full h-full p-6 flex flex-col">
@@ -464,7 +450,7 @@ const SelectLivreurPage = () => {
     )
   }
 
-  // Afficher l'écran d'assignation automatique
+
   if (assignationMode === "auto") {
     return (
       <div className="w-full h-full p-6 flex flex-col">
@@ -624,14 +610,14 @@ const SelectLivreurPage = () => {
                 <button
                   onClick={() => {
                     setAutoCriteria((prev) => {
-                      // Si déjà présent, le retirer
+
                       if (prev.criteria.includes("distance")) {
                         return {
                           ...prev,
                           criteria: prev.criteria.filter((c) => c !== "distance"),
                         }
                       } else {
-                        // Sinon l'ajouter à la fin
+
                         return {
                           ...prev,
                           criteria: [...prev.criteria, "distance"],
@@ -815,7 +801,7 @@ const SelectLivreurPage = () => {
   const handleSelectLivreur = (livreur) => {
     console.log(livreur);
     
-    // Clear previous directions
+
     if (directionsRendererRef.current) {
       directionsRendererRef.current.setMap(null)
       directionsRendererRef.current = null
@@ -823,15 +809,14 @@ const SelectLivreurPage = () => {
 
     setSelectedLivreur(livreur)
 
-    // Center the map on the livreur
     const livreurPosition = livreur.position
     setMapCenter({ lat: livreurPosition.lat, lng: livreurPosition.lng })
     setMapZoom(12)
 
-    // Get the vehicle type to determine travel mode and route style
-    let vehicleType = "voiture" // Default
 
-    // First check for current vehicle in vehicules array
+    let vehicleType = "voiture" 
+
+
     if (livreur.vehicules && livreur.vehicules.length > 0) {
       const currentVehicle = livreur.vehicules.find((v) => v.current)
       if (currentVehicle) {
@@ -848,9 +833,9 @@ const SelectLivreurPage = () => {
 
     const travelMode = getTravelModeForVehicle(vehicleType)
 
-    // If we have a pre-calculated route, use it
+
     if (livreurDistances[livreur._id]?.route) {
-      // Use the DirectionsRenderer to display the route
+
       directionsRendererRef.current = new window.google.maps.DirectionsRenderer({
         map: mapRef.current,
         suppressMarkers: true,
@@ -858,12 +843,12 @@ const SelectLivreurPage = () => {
         polylineOptions: {
           strokeColor:
             vehicleType === "vélo"
-              ? "#10b981" // Green for bikes
+              ? "#10b981" 
               : vehicleType === "moto"
-                ? "#3b82f6" // Blue for motorcycles
+                ? "#3b82f6" 
                 : vehicleType === "voiture"
-                  ? "#f59e0b" // Amber for cars
-                  : "#8b5cf6", // Purple for others
+                  ? "#f59e0b" 
+                  : "#8b5cf6", 
           strokeWeight: 5,
           strokeOpacity: 0.8,
         },
@@ -871,11 +856,11 @@ const SelectLivreurPage = () => {
 
       directionsRendererRef.current.setDirections(livreurDistances[livreur._id].route)
 
-      // Set distance and duration from pre-calculated values
+
       setDistance(livreurDistances[livreur._id].distance)
       setDuration(livreurDistances[livreur._id].duration)
     }
-    // Otherwise calculate a new route
+
     else if (position.data && livreurPosition) {
       const directionsService = new window.google.maps.DirectionsService()
 
@@ -896,11 +881,11 @@ const SelectLivreurPage = () => {
         },
         (result, status) => {
           if (status === window.google.maps.DirectionsStatus.OK) {
-            // Extract information
+
             setDistance(result.routes[0].legs[0].distance.text)
             setDuration(result.routes[0].legs[0].duration.text)
 
-            // Create DirectionsRenderer
+
             directionsRendererRef.current = new window.google.maps.DirectionsRenderer({
               map: mapRef.current,
               suppressMarkers: true,
@@ -908,18 +893,18 @@ const SelectLivreurPage = () => {
               polylineOptions: {
                 strokeColor:
                   vehicleType === "vélo"
-                    ? "#10b981" // Green for bikes
+                    ? "#10b981" 
                     : vehicleType === "moto"
-                      ? "#3b82f6" // Blue for motorcycles
+                      ? "#3b82f6" 
                       : vehicleType === "voiture"
-                        ? "#f59e0b" // Amber for cars
-                        : "#8b5cf6", // Purple for others
+                        ? "#f59e0b" 
+                        : "#8b5cf6", 
                 strokeWeight: 5,
                 strokeOpacity: 0.8,
               },
             })
 
-            // Display the route on the map
+
             directionsRendererRef.current.setDirections(result)
           }
         },
@@ -929,7 +914,6 @@ const SelectLivreurPage = () => {
     toast.success(`Livreur ${livreur.nom} sélectionné`)
   }
 
-  // Gérer le cas où il n'y a pas de livreurs disponibles
   if (livreurs && livreurs.length === 0) {
     return (
       <div className="w-full h-full  p-6 flex flex-col items-center justify-center">
@@ -947,13 +931,9 @@ const SelectLivreurPage = () => {
     )
   }
 
-  // Remplacer la logique de tri pour gérer plusieurs critères
-  // Modifier la partie du code qui gère le tri des livreurs
-
-  // Appliquer les critères de tri dans l'ordre
   if (sortCriteria.length > 0 && Object.keys(livreurDistances).length > 0) {
     filteredLivreurs = [...filteredLivreurs].sort((a, b) => {
-      // Parcourir tous les critères de tri
+
       for (const criterion of sortCriteria) {
         if (criterion === "distance") {
           const distA = livreurDistances[a._id]?.distanceValue || Number.POSITIVE_INFINITY
@@ -967,11 +947,11 @@ const SelectLivreurPage = () => {
           if (b.note_moyenne !== a.note_moyenne) return b.note_moyenne - a.note_moyenne
         }
       }
-      return 0 // Si tous les critères sont égaux
+      return 0 
     })
   }
 
-  // Fonction pour obtenir l'icône du véhicule
+
   const getVehicleIcon = (type) => {
     switch (type?.toLowerCase()) {
       case "voiture":
@@ -987,19 +967,17 @@ const SelectLivreurPage = () => {
     }
   }
 
-  // Ajouter cette fonction pour calculer la distance directe (à vol d'oiseau) comme fallback
   const getDirectDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371 // Rayon de la Terre en km
+    const R = 6371 
     const dLat = ((lat2 - lat1) * Math.PI) / 180
     const dLon = ((lon2 - lon1) * Math.PI) / 180
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2)
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-    return R * c // Distance en km
+    return R * c 
   }
 
-  // Modifier la fonction pour gérer les critères de tri
   const toggleSortCriterion = (criterion) => {
     setSortCriteria((prev) => {
       if (prev.includes(criterion)) {
@@ -1017,7 +995,7 @@ const SelectLivreurPage = () => {
           ? `Assigner un livreur à la commande #${commandeId.slice(-6)}`
           : "Livraison - Sélection des livreurs disponibles"}
       </h1>
-      {/* Ajouter un bouton pour revenir à la sélection du mode d'assignation */}
+
       {assignationMode === "manual" && (
         <div className="mb-4">
           <button
@@ -1034,7 +1012,7 @@ const SelectLivreurPage = () => {
       <span className="font-semibold text-emerald-800">Livreur sélectionné: </span>
       <div className="flex items-center gap-2">
         <span className="font-medium">{selectedLivreur.nom}</span>
-        {/* Get current vehicle using the find method */}
+
         {(() => {
           const currentVehicle = selectedLivreur.vehicules?.find((v) => v.current) || selectedLivreur.vehicule
           return (
@@ -1054,7 +1032,7 @@ const SelectLivreurPage = () => {
       <button
         className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors shadow-sm"
         onClick={commandeId ? confirmAssignLivreur : () => alert("Confirmation de commande avec ce livreur")}
-        disabled={false} // Vous pouvez ajouter un état pour suivre si la requête est en cours
+        disabled={false} 
       >
         {"Confirmer"}
       </button>
@@ -1089,7 +1067,6 @@ const SelectLivreurPage = () => {
       )}
 
       <div className="flex flex-1 gap-5 rounded-lg md:flex-row-reverse flex-col min-h-[600px]">
-        {/* Carte placée avant le tableau pour l'ordre sur mobile */}
         <div className="md:w-7/12 w-full h-96 md:min-h-[600px]">
         <GoogleMap
   mapContainerStyle={mapContainerStyle}
@@ -1139,7 +1116,6 @@ const SelectLivreurPage = () => {
   {livreurs &&
     livreurs.map((livreur) => {
       const position = livreur.position
-      // Get the current vehicle using the find method
       const currentVehicle = livreur.vehicules?.find((v) => v.current) || livreur.vehicule
 
       return (
@@ -1177,7 +1153,6 @@ const SelectLivreurPage = () => {
       <div className="p-3 max-w-xs">
         <h3 className="font-semibold text-lg text-emerald-700 mb-2">{selectedMarker.nom}</h3>
         <div className="space-y-2">
-          {/* Get the current vehicle for the selected marker */}
           {(() => {
             const currentVehicle = selectedMarker.vehicules?.find((v) => v.current) || selectedMarker.vehicule
             return (
@@ -1236,7 +1211,6 @@ const SelectLivreurPage = () => {
                 </span>
               </p>
               <p className="text-xs text-gray-500 italic">
-                {/* Get vehicle type from current vehicle object */}
                 (basé sur {selectedMarker.vehicules?.find(v => v.current)?.type || 
                            selectedMarker.vehicule?.type || "autres"})
               </p>
@@ -1268,7 +1242,6 @@ const SelectLivreurPage = () => {
             </button>
           </div>
 
-          {/* Ajouter un champ de recherche dans la section des filtres */}
           {showFilters && (
             <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <div className="mb-3">
@@ -1481,7 +1454,6 @@ const SelectLivreurPage = () => {
                                 </>
                               )
                             } else {
-                              // Fallback to vehicule if no current vehicle is found
                               return (
                                 <>
                                   <div className="flex items-center gap-1 mb-1">

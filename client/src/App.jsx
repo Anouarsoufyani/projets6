@@ -38,26 +38,21 @@ function App() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const location = useLocation();
 
-    // Close sidebar on route change
     useEffect(() => {
         if (isMobile) {
             setSidebarOpen(false);
         }
     }, [location.pathname, isMobile]);
 
-    // Check if screen is mobile
     useEffect(() => {
         const checkIfMobile = () => {
             setIsMobile(window.innerWidth < 768);
         };
 
-        // Initial check
         checkIfMobile();
 
-        // Add event listener
         window.addEventListener("resize", checkIfMobile);
 
-        // Cleanup
         return () => window.removeEventListener("resize", checkIfMobile);
     }, []);
 
@@ -67,14 +62,11 @@ function App() {
 
     const { data: authUser, isLoading } = useAuthUserQuery();
 
-    // Récupérer les notifications seulement si l'utilisateur est connecté
     const { data: notifications } = useFilteredNotifications(authUser);
 
-    // Utiliser le hook de position pour les livreurs
     const isLivreur = authUser?.role === "livreur";
     const isLivreurActive = isLivreur && authUser?.isWorking;
 
-    // useDeliveryPosition est déjà conditionnel grâce à isLivreurActive
     useDeliveryPosition(isLivreurActive, authUser?._id);
 
     if (isLoading) {

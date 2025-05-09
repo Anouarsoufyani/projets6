@@ -30,7 +30,6 @@ import {
     FaMotorcycle,
     FaBiking,
 } from "react-icons/fa";
-// Ajouter l'import pour le composant ReviewForm et useGetUserReviews
 import ReviewForm from "../../Components/Reviews/ReviewForm";
 import LoadingSpinner from "../../Components/UI/Loading";
 import { useGetUserReviews } from "../../Hooks/queries/useGetReviews";
@@ -65,17 +64,14 @@ const CommandeSuivi = () => {
     const [selectedProblem, setSelectedProblem] = useState("");
     const [problemDescription, setProblemDescription] = useState("");
 
-    // Utiliser un intervalle personnalisé au lieu du refresh automatique du hook
     const [refreshKey, setRefreshKey] = useState(0);
 
-    // Utiliser le hook useLivreurTracking pour la position initiale (avec un intervalle de 15 secondes)
     const {
         livreurPosition,
         livreurStatus,
         isLoading: isLoadingLivreur,
     } = useLivreurTracking(id, 15000);
 
-    // Récupérer les avis de l'utilisateur pour vérifier s'il a déjà laissé un avis
     const { data: userReviews, isLoading: isLoadingReviews } =
         useGetUserReviews();
 
@@ -102,7 +98,6 @@ const CommandeSuivi = () => {
         "Article manquant ou remplacé sans consentement",
     ];
 
-    // Récupérer les données de la commande
     const { data: commande, isLoading } = useQuery({
         queryKey: ["getCommande", id],
         queryFn: async () => {
@@ -128,16 +123,14 @@ const CommandeSuivi = () => {
             }
         },
         retry: false,
-        refetchInterval: 5000, // Rafraîchir toutes les 5 secondes
+        refetchInterval: 5000,
     });
 
-    // Vérifier si l'utilisateur a déjà laissé un avis pour le livreur et le commerçant
     const [hasReviewedLivreur, setHasReviewedLivreur] = useState(false);
     const [hasReviewedCommercant, setHasReviewedCommercant] = useState(false);
 
     useEffect(() => {
         if (userReviews && commande?.data) {
-            // Vérifier si l'utilisateur a déjà laissé un avis pour le livreur
             if (commande.data.livreur_id) {
                 const reviewedLivreur = userReviews.some(
                     (review) =>
@@ -147,7 +140,6 @@ const CommandeSuivi = () => {
                 setHasReviewedLivreur(reviewedLivreur);
             }
 
-            // Vérifier si l'utilisateur a déjà laissé un avis pour le commerçant
             if (commande.data.commercant_id) {
                 const reviewedCommercant = userReviews.some(
                     (review) =>
@@ -159,7 +151,6 @@ const CommandeSuivi = () => {
         }
     }, [userReviews, commande]);
 
-    // Mutation pour valider le code commerçant
     const validateCommercantMutation = useMutation({
         mutationFn: async (code) => {
             const res = await fetch(
@@ -178,7 +169,6 @@ const CommandeSuivi = () => {
         onSuccess: () => {
             toast.success("Commande récupérée avec succès!");
             setCommercantCode("");
-            // Invalider les requêtes pour forcer un rafraîchissement
             queryClient.invalidateQueries({ queryKey: ["getCommande", id] });
             queryClient.invalidateQueries({ queryKey: ["getUserCommandes"] });
         },
@@ -187,7 +177,6 @@ const CommandeSuivi = () => {
         },
     });
 
-    // Mutation pour valider le code client
     const validateClientMutation = useMutation({
         mutationFn: async (code) => {
             const res = await fetch(`/api/commandes/code/validationClient`, {
@@ -203,7 +192,6 @@ const CommandeSuivi = () => {
         onSuccess: () => {
             toast.success("Livraison confirmée avec succès!");
             setClientCode("");
-            // Invalider les requêtes pour forcer un rafraîchissement
             queryClient.invalidateQueries({ queryKey: ["getCommande", id] });
             queryClient.invalidateQueries({ queryKey: ["getUserCommandes"] });
         },
@@ -236,7 +224,6 @@ const CommandeSuivi = () => {
             setProblemDescription("");
             setShowLivreurProblemModal(false);
             setShowClientProblemModal(false);
-            // Invalider les requêtes pour forcer un rafraîchissement
             queryClient.invalidateQueries({ queryKey: ["getCommande", id] });
         },
         onError: (error) => {
@@ -246,7 +233,6 @@ const CommandeSuivi = () => {
         },
     });
 
-    // Avoir la geolocalisation exacte grâce à l'adresse
     const adresseClient = commande?.data?.adresse_livraison
         ? `${commande.data.adresse_livraison.rue}, ${commande.data.adresse_livraison.ville}, ${commande.data.adresse_livraison.code_postal}`
         : "";
@@ -260,30 +246,24 @@ const CommandeSuivi = () => {
     const { data: coords, isLoading: isLoadingCoords } =
         useGetCoords(adresseClient);
 
-    // Refactored calculateRoute function to use DirectionsRenderer properly
     const calculateRoute = useCallback(async () => {
         if (!livreurPosition || !window.google || !mapRef.current) {
             return;
         }
 
-        // Determine the destination based on status
         let destination;
         let travelMode = window.google.maps.TravelMode.DRIVING;
 
         if (deliveryStatus === "prete_a_etre_recuperee" && coordsCommercant) {
-            // If the livreur must pick up the order, the destination is the merchant
             destination = {
                 lat: coordsCommercant.lat,
                 lng: coordsCommercant.lng,
             };
         } else if (coords) {
-            // Otherwise, the destination is the client
             destination = { lat: coords.lat, lng: coords.lng };
         } else {
-            return; // No valid destination
+            return;
         }
-
-        // Check if coordinates are valid
         if (
             isNaN(livreurPosition.lat) ||
             isNaN(destination.lat) ||
@@ -295,11 +275,9 @@ const CommandeSuivi = () => {
         }
 
         try {
-            // Get the livreur's vehicle type to determine travel mode
-            let vehicleType = "voiture"; // Default
+            let vehicleType = "voiture"; 
 
             if (commande?.data?.livreur_id?.vehicules) {
-                // First check for current vehicle
                 const currentVehicle = commande.data.livreur_id.vehicules.find(
                     (v) => v.current
                 );
@@ -310,7 +288,6 @@ const CommandeSuivi = () => {
                         commande.data.livreur_id.vehicule.type.toLowerCase();
                 }
 
-                // Set appropriate travel mode based on vehicle type
                 if (vehicleType === "vélo") {
                     travelMode = window.google.maps.TravelMode.BICYCLING;
                 } else if (vehicleType === "autres") {
@@ -318,7 +295,6 @@ const CommandeSuivi = () => {
                 }
             }
 
-            // Get directions using the Google Maps Directions Service
             const directionsService =
                 new window.google.maps.DirectionsService();
 
@@ -335,11 +311,9 @@ const CommandeSuivi = () => {
                 },
                 (result, status) => {
                     if (status === window.google.maps.DirectionsStatus.OK) {
-                        // Extract information
                         setDistance(result.routes[0].legs[0].distance.text);
                         setDuration(result.routes[0].legs[0].duration.text);
 
-                        // Store the directions result for rendering
                         setDirections(result);
                     } else {
                         console.error("Error calculating route:", status);
@@ -359,12 +333,10 @@ const CommandeSuivi = () => {
         commande?.data?.livreur_id,
     ]);
 
-    // Add a clearDirections function:
     const clearDirections = () => {
         setDirections(null);
     };
 
-    // Add a cleanup function to remove the directions renderer when component unmounts
     useEffect(() => {
         return () => {
             if (directionsRendererRef.current) {
@@ -373,14 +345,12 @@ const CommandeSuivi = () => {
         };
     }, []);
 
-    // Mettre à jour l'itinéraire lorsque la position du livreur change
     useEffect(() => {
         if (livreurPosition && mapRef.current) {
             calculateRoute();
         }
     }, [livreurPosition, calculateRoute]);
 
-    // Initialiser la carte et le centre une seule fois
     useEffect(() => {
         if (!mapInitialized && coords && coords.lat && coords.lng) {
             setMapCenter({ lat: coords.lat, lng: coords.lng });
@@ -388,12 +358,10 @@ const CommandeSuivi = () => {
         }
     }, [coords, mapInitialized]);
 
-    // Gérer le chargement de la carte
     const handleMapLoad = useCallback(
         (map) => {
             mapRef.current = map;
 
-            // Si nous avons déjà les positions, calculer l'itinéraire
             if (livreurPosition && coords) {
                 calculateRoute();
             }
@@ -401,7 +369,6 @@ const CommandeSuivi = () => {
         [calculateRoute, livreurPosition, coords]
     );
 
-    // Gérer la soumission du code commerçant
     const handleCommercantCodeSubmit = (e) => {
         e.preventDefault();
         if (commercantCode.trim()) {
@@ -411,7 +378,6 @@ const CommandeSuivi = () => {
         }
     };
 
-    // Gérer la soumission du code client
     const handleClientCodeSubmit = (e) => {
         e.preventDefault();
         if (clientCode.trim()) {
@@ -440,23 +406,19 @@ const CommandeSuivi = () => {
         }
     }, [livreurStatus]);
 
-    // Mettre à jour le statut de livraison quand la commande change
     useEffect(() => {
         if (commande?.data?.statut) {
             setDeliveryStatus(commande.data.statut);
         }
     }, [commande]);
 
-    // Callback pour rafraîchir les avis après soumission
     const handleReviewSubmitted = () => {
         queryClient.invalidateQueries({ queryKey: ["getUserReviews"] });
     };
 
-    // Get vehicle type for styling the route
     const getVehicleType = () => {
-        if (!commande?.data?.livreur_id) return "voiture"; // Default
+        if (!commande?.data?.livreur_id) return "voiture"; 
 
-        // Check for current vehicle in vehicules array
         if (
             commande.data.livreur_id.vehicules &&
             Array.isArray(commande.data.livreur_id.vehicules)
@@ -469,27 +431,25 @@ const CommandeSuivi = () => {
             }
         }
 
-        // Fallback to vehicule object
         if (commande.data.livreur_id.vehicule?.type) {
             return commande.data.livreur_id.vehicule.type.toLowerCase();
         }
 
-        return "voiture"; // Default fallback
+        return "voiture"; 
     };
 
-    // Get route color based on vehicle type
     const getRouteColor = () => {
         const vehicleType = getVehicleType();
 
         switch (vehicleType) {
             case "vélo":
-                return "#10b981"; // Green for bikes
+                return "#10b981"; 
             case "moto":
-                return "#3b82f6"; // Blue for motorcycles
+                return "#3b82f6"; 
             case "voiture":
-                return "#f59e0b"; // Amber for cars
+                return "#f59e0b"; 
             default:
-                return "#8b5cf6"; // Purple for others
+                return "#8b5cf6"; 
         }
     };
 
@@ -503,10 +463,8 @@ const CommandeSuivi = () => {
         return <LoadingSpinner />;
     }
 
-    // Calculer l'heure d'arrivée estimée en fonction de la durée réelle
     const estimatedArrival = new Date();
     if (duration) {
-        // Parse duration like "15 mins" to minutes
         const durationMatch = duration.match(/(\d+)\s*mins?/);
         if (durationMatch && durationMatch[1]) {
             estimatedArrival.setMinutes(
@@ -514,11 +472,9 @@ const CommandeSuivi = () => {
                     Number.parseInt(durationMatch[1])
             );
         } else {
-            // Fallback to 15 minutes if parsing fails
             estimatedArrival.setMinutes(estimatedArrival.getMinutes() + 15);
         }
     } else {
-        // Default 15 minutes if no duration available
         estimatedArrival.setMinutes(estimatedArrival.getMinutes() + 15);
     }
 
@@ -527,58 +483,47 @@ const CommandeSuivi = () => {
         minute: "2-digit",
     });
 
-    // Calculate the percentage of progress based on elapsed time and distance
     const calculateProgressPercentage = () => {
         if (!distance || !duration) return 0;
 
-        // Extract minutes from the duration (e.g., "15 mins")
         const durationMatch = duration.match(/(\d+)\s*mins?/);
         if (!durationMatch || !durationMatch[1]) return 0;
 
         const totalMinutes = Number.parseInt(durationMatch[1]);
-        if (totalMinutes <= 0) return 100; // If duration is 0, we've arrived
+        if (totalMinutes <= 0) return 100; 
 
-        // Extract distance in meters
         const distanceMatch = distance.match(/(\d+(?:\.\d+)?)\s*(km|m)/);
         if (!distanceMatch) return 0;
 
         const distanceValue = Number.parseFloat(distanceMatch[1]);
         const distanceUnit = distanceMatch[2];
 
-        // Convert to meters
         const distanceInMeters =
             distanceUnit === "km" ? distanceValue * 1000 : distanceValue;
 
-        // If we have the itinerary data, calculate progress based on actual distance traveled
         if (
             commande?.data?.itineraire_parcouru_client &&
             commande.data.itineraire_parcouru_client.length > 0
         ) {
-            // Calculate total distance of the route
             let totalDistance = 0;
             let traveledDistance = 0;
 
-            // This is a simplified calculation - in a real app, you'd use the Google Maps Distance Matrix API
-            // to get more accurate distances along the route
             const lastPoint =
                 commande.data.itineraire_parcouru_client[
                     commande.data.itineraire_parcouru_client.length - 1
                 ].position;
 
-            // Calculate remaining distance to destination
             const remainingDistance =
                 getDirectDistance(
                     lastPoint.lat,
                     lastPoint.lng,
                     coords.lat,
                     coords.lng
-                ) * 1000; // Convert km to meters
+                ) * 1000; 
 
-            // Estimate total distance as traveled + remaining
             totalDistance = distanceInMeters;
             traveledDistance = totalDistance - remainingDistance;
 
-            // Calculate percentage
             const percentage = Math.max(
                 0,
                 Math.min(100, (traveledDistance / totalDistance) * 100)
@@ -586,21 +531,16 @@ const CommandeSuivi = () => {
             return Math.round(percentage);
         }
 
-        // Fallback to time-based estimation
         const minutesRemaining = (estimatedArrival - new Date()) / (1000 * 60);
         const minutesElapsed = totalMinutes - minutesRemaining;
-
-        // Calculate percentage (limited between 0 and 100)
         const percentage = Math.max(
             0,
             Math.min(100, (minutesElapsed / totalMinutes) * 100)
         );
         return Math.round(percentage);
     };
-
-    // Add this helper function for direct distance calculation
     const getDirectDistance = (lat1, lon1, lat2, lon2) => {
-        const R = 6371; // Radius of the Earth in km
+        const R = 6371; 
         const dLat = ((lat2 - lat1) * Math.PI) / 180;
         const dLon = ((lon2 - lon1) * Math.PI) / 180;
         const a =
@@ -610,14 +550,12 @@ const CommandeSuivi = () => {
                 Math.sin(dLon / 2) *
                 Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // Distance in km
+        return R * c;
     };
 
-    // Vérifier si nous avons les coordonnées nécessaires
     const hasValidCoordinates =
         livreurPosition && coords && coords.lat && coords.lng;
 
-    // Vérifier si l'utilisateur est le livreur assigné à cette commande
     const isAssignedClient =
         authUser &&
         commande?.data?.client_id &&
@@ -633,13 +571,12 @@ const CommandeSuivi = () => {
         commande?.data?.livreur_id &&
         authUser._id === commande.data.livreur_id._id;
 
-    // Déterminer l'étape actuelle de la livraison
     const canConfirmPickup =
         isAssignedLivreur && deliveryStatus === "prete_a_etre_recuperee";
     const canConfirmDelivery =
         isAssignedLivreur && deliveryStatus === "recuperee_par_livreur";
 
-    // Fonction pour obtenir la couleur du statut
+
     const getStatusColor = (status) => {
         const statusColors = {
             en_attente: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -658,7 +595,6 @@ const CommandeSuivi = () => {
         );
     };
 
-    // Function to create path points from itinerary data
     const createPathFromItinerary = (itinerary) => {
         if (!itinerary || !Array.isArray(itinerary) || itinerary.length === 0) {
             return [];
@@ -715,7 +651,6 @@ const CommandeSuivi = () => {
 
             <div className="flex flex-col lg:flex-row flex-1 gap-6">
                 <div className="w-full lg:w-1/3 space-y-6">
-                    {/* Livreur info */}
                     <div className="bg-white p-6 rounded-2xl shadow-md">
                         <h3 className="font-semibold text-emerald-800 mb-4 flex items-center">
                             <FaTruck className="mr-2 text-emerald-600" />
@@ -748,7 +683,6 @@ const CommandeSuivi = () => {
                         </div>
                     </div>
 
-                    {/* Vehicle info */}
                     {commande?.data?.livreur_id?.vehicules ? (
     <div className="bg-white p-6 rounded-2xl shadow-md">
         <h3 className="font-semibold text-emerald-800 mb-4 flex items-center">
@@ -756,9 +690,7 @@ const CommandeSuivi = () => {
             Détails du Vehicule
         </h3>
         <div className="space-y-3">
-            {/* Get current vehicle from the array or fallback to vehicule object */}
             {(() => {
-                // First try to find the current vehicle in the vehicules array
                 if (commande?.data?.livreur_id?.vehicules && Array.isArray(commande.data.livreur_id.vehicules)) {
                     const currentVehicle = commande.data.livreur_id.vehicules.find(v => v.current);
                     if (currentVehicle) {
@@ -816,7 +748,6 @@ const CommandeSuivi = () => {
                 
 
                 
-                // No vehicle data available
                 return (
                     <div className="flex justify-center items-center text-gray-500">
                         Aucune information de véhicule disponible
@@ -827,7 +758,6 @@ const CommandeSuivi = () => {
     </div>
 ) : null}
 
-                    {/* Commande info */}
                     {commande && (
                         <div className="bg-white p-6 rounded-2xl shadow-md">
                             <h3 className="font-semibold text-emerald-800 mb-4 flex items-center">
@@ -872,7 +802,6 @@ const CommandeSuivi = () => {
                         </div>
                     )}
 
-                    {/* Delivery status with actual distance and duration */}
                     {commande.data.statut === "livree" ? (
                         <div>
                             {isAssignedClient && (
@@ -890,9 +819,7 @@ const CommandeSuivi = () => {
                                         </p>
                                     </div>
 
-                                    {/* Section d'avis pour le client */}
                                     <div className="grid grid-cols-1 gap-3">
-                                        {/* Avis pour le livreur */}
                                         {commande.data.livreur_id && (
                                             <div className="bg-white p-6 rounded-2xl shadow-md">
                                                 <h3 className="text-lg font-semibold text-emerald-700 mb-4 flex items-center">
@@ -928,7 +855,6 @@ const CommandeSuivi = () => {
                                             </div>
                                         )}
 
-                                        {/* Avis pour le commerçant */}
                                         <div className="bg-white p-6 rounded-2xl shadow-md">
                                             <h3 className="text-lg font-semibold text-emerald-700 mb-4 flex items-center">
                                                 <FaStore className="mr-2 text-emerald-600" />
@@ -981,7 +907,6 @@ const CommandeSuivi = () => {
                         </div>
                     ) : (
                         <>
-                            {/* Bloc d'information sur le statut de livraison */}
                             <div className="bg-white p-6 rounded-2xl shadow-md">
                                 <h3 className="font-semibold text-emerald-800 mb-4 flex items-center">
                                     <FaShippingFast className="mr-2 text-emerald-600" />
@@ -1294,7 +1219,6 @@ const CommandeSuivi = () => {
                             }}
                             onLoad={handleMapLoad}
                         >
-                            {/* Marqueur pour le livreur */}
                             {livreurPosition && (
                                 <Marker
                                     position={{
@@ -1312,7 +1236,6 @@ const CommandeSuivi = () => {
                                 />
                             )}
 
-                            {/* Marqueur pour la destination (client) */}
                             {coords && (
                                 <Marker
                                     position={{
@@ -1330,7 +1253,6 @@ const CommandeSuivi = () => {
                                 />
                             )}
 
-                            {/* Marqueur pour le commerçant */}
                             {coordsCommercant && (
                                 <Marker
                                     position={{
@@ -1348,7 +1270,6 @@ const CommandeSuivi = () => {
                                 />
                             )}
 
-                            {/* Use DirectionsRenderer for active routes */}
                             {directions && deliveryStatus !== "livree" && (
                                 <DirectionsRenderer
                                     directions={directions}
@@ -1364,10 +1285,8 @@ const CommandeSuivi = () => {
                                 />
                             )}
 
-                            {/* Display completed itineraries when order is delivered */}
                             {commande.data.statut === "livree" && (
                                 <>
-                                    {/* Path from livreur to merchant (orange) */}
                                     {commande.data
                                         .itineraire_parcouru_commercant &&
                                         commande.data
@@ -1379,14 +1298,13 @@ const CommandeSuivi = () => {
                                                         .itineraire_parcouru_commercant
                                                 )}
                                                 options={{
-                                                    strokeColor: "#FF8C00", // Orange
+                                                    strokeColor: "#FF8C00", 
                                                     strokeOpacity: 0.8,
                                                     strokeWeight: 5,
                                                 }}
                                             />
                                         )}
 
-                                    {/* Path from merchant to client (blue) */}
                                     {commande.data.itineraire_parcouru_client &&
                                         commande.data.itineraire_parcouru_client
                                             .length > 1 && (
@@ -1396,7 +1314,7 @@ const CommandeSuivi = () => {
                                                         .itineraire_parcouru_client
                                                 )}
                                                 options={{
-                                                    strokeColor: "#3b82f6", // Blue
+                                                    strokeColor: "#3b82f6", 
                                                     strokeOpacity: 0.8,
                                                     strokeWeight: 5,
                                                 }}
@@ -1408,7 +1326,6 @@ const CommandeSuivi = () => {
                     )}
                 </div>
             </div>
-            {/* Modal pour les problèmes du livreur */}
             {showLivreurProblemModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
@@ -1488,7 +1405,6 @@ const CommandeSuivi = () => {
                 </div>
             )}
 
-            {/* Modal pour les problèmes du client */}
             {showClientProblemModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">

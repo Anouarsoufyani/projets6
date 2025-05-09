@@ -19,7 +19,7 @@ export const useSubmitReview = () => {
                 },
                 body: JSON.stringify({
                     targetId,
-                    targetType, // "commercant" ou "livreur"
+                    targetType, 
                     rating,
                     comment,
                     commandeId,
@@ -44,8 +44,6 @@ export const useSubmitReview = () => {
             toast.success(
                 `Votre avis sur le ${targetText} a été soumis avec succès!`
             );
-
-            // Rafraîchir les données des commandes et des avis
             queryClient.invalidateQueries(["getUserCommandes"]);
             queryClient.invalidateQueries([
                 "getCommandeById",

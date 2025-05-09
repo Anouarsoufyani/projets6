@@ -24,7 +24,6 @@ export const useUpdateCommandeStatus = () => {
             return res.json();
         },
         onSuccess: (data, variables) => {
-            // Use the actual status value for the success message
             const statusText =
                 variables.newStatus === "refusee"
                     ? "refusée"
@@ -35,7 +34,6 @@ export const useUpdateCommandeStatus = () => {
                     : "mise à jour";
 
             toast.success(`Commande ${statusText} avec succès!`);
-            // Refresh order data
             queryClient.invalidateQueries(["getAllCommandes"]);
             queryClient.invalidateQueries(["getUserCommandes"]);
         },

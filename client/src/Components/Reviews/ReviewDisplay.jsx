@@ -1,7 +1,7 @@
 import { FaStar, FaRegStar, FaUser, FaCalendarAlt } from "react-icons/fa";
 import PropTypes from "prop-types";
 
-// Composant pour afficher les étoiles de notation
+
 export const StarRating = ({ rating }) => {
     return (
         <div className="flex items-center">
@@ -18,7 +18,7 @@ StarRating.propTypes = {
     rating: PropTypes.number.isRequired,
 };
 
-// Composant pour afficher un avis
+
 export const ReviewCard = ({ review }) => {
     return (
         <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-emerald-400">
@@ -64,19 +64,19 @@ ReviewCard.propTypes = {
     }).isRequired,
 };
 
-// Fonction pour calculer la note moyenne
+
 export const getAverageRating = (reviews) => {
     if (!reviews || reviews.length === 0) return 0;
     const sum = reviews.reduce((total, review) => total + review.rating, 0);
     return (sum / reviews.length).toFixed(1);
 };
 
-// Composant pour afficher un résumé des avis
+
 export const ReviewSummary = ({ reviews }) => {
     const averageRating = getAverageRating(reviews);
 
-    // Calculer la distribution des notes
-    const ratingDistribution = [0, 0, 0, 0, 0]; // Pour les notes de 1 à 5
+
+    const ratingDistribution = [0, 0, 0, 0, 0]; 
     reviews.forEach((review) => {
         if (review.rating >= 1 && review.rating <= 5) {
             ratingDistribution[review.rating - 1]++;
@@ -104,7 +104,7 @@ export const ReviewSummary = ({ reviews }) => {
                 </div>
             </div>
 
-            {/* Distribution des notes */}
+
             <div className="space-y-2">
                 {ratingDistribution
                     .map((count, index) => {

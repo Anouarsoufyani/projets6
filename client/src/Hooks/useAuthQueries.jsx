@@ -1,4 +1,4 @@
-// queries/authQueries.js
+
 import { useQuery } from "@tanstack/react-query"
 
 export const fetchAuthUser = async () => {

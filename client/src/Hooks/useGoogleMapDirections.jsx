@@ -1,6 +1,6 @@
 "use client"
 
-// Dans src/Hooks/useGoogleMapDirections.jsx
+
 import { useState, useRef } from "react"
 
 const useGoogleMapDirections = (options = {}) => {
@@ -13,7 +13,7 @@ const useGoogleMapDirections = (options = {}) => {
   const onMapLoad = (map) => {
     mapRef.current = map
 
-    // Créer DirectionsRenderer s'il n'existe pas
+
     if (!directionsRendererRef.current) {
       directionsRendererRef.current = new window.google.maps.DirectionsRenderer({
         map,
@@ -34,22 +34,19 @@ const useGoogleMapDirections = (options = {}) => {
     }
 
     try {
-      // Créer un objet DirectionsService
+
       const directionsService = new window.google.maps.DirectionsService()
 
-      // Exécuter le calcul d'itinéraire
       const results = await directionsService.route({
         origin: origin,
         destination: destination,
         travelMode: window.google.maps.TravelMode.DRIVING,
       })
 
-      // Stocker la réponse et extraire les informations
       setDirectionsResponse(results)
       setDistance(results.routes[0].legs[0].distance.text)
       setDuration(results.routes[0].legs[0].duration.text)
 
-      // Afficher l'itinéraire sur la carte
       if (directionsRendererRef.current) {
         directionsRendererRef.current.setDirections(results)
       }
@@ -59,12 +56,10 @@ const useGoogleMapDirections = (options = {}) => {
   }
 
   const clearDirections = () => {
-    // Réinitialiser les états
     setDistance(null)
     setDuration(null)
     setDirectionsResponse(null)
 
-    // Effacer l'itinéraire affiché
     if (directionsRendererRef.current) {
       directionsRendererRef.current.setDirections({ routes: [] })
     }

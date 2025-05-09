@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthUserQuery } from "./useAuthQueries";
 
-// Récupérer les avis pour un utilisateur spécifique (commerçant ou livreur)
 export const getReviewsForUser = async (userId) => {
     if (!userId) return [];
 
@@ -15,7 +14,6 @@ export const getReviewsForUser = async (userId) => {
     return data.reviews || [];
 };
 
-// Récupérer les avis soumis par l'utilisateur connecté
 export const getUserReviews = async () => {
     const res = await fetch(`/api/reviews/my-reviews`);
 
@@ -27,7 +25,6 @@ export const getUserReviews = async () => {
     return data.reviews || [];
 };
 
-// Hook pour récupérer les avis pour un utilisateur spécifique
 export const useGetReviewsForUser = (userId) => {
     return useQuery({
         queryKey: ["getReviews", userId],
@@ -37,7 +34,6 @@ export const useGetReviewsForUser = (userId) => {
     });
 };
 
-// Hook pour récupérer les avis laissés par l'utilisateur connecté
 export const useGetUserReviews = () => {
     const { data: user } = useAuthUserQuery();
 

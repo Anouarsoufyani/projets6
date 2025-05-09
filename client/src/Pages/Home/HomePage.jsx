@@ -5,7 +5,6 @@ const HomePage = ({ navbarHeight }) => {
     return (
         <>
             <main className="w-full h-full">
-                {/* En-tête principal */}
                 <header
                     className="flex flex-col md:flex-row w-full justify-center items-center bg-gradient-to-r from-emerald-500 to-emerald-700"
                     style={{
@@ -57,7 +56,6 @@ const HomePage = ({ navbarHeight }) => {
                     </div>
                 </header>
 
-                {/* Section avantages */}
                 <section className="py-16 bg-gray-100">
                     <div className="container mx-auto px-4 sm:px-6">
                         <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12">
@@ -104,7 +102,6 @@ const HomePage = ({ navbarHeight }) => {
                     </div>
                 </section>
 
-                {/* Pied de page avec appel à l’action */}
                 <footer className="bg-emerald-700 text-white py-8">
                     <div className="container mx-auto px-4 text-center">
                         <p className="mb-4">

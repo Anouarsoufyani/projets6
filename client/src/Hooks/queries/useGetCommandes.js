@@ -89,7 +89,7 @@ export const useGetLatestPendingCommande = () => {
     });
 };
 
-// Function to get all commandes (admin only)
+
 export const getAllCommandes = async () => {
     try {
         const res = await fetch(`/api/commandes/all`);

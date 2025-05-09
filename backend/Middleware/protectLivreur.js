@@ -2,7 +2,7 @@ import User from "../Models/User.js";
 
 export const protectLivreur = async (req, res, next) => {
     try {
-        // Vérifier si l'utilisateur existe dans la requête (ajouté par protectRoute)
+
         if (!req.user) {
             return res.status(401).json({
                 success: false,
@@ -10,7 +10,7 @@ export const protectLivreur = async (req, res, next) => {
             });
         }
 
-        // Vérifier si l'utilisateur est un livreur
+
         if (req.user.role !== "livreur") {
             return res.status(403).json({
                 success: false,
@@ -18,7 +18,7 @@ export const protectLivreur = async (req, res, next) => {
             });
         }
 
-        // Vérifier que l'ID dans les paramètres correspond à l'utilisateur connecté
+
         const { userId } = req.params;
         if (userId && userId !== req.user._id.toString()) {
             return res.status(403).json({

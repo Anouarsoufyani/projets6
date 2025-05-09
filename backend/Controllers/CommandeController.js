@@ -1,11 +1,11 @@
-// import { generateTokenAndSetCookie } from "../Lib/utils/generateToken.js";
+
 import userModels from "../Models/User.js";
 import Commande from "../Models/Commandes.js";
 import Notification from "../Models/Notification.js";
 
 const { User, Livreur } = userModels;
 
-// In-memory lock for notification timeout processing (simple alternative to Redis)
+
 const timeoutLocks = new Map();
 
 export const getCommandeById = async (req, res) => {
@@ -38,12 +38,11 @@ export const getCommandeForItineraire = async (req, res) => {
 
 export const getCommandes = async (req, res) => {
     try {
-        // Récupérer le rôle de l'utilisateur connecté
-        const userRole = req.user.role; // Assurez-vous que cette information est disponible dans req.user
+
+        const userRole = req.user.role; 
 
         let filter = {};
 
-        // Définir le filtre selon le rôle de l'utilisateur
         switch (userRole) {
             case "client":
                 filter = { client_id: req.user.id };
@@ -55,7 +54,7 @@ export const getCommandes = async (req, res) => {
                 filter = { livreur_id: req.user.id };
                 break;
             case "admin":
-                // Pour un administrateur, toutes les commandes
+
                 break;
             default:
                 return res.status(403).json({
@@ -64,7 +63,7 @@ export const getCommandes = async (req, res) => {
                 });
         }
 
-        // Effectuer la requête avec le filtre approprié
+
         const commandes = await Commande.find(filter)
             .populate("client_id")
             .populate("commercant_id")
@@ -93,7 +92,7 @@ export const createCommande = async (req, res) => {
         date_livraison: null,
     });
 
-    // checking if user exists
+
     const userToNotify = await User.findOne({ _id: commercant_id }).select(
         "-password"
     );
@@ -105,7 +104,7 @@ export const createCommande = async (req, res) => {
             .json({ success: false, error: "User not found" });
     }
 
-    // Sauvegarde dans la base (à utiliser dans ton code)
+
     try {
         const newNotification = new Notification({
             sender: req.user._id,
@@ -182,13 +181,13 @@ export const getLivreurInfo = async (req, res) => {
             });
         }
 
-        // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
+
         const livreur = commande.livreur_id;
 
         return res.status(200).json({
             success: true,
             livreurId: livreur._id,
-            position: livreur.position, // Position par défaut si non disponible
+            position: livreur.position, 
             status: commande.statut,
         });
     } catch (error) {
@@ -223,7 +222,7 @@ export const getCodeClient = async (req, res) => {
             });
         }
 
-        // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
+
         const livreur = commande.livreur_id;
 
         return res.status(200).json({
@@ -263,7 +262,7 @@ export const getCodeCommercant = async (req, res) => {
             });
         }
 
-        // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
+
         const livreur = commande.livreur_id;
 
         return res.status(200).json({
@@ -311,7 +310,6 @@ export const validation_codeCL = async (req, res) => {
             type: "commande livree",
         });
 
-        // Si on utilise le modèle User avec discriminator, on n'a pas besoin de refaire un findById
         if (
             commande.code_Client == code &&
             commande.is_commercant_verifie == true
@@ -424,7 +422,7 @@ export const assignLivreur = async (req, res) => {
             });
         }
 
-        // Get the merchant for notifications
+
         const commercantToNotify = await User.findById(
             commande.commercant_id
         ).select("-password");
@@ -435,7 +433,7 @@ export const assignLivreur = async (req, res) => {
             });
         }
 
-        // Handle manual assignment mode
+
         if (mode === "manual") {
             if (!livreurId) {
                 return res.status(400).json({
@@ -452,7 +450,6 @@ export const assignLivreur = async (req, res) => {
                 });
             }
 
-            // Check if livreur is still available
             if (!livreur.disponibilite || !livreur.isWorking) {
                 return res.status(400).json({
                     success: false,
@@ -460,15 +457,15 @@ export const assignLivreur = async (req, res) => {
                 });
             }
 
-            // Create notification for the selected livreur
+
             const notification = new Notification({
                 sender: commande.commercant_id,
                 receiver: livreurId,
                 isRequest: true,
-                isActive: true, // Immediately active for manual selection
+                isActive: true, 
                 commande_id: commandeId,
                 type: "nouvelle demande de livraison",
-                expiresAt: new Date(Date.now() + 60000), // Expires in 1 minute
+                expiresAt: new Date(Date.now() + 60000), 
             });
 
             await notification.save();
@@ -483,11 +480,11 @@ export const assignLivreur = async (req, res) => {
                 notificationId: notification._id,
             });
         }
-        // Handle automatic assignment mode
+
         else if (mode === "auto") {
             let vehicleTypes = req.body.vehicleTypes;
             if (!vehicleTypes || !Array.isArray(vehicleTypes)) {
-                // Default to all vehicle types if none specified
+
                 vehicleTypes = ["voiture", "moto", "vélo", "autres"];
             }
 
@@ -502,7 +499,7 @@ export const assignLivreur = async (req, res) => {
                 });
             }
 
-            // Find available livreurs
+
             const livreurs = await Livreur.find({
                 disponibilite: true,
                 isWorking: true,
@@ -515,10 +512,9 @@ export const assignLivreur = async (req, res) => {
                 });
             }
 
-            // Filter livreurs by vehicle type
             const filteredLivreurs = [];
             for (const livreur of livreurs) {
-                // Find the current vehicle that matches one of the requested types
+
                 const vehiculeActuel = livreur.vehicules.find(
                     (v) => v.current && vehicleTypes.includes(v.type)
                 );
@@ -535,7 +531,7 @@ export const assignLivreur = async (req, res) => {
                 });
             }
 
-            // Enrich livreur data with calculated metrics
+
             const livreursAvecInfos = filteredLivreurs.map((livreur) => {
                 const vehicule = livreur.vehiculeActuel;
                 const distance = calculateDistance(
@@ -555,7 +551,7 @@ export const assignLivreur = async (req, res) => {
                 };
             });
 
-            // Apply hard filters based on criteria
+
             const filtered = livreursAvecInfos.filter(
                 ({ capacite, duree, distance, note }) => {
                     const poidsLimit = criteria.find((c) => c.type === "poids");
@@ -582,12 +578,12 @@ export const assignLivreur = async (req, res) => {
                 });
             }
 
-            // Sort by ordered criteria instead of using a score
+
             const orderedCriteria = criteria
                 .filter((c) => c.order !== undefined)
                 .sort((a, b) => a.order - b.order);
 
-            // Sort based on priorities in orderedCriteria
+
             const sorted = filtered.sort((a, b) => {
                 for (const { type } of orderedCriteria) {
                     if (type === "distance" || type === "distanceMax") {
@@ -615,9 +611,8 @@ export const assignLivreur = async (req, res) => {
                 }))
             );
 
-            // Create notifications for all livreurs, but only the first one is active
             const notificationPromises = [];
-            const expirationTime = 60; // seconds
+            const expirationTime = 60; 
 
             for (let i = 0; i < sorted.length; i++) {
                 const livreurAssigne = sorted[i].livreur;
@@ -625,10 +620,10 @@ export const assignLivreur = async (req, res) => {
                     sender: commande.commercant_id,
                     receiver: livreurAssigne._id,
                     isRequest: true,
-                    isActive: i === 0, // Only the first one is active initially
+                    isActive: i === 0, 
                     commande_id: commandeId,
                     type: "nouvelle demande de livraison",
-                    priority: i + 1, // Add priority based on sort order
+                    priority: i + 1, 
                     expiresAt:
                         i === 0
                             ? new Date(Date.now() + expirationTime * 1000)
@@ -644,7 +639,6 @@ export const assignLivreur = async (req, res) => {
                 notificationPromises.push(newNotification.save());
             }
 
-            // Save all notifications in parallel
             const savedNotifications = await Promise.all(notificationPromises);
             console.log(
                 "Auto assignment notifications created:",
@@ -683,7 +677,7 @@ export const assignLivreur = async (req, res) => {
     }
 };
 
-// Add a new function to handle notification responses
+
 export const handleLivreurResponse = async (req, res) => {
     try {
         const { notificationId, response } = req.body;
@@ -699,7 +693,7 @@ export const handleLivreurResponse = async (req, res) => {
             });
         }
 
-        // Find the notification
+
         const notification = await Notification.findById(notificationId);
 
         if (!notification) {
@@ -709,7 +703,7 @@ export const handleLivreurResponse = async (req, res) => {
             });
         }
 
-        // Check if notification is already processed
+
         if (notification.isAccepted || notification.isRefused) {
             return res.status(400).json({
                 success: false,
@@ -717,7 +711,6 @@ export const handleLivreurResponse = async (req, res) => {
             });
         }
 
-        // Check if notification is active
         if (!notification.isActive) {
             return res.status(400).json({
                 success: false,
@@ -725,7 +718,7 @@ export const handleLivreurResponse = async (req, res) => {
             });
         }
 
-        // Find the commande
+
         const commande = await Commande.findById(notification.commande_id);
 
         if (!commande) {
@@ -735,9 +728,7 @@ export const handleLivreurResponse = async (req, res) => {
             });
         }
 
-        // Check if commande already has a livreur assigned
         if (commande.livreur_id) {
-            // Mark notification as refused since commande is already assigned
             notification.isRefused = true;
             notification.refusalReason = "Commande déjà assignée";
             await notification.save();
@@ -757,13 +748,12 @@ export const handleLivreurResponse = async (req, res) => {
             });
         }
 
-        // Check if livreur is still available
+
         if (!livreur.disponibilite || !livreur.isWorking) {
             notification.isRefused = true;
             notification.refusalReason = "Livreur non disponible";
             await notification.save();
 
-            // Activate next notification
             await activateNextNotification(
                 notification.commande_id,
                 notification._id
@@ -776,25 +766,25 @@ export const handleLivreurResponse = async (req, res) => {
         }
 
         if (response === "accept") {
-            // Accept the delivery request
+
             notification.isAccepted = true;
             notification.responseTime = new Date();
 
-            // Update commande
+
             commande.livreur_id = livreur._id;
             commande.statut = "prete_a_etre_recuperee";
 
-            // Update livreur availability
+
             livreur.disponibilite = false;
 
-            // Save all changes
+
             await Promise.all([
                 notification.save(),
                 commande.save(),
                 livreur.save(),
             ]);
 
-            // Mark all other notifications for this commande as refused
+
             await Notification.updateMany(
                 {
                     commande_id: commande._id,
@@ -808,10 +798,10 @@ export const handleLivreurResponse = async (req, res) => {
                 }
             );
 
-            // Send notifications to client and merchant
+
             const notificationPromises = [];
 
-            // Notify merchant
+
             const merchantNotification = new Notification({
                 sender: livreur._id,
                 receiver: commande.commercant_id,
@@ -820,7 +810,7 @@ export const handleLivreurResponse = async (req, res) => {
             });
             notificationPromises.push(merchantNotification.save());
 
-            // Notify client
+
             const clientNotification = new Notification({
                 sender: livreur._id,
                 receiver: commande.client_id,
@@ -829,7 +819,7 @@ export const handleLivreurResponse = async (req, res) => {
             });
             notificationPromises.push(clientNotification.save());
 
-            // Save notifications in parallel
+
             await Promise.all(notificationPromises);
 
             return res.status(200).json({
@@ -841,20 +831,20 @@ export const handleLivreurResponse = async (req, res) => {
                 },
             });
         } else {
-            // Refuse the delivery request
+
             notification.isRefused = true;
             notification.refusalReason = "Refusé par le livreur";
             notification.responseTime = new Date();
             await notification.save();
 
-            // Activate the next notification
+
             const nextNotification = await activateNextNotification(
                 notification.commande_id,
                 notification._id
             );
 
             if (nextNotification) {
-                // Notify the next livreur with a push notification or similar if needed
+
 
                 return res.status(200).json({
                     success: true,
@@ -866,7 +856,7 @@ export const handleLivreurResponse = async (req, res) => {
                     },
                 });
             } else {
-                // No more livreurs available, notify merchant
+
                 const merchantNotification = new Notification({
                     sender: req.user._id,
                     receiver: commande.commercant_id,
@@ -897,10 +887,9 @@ export const handleLivreurResponse = async (req, res) => {
     }
 };
 
-// Helper function to activate the next notification in the queue
 async function activateNextNotification(commandeId, currentNotificationId) {
     try {
-        // Find the next notification with higher priority
+
         const nextNotification = await Notification.findOne({
             commande_id: commandeId,
             isRequest: true,
@@ -910,18 +899,18 @@ async function activateNextNotification(commandeId, currentNotificationId) {
             _id: { $ne: currentNotificationId },
         }).sort({ priority: 1 });
 
-        // If there's a next notification, update its status to active
+
         if (nextNotification) {
             nextNotification.isActive = true;
-            nextNotification.expiresAt = new Date(Date.now() + 60000); // Expires in 1 minute
+            nextNotification.expiresAt = new Date(Date.now() + 60000); 
 
-            // Add a message about why this notification was activated
+
             nextNotification.description =
                 "Vous avez été sélectionné car le livreur précédent n'a pas répondu ou a refusé la livraison.";
 
             await nextNotification.save();
 
-            // Get the livreur details
+
             const livreur = await User.findById(
                 nextNotification.receiver
             ).select("nom");
@@ -942,15 +931,14 @@ async function activateNextNotification(commandeId, currentNotificationId) {
     }
 }
 
-// Add a new function to check notification timeouts
+
 export const checkNotificationTimeouts = async (req, res) => {
     try {
-        // Use in-memory locking instead of Redis
+
         const lockKey = `notification_timeout_lock_${req.user._id}`;
 
         if (timeoutLocks.has(lockKey)) {
             const lockTime = timeoutLocks.get(lockKey);
-            // Check if lock is older than 30 seconds (stale lock)
             if (Date.now() - lockTime < 30000) {
                 return res.status(200).json({
                     success: true,
@@ -959,13 +947,13 @@ export const checkNotificationTimeouts = async (req, res) => {
                     locked: true,
                 });
             }
-            // If lock is stale, we'll proceed and override it
+
         }
 
-        // Set lock
+
         timeoutLocks.set(lockKey, Date.now());
 
-        // Set a timeout to automatically release the lock after 30 seconds
+
         setTimeout(() => {
             if (timeoutLocks.get(lockKey) === Date.now()) {
                 timeoutLocks.delete(lockKey);
@@ -973,7 +961,7 @@ export const checkNotificationTimeouts = async (req, res) => {
         }, 30000);
 
         try {
-            // Find pending notifications that have timed out
+
             const query = {
                 isRequest: true,
                 isAccepted: { $ne: true },
@@ -982,22 +970,22 @@ export const checkNotificationTimeouts = async (req, res) => {
                 expiresAt: { $lt: new Date() },
             };
 
-            // If not admin, only check notifications relevant to the user
+ 
             if (req.user.role !== "admin") {
-                // For livreurs, check notifications where they are the receiver
+
                 if (req.user.role === "livreur") {
                     query.receiver = req.user._id;
                 }
-                // For commercants, check notifications related to their commandes
+
                 else if (req.user.role === "commercant") {
-                    // Get all commandes for this commercant
+
                     const commandes = await Commande.find({
                         commercant_id: req.user._id,
                     }).select("_id");
                     const commandeIds = commandes.map((c) => c._id);
                     query.commande_id = { $in: commandeIds };
                 }
-                // For clients, similar approach as commercants
+
                 else if (req.user.role === "client") {
                     const commandes = await Commande.find({
                         client_id: req.user._id,
@@ -1007,7 +995,7 @@ export const checkNotificationTimeouts = async (req, res) => {
                 }
             }
 
-            // Add a limit to prevent processing too many at once
+
             const timedOutNotifications = await Notification.find(query).limit(
                 10
             );
@@ -1016,7 +1004,7 @@ export const checkNotificationTimeouts = async (req, res) => {
 
             for (const notification of timedOutNotifications) {
                 try {
-                    // Mark as refused due to timeout
+
                     notification.isRefused = true;
                     notification.refusalReason =
                         "Timeout - pas de réponse dans le délai imparti";
@@ -1030,20 +1018,19 @@ export const checkNotificationTimeouts = async (req, res) => {
                         status: "timeout",
                     });
 
-                    // Find the commande
                     const commande = await Commande.findById(
                         notification.commande_id
                     );
 
                     if (commande && !commande.livreur_id) {
-                        // Activate the next notification
+
                         const nextNotification = await activateNextNotification(
                             notification.commande_id,
                             notification._id
                         );
 
                         if (nextNotification) {
-                            // Add a message to the next notification
+
                             nextNotification.description =
                                 "Vous avez été sélectionné car le livreur précédent n'a pas répondu dans le délai imparti.";
                             await nextNotification.save();
@@ -1055,9 +1042,9 @@ export const checkNotificationTimeouts = async (req, res) => {
                                 status: "activated",
                             });
                         } else {
-                            // No more livreurs available, notify merchant
+t
                             const merchantNotification = new Notification({
-                                sender: notification.receiver, // The livreur who timed out
+                                sender: notification.receiver, 
                                 receiver: commande.commercant_id,
                                 commande_id: commande._id,
                                 type: "refus de livraison",
@@ -1086,7 +1073,7 @@ export const checkNotificationTimeouts = async (req, res) => {
                 }
             }
 
-            // Release the lock
+
             timeoutLocks.delete(lockKey);
 
             return res.status(200).json({
@@ -1095,7 +1082,7 @@ export const checkNotificationTimeouts = async (req, res) => {
                 results,
             });
         } catch (error) {
-            // Release the lock in case of error
+
             timeoutLocks.delete(lockKey);
             throw error;
         }
@@ -1112,7 +1099,7 @@ export const checkNotificationTimeouts = async (req, res) => {
     }
 };
 
-// Keep the existing calculateDistance function
+
 function calculateDistance(lat1, lon1, lat2, lon2) {
     return Math.sqrt(Math.pow(lat1 - lat2, 2) + Math.pow(lon1 - lon2, 2));
 }
@@ -1194,7 +1181,6 @@ export const updateCommandeStatus = async (req, res) => {
 
         commande.statut = statut;
 
-        // Remove delivery person association for specific statuses
         if (
             ["en_attente", "refusee", "en_preparation", "annulee"].includes(
                 statut
@@ -1257,7 +1243,7 @@ export const updateCommandeItineraire = async (req, res) => {
             });
         }
 
-        // Vérifier que le livreur qui fait la requête est bien celui assigné à la commande
+
         if (commande.livreur_id.toString() !== req.user._id.toString()) {
             return res.status(403).json({
                 success: false,
@@ -1266,23 +1252,22 @@ export const updateCommandeItineraire = async (req, res) => {
         }
 
         if (commande.statut === "prete_a_etre_recuperee") {
-            // Initialiser l'itinéraire s'il n'existe pas
             if (!commande.itineraire_parcouru_commercant) {
                 commande.itineraire_parcouru_commercant = [];
             }
 
-            // Ajouter la nouvelle position à l'itinéraire
+
             commande.itineraire_parcouru_commercant.push({
                 position,
                 timestamp: timestamp || new Date(),
             });
         } else if (commande.statut === "recuperee_par_livreur") {
-            // Initialiser l'itinéraire s'il n'existe pas
+
             if (!commande.itineraire_parcouru_client) {
                 commande.itineraire_parcouru_client = [];
             }
 
-            // Ajouter la nouvelle position à l'itinéraire
+
             commande.itineraire_parcouru_client.push({
                 position,
                 timestamp: timestamp || new Date(),
@@ -1397,12 +1382,11 @@ export const problemsDelivery = async (req, res) => {
     });
 };
 
-// Add this function to the CommandeController.js file
-// Place it near the other export functions
+
 
 export const getAllCommandes = async (req, res) => {
     try {
-        // Only admins should be able to access all commandes
+
         if (req.user.role !== "admin") {
             return res.status(403).json({
                 success: false,
@@ -1411,12 +1395,12 @@ export const getAllCommandes = async (req, res) => {
             });
         }
 
-        // Fetch all commandes with populated references
+
         const commandes = await Commande.find({})
             .populate("client_id")
             .populate("commercant_id")
             .populate("livreur_id")
-            .sort({ date_creation: -1 }); // Sort by creation date, newest first
+            .sort({ date_creation: -1 }); 
 
         return res.status(200).json({
             success: true,

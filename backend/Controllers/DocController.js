@@ -3,7 +3,7 @@ const { User, Client, Commercant, Livreur, Admin } = userModels;
 import fs from "fs";
 import path from "path";
 
-// Gérer l'upload
+
 export const uploadDocuments = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
@@ -13,7 +13,7 @@ export const uploadDocuments = async (req, res) => {
 
         const labels = Array.isArray(req.body.labels)
             ? req.body.labels
-            : [req.body.labels]; // gérer un seul label
+            : [req.body.labels]; 
         
 
         const docs = req.files.map((file, index) => ({
@@ -36,14 +36,14 @@ export const uploadDocuments = async (req, res) => {
     }
 };
 
-// Voir les documents pour l'admin
+
 export const getDocumentsAdmin = async (req, res) => {
     if (req.user.role !== "admin") return res.status(403).send("Accès refusé");
     const users = await User.find({ role: "livreur" });
     res.json(users.map((u) => ({ id: u._id, nom: u.nom, docs: u.documents })));
 };
 
-// Valider / refuser
+
 export const updateDocumentStatus = async (req, res) => {
     const { userId, docIndex } = req.params;
     const { action } = req.body;
@@ -51,11 +51,11 @@ export const updateDocumentStatus = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).send("Utilisateur non trouvé");
 
-    // 1. Met à jour le statut du document
+
     const doc = user.documents[docIndex];
     doc.statut = action === "valider" ? "validé" : "refusé";
 
-    // 2. Vérifie si les documents généraux sont valides
+
     const hasCarteIdentite = user.documents.some(
         (d) => d.label === "carte d'identité" && d.statut === "validé"
     );
@@ -63,7 +63,7 @@ export const updateDocumentStatus = async (req, res) => {
         (d) => d.label === "photo de votre tête" && d.statut === "validé"
     );
 
-    // Vélo et autres : pas de documents spécifiques
+
     if (hasCarteIdentite && hasPhotoTete) {
         user.vehicules = user.vehicules.map((v) => {
             if (["vélo", "autres"].includes(v.type)) {
@@ -73,7 +73,7 @@ export const updateDocumentStatus = async (req, res) => {
         });
     }
 
-    // 3. Moto
+
     const motoDocsOk = [
         "permis moto",
         "carte grise moto",
@@ -89,7 +89,7 @@ export const updateDocumentStatus = async (req, res) => {
         });
     }
 
-    // 4. Voiture
+
     const voitureDocsOk = [
         "permis voiture",
         "carte grise voiture",
@@ -105,7 +105,6 @@ export const updateDocumentStatus = async (req, res) => {
         });
     }
 
-    // 5. Statut global du livreur
     const allDocsValid = user.documents.every((d) => d.statut === "validé");
     user.statut = allDocsValid ? "vérifié" : "en vérification";
 
@@ -113,7 +112,7 @@ export const updateDocumentStatus = async (req, res) => {
     res.send("Statut mis à jour");
 };
 
-// Mettre à jour un document existant
+
 export const updateDocument = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
@@ -124,15 +123,13 @@ export const updateDocument = async (req, res) => {
 
         const doc = user.documents.id(documentId);
         if (!doc) return res.status(404).send("Document introuvable");
-        // if (doc.statut === "validé")
-        //     return res.status(403).send("Ce document a déjà été validé");
 
-        // Supprimer l'ancien fichier physiquement
+
         if (fs.existsSync(doc.url)) {
             fs.unlinkSync(doc.url);
         }
 
-        // Met à jour les infos
+
         doc.nom = file.originalname;
         doc.url = file.path;
         doc.statut = "en attente";
@@ -147,7 +144,7 @@ export const updateDocument = async (req, res) => {
     }
 };
 
-// Supprimer un document
+
 export const deleteDocument = async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
@@ -159,12 +156,12 @@ export const deleteDocument = async (req, res) => {
         if (doc.statut === "validé")
             return res.status(403).send("Ce document a déjà été validé");
 
-        // Supprimer physiquement le fichier
+
         if (doc.url && fs.existsSync(doc.url)) {
             fs.unlinkSync(doc.url);
         }
 
-        // On ne supprime pas l'objet, on le vide
+
         doc.url = null;
         doc.statut = "non soumis";
 

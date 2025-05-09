@@ -2,7 +2,7 @@ import User from "../Models/User.js";
 
 export const protectAdmin = async (req, res, next) => {
     try {
-        // Vérifier si l'utilisateur existe dans la requête (ajouté par protectRoute)
+
         if (!req.user) {
             return res.status(401).json({
                 success: false,
@@ -10,7 +10,7 @@ export const protectAdmin = async (req, res, next) => {
             });
         }
 
-        // Vérifier si l'utilisateur est un admin
+
         if (req.user.role !== "admin") {
             return res.status(403).json({
                 success: false,

@@ -5,33 +5,17 @@ const CommandeSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true,
-    }, // Référence au client
+    }, 
     commercant_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true,
-    }, // Référence au commerçant
+    }, 
     livreur_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
     },
-    // produits: [
-    //     {
-    //         produit_id: {
-    //             type: mongoose.Schema.Types.ObjectId,
-    //             ref: "Produit",
-    //             required: true,
-    //         },
-    //         quantite: {
-    //             type: Number,
-    //             required: true,
-    //         },
-    //         prix_unitaire: {
-    //             type: Number,
-    //             required: true,
-    //         }, // Prix au moment de la commande
-    //     },
-    // ],
+
     total: {
         type: Number,
         required: true,
@@ -67,7 +51,7 @@ const CommandeSchema = new mongoose.Schema({
     },
     date_livraison: {
         type: Date,
-    }, // Rempli quand livrée
+    }, 
     code_Client: {
         type: String,
         default: () => Math.floor(1000 + Math.random() * 9000).toString(),
@@ -110,7 +94,7 @@ const CommandeSchema = new mongoose.Schema({
     ],
 });
 
-// Index pour accélérer les filtres
+
 CommandeSchema.index({ client_id: 1 });
 CommandeSchema.index({ commercant_id: 1 });
 CommandeSchema.index({ livreur_id: 1 });

@@ -45,7 +45,7 @@ router.patch(
 router.get("/:id", protectRoute, getUserById);
 router.post("/livreur/vehicules", protectRoute, protectLivreur, addVehicules);
 router.put("/vehicules/current",protectRoute,protectLivreur,updateCurrentVehicle);
-// router.get("/:id", protectRoute, getCommandeById);
+
 router.post("/updateUserform",protectRoute,updateUserInfo);
 router.put("/changeStatut",protectRoute,protectAdmin,updateStatut)
 

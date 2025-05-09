@@ -3,7 +3,7 @@ import userModels from "../Models/User.js";
 const { User } = userModels;
 import mongoose from "mongoose";
 
-// Créer un nouvel avis
+
 export const createReview = async (req, res) => {
     try {
         const { targetId, targetType, rating, comment, commandeId } = req.body;
@@ -11,7 +11,7 @@ export const createReview = async (req, res) => {
 
         
 
-        // Vérifier si l'utilisateur a déjà laissé un avis pour cette commande et ce destinataire
+
         const existingReview = await Review.findOne({
             auteur: userId,
             cible: targetId,
@@ -25,7 +25,6 @@ export const createReview = async (req, res) => {
             });
         }
 
-        // Vérification de l'existence de l'auteur et de la cible
         const auteurUser = await User.findById(userId).select("-password");
         const cibleUser = await User.findById(targetId).select("-password");
 
@@ -35,11 +34,11 @@ export const createReview = async (req, res) => {
                 .json({ success: false, error: "Auteur ou cible introuvable" });
         }
 
-        // Création de l'objet review
+
         const review = new Review({
             auteur: userId,
             cible: targetId,
-            roleCible: targetType, // "commercant" ou "livreur"
+            roleCible: targetType, 
             note: rating,
             commentaire: comment,
             commande: commandeId || null,
@@ -47,7 +46,7 @@ export const createReview = async (req, res) => {
 
         await review.save();
 
-        // Mettre à jour la note moyenne de l'utilisateur cible
+
         const allReviews = await Review.find({ cible: targetId });
         const totalRating = allReviews.reduce(
             (sum, review) => sum + review.note,
@@ -75,7 +74,7 @@ export const createReview = async (req, res) => {
     }
 };
 
-// Récupérer les avis laissés par l'utilisateur connecté
+
 export const getUserReviews = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -85,7 +84,7 @@ export const getUserReviews = async (req, res) => {
             .populate("cible", "nom email nom_boutique")
             .populate("commande", "numero");
 
-        // Formater les avis pour l'affichage
+
         const formattedReviews = reviews.map((review) => ({
             _id: review._id,
             targetId: review.cible._id,
@@ -112,7 +111,7 @@ export const getUserReviews = async (req, res) => {
     }
 };
 
-// Récupérer les avis pour un utilisateur spécifique (commerçant ou livreur)
+
 export const getReviewsForUser = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -129,7 +128,7 @@ export const getReviewsForUser = async (req, res) => {
             .populate("auteur", "nom email")
             .populate("commande", "numero");
 
-        // Formater les avis pour l'affichage
+
         const formattedReviews = reviews.map((review) => ({
             _id: review._id,
             clientId: review.auteur._id,

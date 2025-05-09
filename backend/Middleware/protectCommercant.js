@@ -2,7 +2,7 @@ import User from "../Models/User.js";
 
 export const protectCommercant = async (req, res, next) => {
     try {
-        // Vérifier si l'utilisateur existe dans la requête (ajouté par protectRoute)
+
         if (!req.user) {
             return res.status(401).json({
                 success: false,
@@ -10,7 +10,7 @@ export const protectCommercant = async (req, res, next) => {
             });
         }
 
-        // Vérifier si l'utilisateur est un commerce
+
         if (req.user.role !== "commercant") {
             return res.status(403).json({
                 success: false,

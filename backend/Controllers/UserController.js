@@ -3,11 +3,11 @@ const { User, Client, Commercant, Livreur } = userModels;
 import bcrypt from "bcryptjs";
 
 export const getUserProfile = async (req, res) => {
-    // validation for req.params
+
     const { username } = req.params;
 
     try {
-        // checking if user exists
+
         const user = await User.findOne({ username }).select("-password");
         if (!user) {
             return res
@@ -24,7 +24,7 @@ export const getUserProfile = async (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
-    const userId = req.user?.id; // Vérifie que req.user est défini par un middleware d'auth
+    const userId = req.user?.id; 
 
     if (!userId) {
         return res.status(401).json({ error: "Utilisateur non authentifié" });
@@ -51,12 +51,11 @@ export const updateProfile = async (req, res) => {
             return res.status(404).json({ error: "Utilisateur non trouvé" });
         }
 
-        // Champs communs
         user.nom = nom || user.nom;
         user.email = email || user.email;
         user.numero = numero || user.numero;
 
-        // Mise à jour du mot de passe
+
         if (newPassword) {
             if (!currentPassword) {
                 return res
@@ -75,7 +74,7 @@ export const updateProfile = async (req, res) => {
             user.password = await bcrypt.hash(newPassword, 10);
         }
 
-        // Champs spécifiques selon le rôle
+
         switch (user.role) {
             case "commercant":
                 user.nom_boutique = nom_boutique || user.nom_boutique;
@@ -83,11 +82,9 @@ export const updateProfile = async (req, res) => {
                     adresse_boutique || user.adresse_boutique;
                 break;
             case "livreur":
-                // Validation spécifique pour le véhicule
                 if (vehicule) {
                     const { type, plaque, couleur, capacite } = vehicule;
 
-                    // Si le type est voiture ou moto, la plaque est obligatoire
                     if (
                         (type === "voiture" || type === "moto") &&
                         (!plaque || plaque.trim() === "")
@@ -97,7 +94,7 @@ export const updateProfile = async (req, res) => {
                         });
                     }
 
-                    // Mise à jour du véhicule uniquement si fourni
+
                     user.vehicule = {
                         type: type || user.vehicule?.type,
                         plaque: plaque || user.vehicule?.plaque,
@@ -123,7 +120,7 @@ export const updateProfile = async (req, res) => {
 
         await user.save();
 
-        // Retire le mot de passe de la réponse
+
         const userResponse = user.toObject();
         delete userResponse.password;
 
@@ -175,7 +172,7 @@ export const updateUserPosition = async (req, res) => {
         const { userId } = req.params;
         const { lat, lng } = req.body;
 
-        // Vérifier que l'utilisateur existe et est un livreur
+
         const livreur = await Livreur.findById(userId);
         if (!livreur) {
             return res.status(403).json({
@@ -184,7 +181,7 @@ export const updateUserPosition = async (req, res) => {
             });
         }
 
-        // Vérifier que le livreur est disponible
+
         if (!livreur.isWorking) {
             return res.status(400).json({
                 success: false,
@@ -193,10 +190,10 @@ export const updateUserPosition = async (req, res) => {
             });
         }
 
-        // Mettre à jour la position directement sur l'instance du livreur
+
         livreur.position = { lat, lng };
 
-        // Sauvegarder les modifications
+
         await livreur.save();
 
         res.status(200).json({
@@ -314,12 +311,11 @@ export const updateLivreurDocuments = async (req, res) => {
             (d) => d.label === "photo de votre tête" && d.statut === "validé"
         );
 
-        // Statuts des véhicules en fonction de leurs documents associés
+
         livreur.vehicules = livreur.vehicules.map((v) => {
             let requiredDocs = [];
 
             if (v.type === "vélo" || v.type === "autres") {
-                // Aucun document requis pour ces types, donc toujours vérifiés
                 v.statut = "vérifié";
                 return v;
             }
@@ -355,7 +351,7 @@ export const updateLivreurDocuments = async (req, res) => {
         if (hasCarteIdentite && hasPhotoTete && hasVehiculeVerifie) {
             livreur.statut = "vérifié";
         } else {
-            // Si tous les documents ont un statut, mais certains sont refusés, on met "refusé"
+
             const tousValides =
                 livreur.documents.length > 0 &&
                 livreur.documents.every(

@@ -14,7 +14,7 @@ import {
 
 const router = express.Router();
 
-// Multer config
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const dir = path.join("uploads", req.user.id);
@@ -34,7 +34,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Routes
+
 router.post(
     "/upload",
     protectRoute,

@@ -4,21 +4,21 @@ const { User, Client, Commercant, Livreur, Admin } = userModels;
 import bcrypt from "bcryptjs";
 
 export const signup = async (req, res) => {
-    // validation for req.body
+
     const { email, nom, password, numero, role } = req.body;
 
-    // Regular expression for email validation (i dont understand but ok)
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     try {
-        // validation for email
+
         if (!emailRegex.test(email)) {
             return res
                 .status(400)
                 .json({ success: false, error: "Invalid email address" });
         }
 
-        // checking if email already exists
+
         const existingEmail = await User.findOne({ email });
         if (existingEmail) {
             return res
@@ -32,7 +32,7 @@ export const signup = async (req, res) => {
                 .status(400)
                 .json({ success: false, error: "Email already taken" });
         }
-        // checking if password is at least 6 characters
+
         if (password.length < 6) {
             return res.status(400).json({
                 success: false,
@@ -40,8 +40,7 @@ export const signup = async (req, res) => {
             });
         }
 
-        //hash password
-        // example : pass os 123456 -> it will be something like wuijfowebf327423gr784vbf47
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 

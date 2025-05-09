@@ -3,18 +3,18 @@ import mongoose from "mongoose";
 const notificationSchema = new mongoose.Schema(
     {
         sender: {
-            type: mongoose.Schema.Types.ObjectId, // ref: refer to the id of the model
-            ref: "User", // the id will be of the user model
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: "User", 
             required: true,
         },
         receiver: {
-            type: mongoose.Schema.Types.ObjectId, // ref: refer to the id of the model
-            ref: "User", // the id will be of the user model
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: "User", 
             required: true,
         },
         commande_id: {
-            type: mongoose.Schema.Types.ObjectId, // ref: refer to the id of the model
-            ref: "Commande", // the id will be of the commande model
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: "Commande", 
         },
         description: {
             type: String,

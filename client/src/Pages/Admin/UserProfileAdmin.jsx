@@ -1023,38 +1023,49 @@ const UserProfileAdmin = () => {
                                                         "rue",
                                                         "ville",
                                                         "code_postal",
-                                                    ].map((field) => (
-                                                        <input
-                                                            key={field}
-                                                            type="text"
-                                                            placeholder={
-                                                                field
-                                                                    .charAt(0)
-                                                                    .toUpperCase() +
-                                                                field
-                                                                    .slice(1)
-                                                                    .replace(
-                                                                        "_",
-                                                                        " "
-                                                                    )
-                                                            }
-                                                            value={
-                                                                adresse[
+                                                    ]
+                                                        .filter(
+                                                            (field) =>
+                                                                field !==
+                                                                    "lat" &&
+                                                                field !== "lng"
+                                                        )
+                                                        .map((field) => (
+                                                            <input
+                                                                key={field}
+                                                                type="text"
+                                                                placeholder={
                                                                     field
-                                                                ] || ""
-                                                            }
-                                                            name={field}
-                                                            onChange={(e) =>
-                                                                handleChange(
-                                                                    e,
-                                                                    "adresses_favorites",
-                                                                    null,
-                                                                    index
-                                                                )
-                                                            }
-                                                            className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                                                        />
-                                                    ))}
+                                                                        .charAt(
+                                                                            0
+                                                                        )
+                                                                        .toUpperCase() +
+                                                                    field
+                                                                        .slice(
+                                                                            1
+                                                                        )
+                                                                        .replace(
+                                                                            "_",
+                                                                            " "
+                                                                        )
+                                                                }
+                                                                value={
+                                                                    adresse[
+                                                                        field
+                                                                    ] || ""
+                                                                }
+                                                                name={field}
+                                                                onChange={(e) =>
+                                                                    handleChange(
+                                                                        e,
+                                                                        "adresses_favorites",
+                                                                        null,
+                                                                        index
+                                                                    )
+                                                                }
+                                                                className="p-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+                                                            />
+                                                        ))}
                                                 </div>
                                             )
                                         )}

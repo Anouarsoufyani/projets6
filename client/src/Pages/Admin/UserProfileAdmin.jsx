@@ -1026,13 +1026,7 @@ const UserProfileAdmin = () => {
                                                     ].map((field) => (
                                                         <input
                                                             key={field}
-                                                            type={
-                                                                field ===
-                                                                    "lat" ||
-                                                                field === "lng"
-                                                                    ? "number"
-                                                                    : "text"
-                                                            }
+                                                            type="text"
                                                             placeholder={
                                                                 field
                                                                     .charAt(0)
@@ -1076,8 +1070,8 @@ const UserProfileAdmin = () => {
                                                             rue: "",
                                                             ville: "",
                                                             code_postal: "",
-                                                            lat: "",
-                                                            lng: "",
+                                                            // lat: "",
+                                                            // lng: "",
                                                         },
                                                     ],
                                                 })

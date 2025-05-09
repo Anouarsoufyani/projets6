@@ -44,8 +44,8 @@ Application de mise en relation entre clients, commerçants et livreurs pour fac
 
 1. Clonez le dépôt
 ```bash
-git clone https://github.com/votre-utilisateur/plateforme-livraison.git
-cd plateforme-livraison
+git clone https://github.com/Anouarsoufyani/projets6.git
+cd projets6
 ```
 
 2. Configuration des variables d'environnement
